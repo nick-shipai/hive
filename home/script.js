@@ -6,8 +6,8 @@
     'use strict';
 
     /* ── Config ──────────────────────────────── */
-    var API_BASE = 'http://54.202.91.167:5000';
-    var SOCKET_URL = 'http://54.202.91.167:5000';
+    var API_BASE = 'https://71e5-54-202-91-167.ngrok-free.app';
+    var SOCKET_URL = 'https://71e5-54-202-91-167.ngrok-free.app';
     var MESSAGE_LIMIT = 10;
 
     /* ── State ───────────────────────────────── */
@@ -224,7 +224,10 @@
                 var token = HiveAuth.getToken();
                 fetch(API_BASE + '/api/upload/avatar', {
                     method: 'POST',
-                    headers: { 'Authorization': 'Bearer ' + token },
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'ngrok-skip-browser-warning': 'true',
+                    },
                     body: fd,
                 })
                 .then(function (r) { return r.json(); })
@@ -3559,7 +3562,7 @@
                 url = API_BASE + '/api/hashtags/trending?limit=8';
             }
             var token = HiveAuth.getToken();
-            fetch(url, { headers: { 'Authorization': 'Bearer ' + token } })
+            fetch(url, { headers: { 'Authorization': 'Bearer ' + token, 'ngrok-skip-browser-warning': 'true' } })
                 .then(function (r) { return r.json(); })
                 .then(function (data) {
                     if (!data.success || !data.hashtags) return;
@@ -3921,6 +3924,7 @@
         var xhr = new XMLHttpRequest();
         xhr.open('POST', API_BASE + '/api/upload/attachment', true);
         xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+        xhr.setRequestHeader('ngrok-skip-browser-warning', 'true');
         xhr.upload.addEventListener('progress', function(e) {
             if (e.lengthComputable && onProgress) {
                 onProgress(Math.round((e.loaded / e.total) * 100));
@@ -4442,6 +4446,7 @@
         var socket = io(SOCKET_URL, {
             auth: { token: token },
             transports: ['websocket', 'polling'],
+            extraHeaders: { 'ngrok-skip-browser-warning': 'true' },
         });
 
         socket.on('connect', function () {
@@ -5866,7 +5871,10 @@
                     var token = HiveAuth.getToken();
                     fetch(API_BASE + '/api/upload?folder=' + uploadFolder, {
                         method: 'POST',
-                        headers: { 'Authorization': 'Bearer ' + token },
+                        headers: {
+                            'Authorization': 'Bearer ' + token,
+                            'ngrok-skip-browser-warning': 'true',
+                        },
                         body: formData,
                     })
                     .then(function(resp) { return resp.json(); })
@@ -5910,7 +5918,10 @@
                     var token = HiveAuth.getToken();
                     fetch(API_BASE + '/api/upload?folder=' + (folder || 'uploads'), {
                         method: 'POST',
-                        headers: { 'Authorization': 'Bearer ' + token },
+                        headers: {
+                            'Authorization': 'Bearer ' + token,
+                            'ngrok-skip-browser-warning': 'true',
+                        },
                         body: formData,
                     })
                     .then(function(resp) { return resp.json(); })

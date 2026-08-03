@@ -13,7 +13,7 @@
 (function () {
     'use strict';
 
-    var API_BASE = 'http://54.202.91.167:5000';
+    var API_BASE = 'https://71e5-54-202-91-167.ngrok-free.app';
     var TOKEN_KEY = 'hive_token';
     var USER_KEY = 'hive_user';
 
@@ -85,6 +85,10 @@
             }
             if (token) {
                 options.headers['Authorization'] = 'Bearer ' + token;
+            }
+            // ngrok free-domain interstitial bypass
+            if (!options.headers['ngrok-skip-browser-warning']) {
+                options.headers['ngrok-skip-browser-warning'] = 'true';
             }
 
             var controller = new AbortController();

@@ -7,7 +7,7 @@
     'use strict';
 
     /* ── Config ──────────────────────────────────────────── */
-    const API_BASE = 'http://54.202.91.167:5000';
+    const API_BASE = 'https://71e5-54-202-91-167.ngrok-free.app';
     const TIMEOUT_MS = 12000;
 
     /* ── Particles ───────────────────────────────────────── */
@@ -235,7 +235,10 @@
 
         return fetch(API_BASE + endpoint, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'ngrok-skip-browser-warning': 'true',
+            },
             body: JSON.stringify(body),
             signal: controller.signal,
         })

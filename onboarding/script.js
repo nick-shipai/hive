@@ -6,7 +6,7 @@
 (function () {
     'use strict';
 
-    var API = 'http://54.202.91.167:5000';
+    var API = 'https://71e5-54-202-91-167.ngrok-free.app';
     var TIMEOUT = 30000;
     var MAX_SIZE = 5 * 1024 * 1024;
     var ALLOWED = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
@@ -274,7 +274,10 @@
                     formData.append('file', blob, 'avatar.jpg');
                     fetch(API + '/api/upload/avatar', {
                         method: 'POST',
-                        headers: { 'Authorization': 'Bearer ' + HiveAuth.getToken() },
+                        headers: {
+                            'Authorization': 'Bearer ' + HiveAuth.getToken(),
+                            'ngrok-skip-browser-warning': 'true',
+                        },
                         body: formData,
                     })
                     .then(function (r) { return r.json(); })
@@ -369,7 +372,8 @@
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + HiveAuth.getToken()
+                    'Authorization': 'Bearer ' + HiveAuth.getToken(),
+                    'ngrok-skip-browser-warning': 'true'
                 },
                 body: JSON.stringify({ profile_picture: picUrl, date_of_birth: dobVal, rank: 'rookie' }),
             })
@@ -424,7 +428,10 @@
                     fd.append('file', blob, 'default-avatar.jpg');
                     fetch(API + '/api/upload/avatar', {
                         method: 'POST',
-                        headers: { 'Authorization': 'Bearer ' + HiveAuth.getToken() },
+                        headers: {
+                            'Authorization': 'Bearer ' + HiveAuth.getToken(),
+                            'ngrok-skip-browser-warning': 'true',
+                        },
                         body: fd,
                     })
                     .then(function (r) { return r.json(); })
@@ -461,7 +468,10 @@
                 formData.append('file', blob, 'default-avatar.jpg');
                 fetch(API + '/api/upload/avatar', {
                     method: 'POST',
-                    headers: { 'Authorization': 'Bearer ' + HiveAuth.getToken() },
+                    headers: {
+                        'Authorization': 'Bearer ' + HiveAuth.getToken(),
+                        'ngrok-skip-browser-warning': 'true',
+                    },
                     body: formData,
                 })
                 .then(function (r) { return r.json(); })
@@ -471,7 +481,8 @@
                         method: 'PUT',
                         headers: {
                             'Content-Type': 'application/json',
-                            'Authorization': 'Bearer ' + HiveAuth.getToken()
+                            'Authorization': 'Bearer ' + HiveAuth.getToken(),
+                            'ngrok-skip-browser-warning': 'true'
                         },
                         body: JSON.stringify({ profile_picture: url, date_of_birth: dobVal, rank: 'rookie' }),
                     });
