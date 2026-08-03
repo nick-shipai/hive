@@ -6,7 +6,7 @@
 (function () {
     'use strict';
 
-    var API = 'https://71e5-54-202-91-167.ngrok-free.app';
+    var API = 'https://ea23-54-202-91-167.ngrok-free.app';
     var TIMEOUT = 30000;
     var MAX_SIZE = 5 * 1024 * 1024;
     var ALLOWED = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];

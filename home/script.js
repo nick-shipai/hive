@@ -6,8 +6,8 @@
     'use strict';
 
     /* ── Config ──────────────────────────────── */
-    var API_BASE = 'https://71e5-54-202-91-167.ngrok-free.app';
-    var SOCKET_URL = 'https://71e5-54-202-91-167.ngrok-free.app';
+    var API_BASE = 'https://ea23-54-202-91-167.ngrok-free.app';
+    var SOCKET_URL = 'https://ea23-54-202-91-167.ngrok-free.app';
     var MESSAGE_LIMIT = 10;
 
     /* ── State ───────────────────────────────── */

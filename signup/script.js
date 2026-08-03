@@ -7,7 +7,7 @@
     'use strict';
 
     /* ── Config ──────────────────────────────────────────── */
-    const API_BASE = 'https://71e5-54-202-91-167.ngrok-free.app';
+    const API_BASE = 'https://ea23-54-202-91-167.ngrok-free.app';
     const TIMEOUT_MS = 12000;
 
     /* ── Particles ───────────────────────────────────────── */
