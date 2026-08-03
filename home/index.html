@@ -1,0 +1,2310 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hive</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐝</text></svg>">
+</head>
+
+<body>
+    <canvas id="particles"></canvas>
+
+    <div class="app">
+        <!-- ═══════════ NAV RAIL ═══════════ -->
+        <nav class="rail" aria-label="Navigation">
+            <div class="rail-top">
+                <!-- Hive Home (active) -->
+                <a href="#" class="rail-icon active" data-tip="Home" data-color="#6C63FF" data-nav="home">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                        <polyline points="9 22 9 12 15 12 15 22" />
+                    </svg>
+                    <span class="rail-pill"></span>
+                </a>
+                <!-- Communities -->
+                <a href="#" class="rail-icon" data-tip="Communities" data-color="#FF4D9E" data-nav="communities">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                        <circle cx="9" cy="7" r="4" />
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                    </svg>
+                    <span class="rail-pill"></span>
+                </a>
+                <!-- Chats (DMs) -->
+                <a href="#" class="rail-icon" data-tip="Chats" data-color="#00E5FF" data-nav="chats">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                    </svg>
+                    <span class="rail-badge" id="chats-rail-badge" style="display:none;">0</span>
+                    <span class="rail-pill"></span>
+                </a>
+                <!-- Search -->
+                <a href="#" class="rail-icon" data-tip="Search" data-color="#00E5FF" data-nav="search">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8" />
+                        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    </svg>
+                </a>
+                <!-- Friends -->
+                <a href="#" class="rail-icon" data-tip="Friends" data-color="#7CFFB2" data-nav="friends">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                        <circle cx="8.5" cy="7" r="4" />
+                        <polyline points="17 11 19 13 23 9" />
+                    </svg>
+                </a>
+            </div>
+            <div class="rail-bottom">
+                <!-- Notifications -->
+                <a href="#" class="rail-icon" data-tip="Notifications" data-color="#FFD93D" data-nav="notifications">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                    </svg>
+                </a>
+                <!-- Settings -->
+                <a href="#" class="rail-icon" data-tip="Settings" data-color="#A7B0C0" data-nav="settings">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="3" />
+                        <path
+                            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                    </svg>
+                </a>
+            </div>
+        </nav>
+
+        <!-- ═══════════ SIDEBAR (switchable) ═══════════ -->
+        <aside class="sidebar" aria-label="Navigation">
+            <!-- ═══ COMMUNITIES PANEL ═══ -->
+            <div class="sidebar-panel" id="sidebar-communities-panel">
+                <div class="sidebar-header">
+                    <h2 class="sidebar-title">Communities</h2>
+                    <button class="sidebar-add" id="sidebar-create-community-btn" aria-label="Create community">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19" />
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="sidebar-search">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8" />
+                        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    </svg>
+                    <input type="text" id="community-search-input" placeholder="Search communities..."
+                        aria-label="Search communities">
+                </div>
+
+                <div class="community-list" id="community-list">
+                    <!-- Loading skeleton -->
+                    <div class="community-skeleton" id="community-skeleton">
+                        <div class="skeleton-item">
+                            <div class="skeleton-avatar"></div>
+                            <div class="skeleton-text">
+                                <div class="skeleton-line"></div>
+                                <div class="skeleton-line short"></div>
+                            </div>
+                        </div>
+                        <div class="skeleton-item">
+                            <div class="skeleton-avatar"></div>
+                            <div class="skeleton-text">
+                                <div class="skeleton-line"></div>
+                                <div class="skeleton-line short"></div>
+                            </div>
+                        </div>
+                        <div class="skeleton-item">
+                            <div class="skeleton-avatar"></div>
+                            <div class="skeleton-text">
+                                <div class="skeleton-line"></div>
+                                <div class="skeleton-line short"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Empty state -->
+                    <div class="community-empty" id="community-empty" style="display:none;">
+                        <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor"
+                            stroke-width="1.5" opacity="0.4">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                            <circle cx="9" cy="7" r="4" />
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                        </svg>
+                        <span>No communities yet</span>
+                    </div>
+                    <!-- Error state -->
+                    <div class="community-error" id="community-error" style="display:none;">
+                        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#FF4D9E" stroke-width="1.5">
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="12" y1="8" x2="12" y2="12" />
+                            <line x1="12" y1="16" x2="12.01" y2="16" />
+                        </svg>
+                        <span id="community-error-msg">Failed to load communities</span>
+                        <button class="retry-btn" id="retry-communities">Retry</button>
+                    </div>
+                    <!-- Communities will be injected here -->
+                </div>
+            </div>
+
+            <!-- ═══ DM PANEL ═══ -->
+            <div class="sidebar-panel" id="sidebar-dm-panel" style="display:none;">
+                <div class="sidebar-header">
+                    <h2 class="sidebar-title">Direct Messages</h2>
+                    <button class="sidebar-add" id="dm-new-chat-btn" aria-label="New chat">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19" />
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="sidebar-search">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8" />
+                        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    </svg>
+                    <input type="text" id="dm-search-input" placeholder="Search conversations..."
+                        aria-label="Search conversations">
+                </div>
+
+                <div class="dm-list" id="dm-list">
+                    <!-- Loading skeleton -->
+                    <div class="dm-skeleton" id="dm-skeleton">
+                        <div class="dm-skel-item">
+                            <div class="dm-skel-avatar"></div>
+                            <div class="dm-skel-text">
+                                <div class="dm-skel-line"></div>
+                                <div class="dm-skel-line short"></div>
+                            </div>
+                        </div>
+                        <div class="dm-skel-item">
+                            <div class="dm-skel-avatar"></div>
+                            <div class="dm-skel-text">
+                                <div class="dm-skel-line"></div>
+                                <div class="dm-skel-line short"></div>
+                            </div>
+                        </div>
+                        <div class="dm-skel-item">
+                            <div class="dm-skel-avatar"></div>
+                            <div class="dm-skel-text">
+                                <div class="dm-skel-line"></div>
+                                <div class="dm-skel-line short"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Empty state -->
+                    <div class="dm-empty" id="dm-empty" style="display:none;">
+                        <div class="dm-empty-icon">
+                            <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor"
+                                stroke-width="1" opacity="0.3">
+                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                            </svg>
+                        </div>
+                        <span class="dm-empty-title">No Direct Messages</span>
+                        <span class="dm-empty-desc">Start a conversation with someone!</span>
+                    </div>
+                    <!-- Error state -->
+                    <div class="dm-error" id="dm-error" style="display:none;">
+                        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#FF4D9E" stroke-width="1.5">
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="12" y1="8" x2="12" y2="12" />
+                            <line x1="12" y1="16" x2="12.01" y2="16" />
+                        </svg>
+                        <span id="dm-error-msg">Failed to load conversations</span>
+                        <button class="retry-btn" id="retry-dm">Retry</button>
+                    </div>
+                    <!-- Conversations injected here -->
+                </div>
+            </div>
+
+            <!-- ═══ FRIENDS PANEL ═══ -->
+            <div class="sidebar-panel" id="sidebar-friends-panel" style="display:none;">
+                <div class="sidebar-header">
+                    <h2 class="sidebar-title">Friends</h2>
+                    <span class="friends-count" id="friends-count"></span>
+                </div>
+
+                <div class="sidebar-search friends-search">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8" />
+                        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    </svg>
+                    <input type="text" id="friends-search-input" placeholder="Search friends..."
+                        aria-label="Search friends">
+                </div>
+
+                <!-- Tab bar: All / Online / Requests -->
+                <div class="friends-tabs" id="friends-tabs">
+                    <button class="friends-tab active" data-filter="all">All</button>
+                    <button class="friends-tab" data-filter="online">Online</button>
+                    <button class="friends-tab" data-filter="requests">Requests <span class="friends-req-badge"
+                            id="friends-req-badge" style="display:none;">0</span></button>
+                </div>
+
+                <!-- Incoming requests section -->
+                <div class="friends-section" id="friends-incoming-section" style="display:none;">
+                    <div class="friends-section-title">Incoming Requests</div>
+                    <div class="friends-incoming-list" id="friends-incoming-list"></div>
+                </div>
+
+                <div class="friends-list" id="friends-list">
+                    <!-- Loading skeleton -->
+                    <div class="friends-skeleton" id="friends-skeleton">
+                        <div class="friend-skel">
+                            <div class="friend-skel-avatar"></div>
+                            <div class="friend-skel-text">
+                                <div class="friend-skel-line"></div>
+                                <div class="friend-skel-line short"></div>
+                            </div>
+                        </div>
+                        <div class="friend-skel">
+                            <div class="friend-skel-avatar"></div>
+                            <div class="friend-skel-text">
+                                <div class="friend-skel-line"></div>
+                                <div class="friend-skel-line short"></div>
+                            </div>
+                        </div>
+                        <div class="friend-skel">
+                            <div class="friend-skel-avatar"></div>
+                            <div class="friend-skel-text">
+                                <div class="friend-skel-line"></div>
+                                <div class="friend-skel-line short"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Empty state -->
+                    <div class="friends-empty" id="friends-empty" style="display:none;">
+                        <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor"
+                            stroke-width="1" opacity="0.3">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                            <circle cx="9" cy="7" r="4" />
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                        </svg>
+                        <span class="friends-empty-title">No Friends Yet</span>
+                        <span class="friends-empty-desc">Find people to add as friends!</span>
+                    </div>
+                    <!-- Error state -->
+                    <div class="friends-error" id="friends-error" style="display:none;">
+                        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#FF4D9E" stroke-width="1.5">
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="12" y1="8" x2="12" y2="12" />
+                            <line x1="12" y1="16" x2="12.01" y2="16" />
+                        </svg>
+                        <span id="friends-error-msg">Failed to load friends</span>
+                        <button class="retry-btn" id="retry-friends">Retry</button>
+                    </div>
+                    <!-- Friends injected here -->
+                </div>
+            </div>
+
+            <!-- ═══ USER PANEL (shared) ═══ -->
+            <div class="user-panel">
+                <div class="user-avatar-wrap">
+                    <img class="user-avatar" id="user-avatar" src="https://i.pravatar.cc/80?img=47" alt="Your avatar"
+                        loading="lazy">
+                    <span class="user-status-dot online"></span>
+                </div>
+                <div class="user-info">
+                    <span class="user-name" id="user-name">User</span>
+                    <span class="user-tag" id="user-tag">#0001</span>
+                </div>
+                <div class="user-actions">
+                    <button class="ua-btn" aria-label="Mute" title="Mute">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                            <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                            <line x1="12" y1="19" x2="12" y2="23" />
+                            <line x1="8" y1="23" x2="16" y2="23" />
+                        </svg>
+                    </button>
+                    <button class="ua-btn" aria-label="Deafen" title="Deafen">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
+                            <path
+                                d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
+                        </svg>
+                    </button>
+                    <button class="ua-btn" aria-label="Settings" title="Settings">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="3" />
+                            <path
+                                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ═══════════ MAIN AREA ═══════════ -->
+        <main class="main">
+            <!-- ═══ HOME VIEW ═══ -->
+            <div class="home-view" id="home-view">
+                <!-- Top Bar -->
+                <header class="topbar">
+                    <div class="topbar-left">
+                        <div class="topbar-channel">
+                            <span class="topbar-hash">#</span>
+                            <span class="topbar-channel-name">general</span>
+                        </div>
+                        <div class="topbar-divider"></div>
+                        <span class="topbar-topic">Chat about anything!</span>
+                    </div>
+                    <div class="topbar-right">
+                        <div class="topbar-search">
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <circle cx="11" cy="11" r="8" />
+                                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                            </svg>
+                            <input type="text" placeholder="Search" aria-label="Search">
+                        </div>
+                        <button class="topbar-btn" id="topbar-notif-btn" aria-label="Notifications">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                            </svg>
+                            <span class="topbar-badge">5</span>
+                        </button>
+                        <button class="topbar-btn" aria-label="Members">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                                <circle cx="9" cy="7" r="4" />
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                            </svg>
+                        </button>
+                        <button class="topbar-btn" aria-label="Pinned">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path
+                                    d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+                            </svg>
+                        </button>
+                    </div>
+                </header>
+
+                <!-- Content Area -->
+                <div class="content" id="home-content">
+                    <!-- Welcome Banner -->
+                    <div class="welcome-banner">
+                        <div class="welcome-bg">
+                            <div class="welcome-orb wo-1"></div>
+                            <div class="welcome-orb wo-2"></div>
+                        </div>
+                        <div class="welcome-inner">
+                            <div class="welcome-icon">
+                                <svg viewBox="0 0 40 40" width="48" height="48">
+                                    <defs>
+                                        <linearGradient id="wlg" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stop-color="#6C63FF" />
+                                            <stop offset="100%" stop-color="#00E5FF" />
+                                        </linearGradient>
+                                    </defs>
+                                    <path d="M20 2 L35 10 L35 26 L20 38 L5 26 L5 10 Z" fill="url(#wlg)" opacity="0.9" />
+                                    <path d="M20 8 L28 13 L28 23 L20 28 L12 23 L12 13 Z" fill="#050816" opacity="0.5" />
+                                    <circle cx="20" cy="18" r="3.5" fill="white" opacity="0.9" />
+                                </svg>
+                            </div>
+                            <div class="welcome-text">
+                                <h1>Welcome to <span class="gradient">Hive</span></h1>
+                                <p>This is your home. Explore communities, chat with friends, and discover new things.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="section-label">Quick Actions</div>
+                    <div class="quick-actions">
+                        <button class="qa-card">
+                            <div class="qa-icon" style="--qi:#6C63FF">
+                                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <line x1="12" y1="5" x2="12" y2="19" />
+                                    <line x1="5" y1="12" x2="19" y2="12" />
+                                </svg>
+                            </div>
+                            <span>Create Community</span>
+                        </button>
+                        <button class="qa-card">
+                            <div class="qa-icon" style="--qi:#00E5FF">
+                                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <circle cx="11" cy="11" r="8" />
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                                </svg>
+                            </div>
+                            <span>Find Communities</span>
+                        </button>
+                        <button class="qa-card">
+                            <div class="qa-icon" style="--qi:#FF4D9E">
+                                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path
+                                        d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                                </svg>
+                            </div>
+                            <span>Add Friends</span>
+                        </button>
+                        <button class="qa-card">
+                            <div class="qa-icon" style="--qi:#7CFFB2">
+                                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                                </svg>
+                            </div>
+                            <span>Start DM</span>
+                        </button>
+                    </div>
+
+                    <!-- Continue Where You Left Off (populated by backend) -->
+                    <div class="section-label" id="continue-section-label" style="display:none;">Continue Where You Left
+                        Off</div>
+                    <div class="continue-grid" id="home-continue-grid">
+                        <!-- Populated dynamically if user has recent activity -->
+                    </div>
+
+                    <!-- User's Communities (populated by backend with real member + online counts) -->
+                    <div class="section-label">Your Communities</div>
+                    <div class="featured-grid" id="home-communities-grid">
+                        <!-- Populated by loadCommunities() with real data -->
+                    </div>
+                </div>
+            </div>
+            <!-- ═══ END HOME VIEW ═══ -->
+
+            <!-- ═══ CHAT VIEW ═══ -->
+            <div class="chat-view" id="chat-view" style="display:none;">
+                <!-- Chat Top Bar -->
+                <header class="chat-topbar">
+                    <div class="chat-topbar-left">
+                        <button class="chat-back-btn" id="chat-back-btn" aria-label="Back to home">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="15 18 9 12 15 6" />
+                            </svg>
+                        </button>
+                        <div class="chat-community-badge" id="chat-community-badge">
+                            <span class="chat-community-icon" id="chat-community-icon"></span>
+                            <span class="chat-community-name" id="chat-community-name"></span>
+                        </div>
+                        <div class="chat-topbar-divider"></div>
+                        <div class="chat-channel-info">
+                            <span class="chat-channel-hash">#</span>
+                            <span class="chat-channel-name" id="chat-channel-name">general</span>
+                        </div>
+                        <div class="chat-topbar-divider"></div>
+                        <span class="chat-topic" id="chat-topic">Chat about anything and everything</span>
+                    </div>
+                    <div class="chat-topbar-right">
+                        <button class="chat-topbar-btn" aria-label="Voice call" data-tip="Voice" data-color="#7CFFB2">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path
+                                    d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                            </svg>
+                        </button>
+                        <button class="chat-topbar-btn" aria-label="Video call" data-tip="Video" data-color="#00E5FF">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polygon points="23 7 16 12 23 17 23 7" />
+                                <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+                            </svg>
+                        </button>
+                        <button class="chat-topbar-btn" aria-label="Pinned messages" data-tip="Pins"
+                            data-color="#FFD93D">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path
+                                    d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+                            </svg>
+                        </button>
+                        <button class="chat-topbar-btn" aria-label="Search messages" data-tip="Search"
+                            data-color="#6C63FF">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <circle cx="11" cy="11" r="8" />
+                                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                            </svg>
+                        </button>
+                        <button class="chat-topbar-btn" aria-label="Invite members" data-tip="Invite"
+                            data-color="#FF4D9E">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                                <circle cx="8.5" cy="7" r="4" />
+                                <line x1="20" y1="8" x2="20" y2="14" />
+                                <line x1="23" y1="11" x2="17" y2="11" />
+                            </svg>
+                        </button>
+                        <button class="chat-topbar-btn active" id="toggle-members-btn" aria-label="Member list"
+                            data-tip="Members" data-color="#A7B0C0">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                                <circle cx="9" cy="7" r="4" />
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                            </svg>
+                        </button>
+                    </div>
+                </header>
+
+                <!-- Chat Body -->
+                <div class="chat-body">
+                    <!-- Messages Area -->
+                    <div class="chat-messages" id="chat-messages">
+                        <div class="chat-messages-inner" id="chat-messages-inner">
+                            <!-- Loading older messages skeleton -->
+                            <div class="loading-older" id="loading-older" style="display:none;">
+                                <div class="loading-older-spinner"></div>
+                                <span class="loading-older-text">Loading older messages...</span>
+                            </div>
+                            <!-- Messages injected by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Typing Indicator -->
+                    <div class="typing-indicator" id="typing-indicator" style="display:none;">
+                        <div class="typing-avatars" id="typing-avatars"></div>
+                        <div class="typing-content">
+                            <span class="typing-text" id="typing-text"></span>
+                            <div class="typing-dots">
+                                <span></span><span></span><span></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Reply Composer -->
+                    <div class="reply-composer" id="reply-composer" style="display:none;">
+                        <div class="reply-composer-inner">
+                            <div class="reply-composer-accent"></div>
+                            <div class="reply-composer-content">
+                                <span class="reply-composer-label">Replying to</span>
+                                <div class="reply-composer-target">
+                                    <img class="reply-composer-avatar" id="reply-composer-avatar" src="" alt=""
+                                        loading="lazy">
+                                    <span class="reply-composer-username" id="reply-composer-username"></span>
+                                    <span class="reply-composer-text" id="reply-composer-text"></span>
+                                </div>
+                            </div>
+                            <button class="reply-composer-close" id="reply-composer-close" aria-label="Cancel reply">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="18" y1="6" x2="6" y2="18" />
+                                    <line x1="6" y1="6" x2="18" y2="18" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Mute Banner -->
+                    <div class="mute-banner" id="mute-banner" style="display:none;">
+                        <div class="mute-banner-icon">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                                <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                                <line x1="12" y1="19" x2="12" y2="23" />
+                                <line x1="8" y1="23" x2="16" y2="23" />
+                            </svg>
+                        </div>
+                        <div class="mute-banner-content">
+                            <span class="mute-banner-title">You are temporarily muted by Hive Guardian</span>
+                            <span class="mute-banner-reason" id="mute-banner-reason"></span>
+                            <span class="mute-banner-timer" id="mute-banner-timer"></span>
+                        </div>
+                    </div>
+
+                    <!-- Message Composer -->
+                    <div class="chat-restricted-banner" id="chat-restricted-banner" style="display:none;">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                        </svg>
+                        <span id="chat-restricted-text">Only Contributor rank and above can chat here</span>
+                    </div>
+                    <div class="chat-composer" id="chat-composer">
+                        <!-- Hashtag Autocomplete Panel -->
+                        <div class="hashtag-panel" id="hashtag-panel" style="display:none;">
+                            <div class="hashtag-panel-header">
+                                <span class="hashtag-panel-title">Hashtags</span>
+                                <span class="hashtag-panel-hint">↑↓ Navigate · Enter Select · Esc Close</span>
+                            </div>
+                            <div class="hashtag-panel-list" id="hashtag-panel-list"></div>
+                        </div>
+                        <div class="composer-wrapper">
+                            <!-- Attachment Preview (inside composer) -->
+                            <div class="attach-preview" id="attach-preview" style="display:none;">
+                                <div class="attach-preview-inner" id="attach-preview-inner"></div>
+                                <button class="attach-preview-remove" id="attach-preview-remove"
+                                    aria-label="Remove attachment">
+                                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor"
+                                        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <line x1="18" y1="6" x2="6" y2="18" />
+                                        <line x1="6" y1="6" x2="18" y2="18" />
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="attach-menu-wrap">
+                                <button class="composer-btn attach-btn" id="attach-btn" aria-label="Attach file"
+                                    data-tip="Attach" data-color="#A7B0C0">
+                                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="12" cy="12" r="10" />
+                                        <line x1="12" y1="8" x2="12" y2="16" />
+                                        <line x1="8" y1="12" x2="16" y2="12" />
+                                    </svg>
+                                </button>
+                                <div class="attach-menu" id="attach-menu" style="display:none;">
+                                    <button class="attach-menu-item" data-type="image">
+                                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none"
+                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                                            <circle cx="8.5" cy="8.5" r="1.5" />
+                                            <polyline points="21 15 16 10 5 21" />
+                                        </svg>
+                                        <span>Image</span>
+                                    </button>
+                                    <button class="attach-menu-item" data-type="video">
+                                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none"
+                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <polygon points="23 7 16 12 23 17 23 7" />
+                                            <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+                                        </svg>
+                                        <span>Video</span>
+                                    </button>
+                                    <button class="attach-menu-item" data-type="audio">
+                                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none"
+                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <path d="M9 18V5l12-2v13" />
+                                            <circle cx="6" cy="18" r="3" />
+                                            <circle cx="18" cy="16" r="3" />
+                                        </svg>
+                                        <span>Audio</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <input type="file" id="attach-file-input" accept="image/*,video/*,audio/*" multiple
+                                style="display:none;">
+                            <div class="composer-input-wrap">
+                                <div class="composer-input" id="composer-input" contenteditable="true"
+                                    data-placeholder="Message #general" role="textbox" aria-label="Message input"></div>
+                            </div>
+                            <div class="composer-actions">
+                                <button class="composer-btn" aria-label="Emoji" data-tip="Emoji" data-color="#FFD93D">
+                                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="12" cy="12" r="10" />
+                                        <path d="M8 14s1.5 2 4 2 4-2 4-2" />
+                                        <line x1="9" y1="9" x2="9.01" y2="9" />
+                                        <line x1="15" y1="9" x2="15.01" y2="9" />
+                                    </svg>
+                                </button>
+                                <button class="composer-btn" aria-label="GIF" data-tip="GIF" data-color="#00E5FF">
+                                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="2" y="4" width="20" height="16" rx="3" /><text x="12" y="15"
+                                            text-anchor="middle" font-size="8" font-weight="700" fill="currentColor"
+                                            stroke="none" font-family="Inter,sans-serif">GIF</text>
+                                    </svg>
+                                </button>
+                                <button class="composer-btn" aria-label="Sticker" data-tip="Sticker"
+                                    data-color="#FF4D9E">
+                                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M15.5 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V8.5L15.5 3z" />
+                                        <polyline points="14 3 14 9 21 9" />
+                                    </svg>
+                                </button>
+                                <button class="composer-btn" aria-label="Mention" data-tip="Mention"
+                                    data-color="#6C63FF">
+                                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="12" cy="12" r="4" />
+                                        <path d="M16 8v5a3 3 0 006 0v-1a10 10 0 10-3.92 7.94" />
+                                    </svg>
+                                </button>
+                                <button class="composer-btn send-btn" id="send-btn" aria-label="Send message">
+                                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <line x1="22" y1="2" x2="11" y2="13" />
+                                        <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            <!-- ═══ END CHAT VIEW ═══ -->
+        </main>
+
+        <!-- ═══════════ RIGHT SIDEBAR ═══════════ -->
+        <aside class="right-sidebar" aria-label="Activity">
+            <!-- ═══ HOME VIEW SIDEBAR ═══ -->
+            <div class="home-sidebar" id="home-sidebar">
+                <!-- Friends Online (populated by backend) -->
+                <div class="rs-section">
+                    <div class="rs-header">
+                        <h3>ONLINE — <span id="home-online-num">0</span></h3>
+                        <button class="rs-search" aria-label="Search friends">
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <circle cx="11" cy="11" r="8" />
+                                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="friend-list" id="home-online-list">
+                        <!-- Populated by loadHomePresence() -->
+                    </div>
+                </div>
+
+                <!-- Offline (populated by backend) -->
+                <div class="rs-section">
+                    <div class="rs-header">
+                        <h3>OFFLINE — <span id="home-offline-num">0</span></h3>
+                    </div>
+                    <div class="friend-list" id="home-offline-list">
+                        <!-- Populated by loadHomePresence() -->
+                    </div>
+                </div>
+
+                <!-- Hive Nitro Promo -->
+                <div class="rs-section">
+                    <div class="nitro-promo">
+                        <div class="nitro-icon">
+                            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor"
+                                stroke-width="1.5">
+                                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                            </svg>
+                        </div>
+                        <div class="nitro-text">
+                            <span class="nitro-title">Hive Premium</span>
+                            <span class="nitro-desc">Unlock exclusive perks and boost your profile.</span>
+                        </div>
+                        <button class="nitro-btn">Upgrade</button>
+                    </div>
+                </div>
+            </div>
+            <!-- ═══ END HOME VIEW SIDEBAR ═══ -->
+
+            <!-- ═══ CHAT VIEW SIDEBAR ═══ -->
+            <div class="chat-sidebar" id="chat-sidebar" style="display:none;">
+                <!-- Community Info -->
+                <div class="cs-section cs-community-info">
+                    <div class="cs-community-header">
+                        <span class="cs-community-icon" id="cs-community-icon"></span>
+                        <div class="cs-community-meta">
+                            <span class="cs-community-name" id="cs-community-name"></span>
+                            <span class="cs-community-desc" id="cs-community-desc"></span>
+                        </div>
+                    </div>
+                    <div class="cs-community-stats">
+                        <div class="cs-stat">
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                                <circle cx="9" cy="7" r="4" />
+                            </svg>
+                            <span id="cs-member-count">0 members</span>
+                        </div>
+                        <div class="cs-stat">
+                            <span class="cs-online-dot"></span>
+                            <span id="cs-online-count">0 online</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Online Members -->
+                <div class="cs-section cs-presence-section">
+                    <div class="cs-header">
+                        <h3>ONLINE — <span id="cs-online-num">0</span></h3>
+                    </div>
+                    <div class="cs-member-list" id="cs-online-list"></div>
+                </div>
+
+                <!-- Offline Members -->
+                <div class="cs-section cs-presence-section">
+                    <div class="cs-header">
+                        <h3>OFFLINE — <span id="cs-offline-num">0</span></h3>
+                    </div>
+                    <div class="cs-member-list" id="cs-offline-list"></div>
+                </div>
+
+                <!-- Moderators -->
+                <div class="cs-section">
+                    <div class="cs-header">
+                        <h3>Moderators</h3>
+                    </div>
+                    <div class="cs-member-list" id="cs-mod-list"></div>
+                </div>
+
+                <!-- Pinned Messages -->
+                <div class="cs-section">
+                    <div class="cs-header">
+                        <h3>Pinned</h3>
+                    </div>
+                    <div class="cs-pinned-list" id="cs-pinned-list"></div>
+                </div>
+            </div>
+            <!-- ═══ END CHAT VIEW SIDEBAR ═══ -->
+        </aside>
+
+        <!-- ═══════════ PROFILE PANEL (right-side) ═══════════ -->
+        <aside class="rpanel" id="rpanel" style="display:none;">
+            <button class="rpanel-collapse-handle" id="rpanel-collapse-handle" aria-label="Expand profile panel" title="Expand">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="9 18 15 12 9 6" />
+                </svg>
+            </button>
+            <!-- Profile View -->
+            <div class="rpanel-view" id="rpanel-profile" style="display:none;">
+                <div class="rpanel-toolbar">
+                    <button class="rpanel-back" id="rpanel-back" aria-label="Close profile">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="15 18 9 12 15 6" />
+                        </svg>
+                    </button>
+                    <span class="rpanel-title">Profile</span>
+                    <div class="rpanel-toolbar-actions">
+                        <button class="rpanel-toolbar-btn" data-action="copy-id" title="Copy ID">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                            </svg>
+                        </button>
+                        <button class="rpanel-toolbar-btn" data-action="share" title="Share Profile">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="18" cy="5" r="3" />
+                                <circle cx="6" cy="12" r="3" />
+                                <circle cx="18" cy="19" r="3" />
+                                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                            </svg>
+                        </button>
+                        <button class="rpanel-toolbar-btn primary" id="rpanel-edit-btn" title="Edit Profile">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="rpanel-scroll">
+                    <!-- Banner -->
+                    <div class="rpanel-banner" id="rpanel-banner">
+                        <div class="rpanel-banner-orb rpbo-1"></div>
+                        <div class="rpanel-banner-orb rpbo-2"></div>
+                        <div class="rpanel-banner-orb rpbo-3"></div>
+                        <div class="rpanel-banner-shimmer"></div>
+                    </div>
+
+                    <!-- Hero / Identity -->
+                    <div class="rpanel-hero">
+                        <div class="rpanel-avatar-wrap" id="rpanel-avatar-wrap">
+                            <div class="rpanel-avatar-ring">
+                                <img class="rpanel-avatar" id="rpanel-avatar" src="" alt="Profile picture">
+                            </div>
+                            <div class="rpanel-status-dot online" id="rpanel-status-dot"></div>
+                        </div>
+                        <div class="rpanel-hero-identity">
+                            <div class="rpanel-name-row">
+                                <span class="rpanel-username" id="rpanel-username"></span>
+                                <span class="rpanel-badges" id="rpanel-badges"></span>
+                            </div>
+                            <span class="rpanel-displayname" id="rpanel-displayname"></span>
+                            <span class="rpanel-meta-item" id="rpanel-member-since">
+                                <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                                    <line x1="16" y1="2" x2="16" y2="6" />
+                                    <line x1="8" y1="2" x2="8" y2="6" />
+                                    <line x1="3" y1="10" x2="21" y2="10" />
+                                </svg>
+                                <span></span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- About / Bio Card -->
+                    <div class="rp-card rp-card-about rp-entrance" data-delay="0">
+                        <div class="rp-card-h">
+                            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <circle cx="12" cy="12" r="10" />
+                                <line x1="12" y1="16" x2="12" y2="12" />
+                                <line x1="12" y1="8" x2="12.01" y2="8" />
+                            </svg>
+                            <span>About</span>
+                        </div>
+                        <div class="rp-card-b">
+                            <div class="rp-about-bio" id="rp-if-bio">No bio yet.</div>
+                            <div class="rp-about-fields">
+                                <div class="rp-field"><span class="rp-fl">Rank</span><span class="rp-fv"
+                                        id="rp-if-rank"></span></div>
+                                <div class="rp-field"><span class="rp-fl">Joined</span><span class="rp-fv"
+                                        id="rp-if-joined"></span></div>
+                                <div class="rp-field"><span class="rp-fl">Display Name</span><span class="rp-fv"
+                                        id="rp-if-display-name"></span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Stats Card -->
+                    <div class="rp-card rp-card-stats rp-entrance" data-delay="1">
+                        <div class="rp-card-h">
+                            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                            </svg>
+                            <span>Statistics</span>
+                        </div>
+                        <div class="rp-card-b">
+                            <div class="rp-stats-grid">
+                                <div class="rp-stat-tile" style="--st:#6C63FF">
+                                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                                    </svg>
+                                    <span class="rp-stat-v" data-count="1247">0</span>
+                                    <span class="rp-stat-l">Messages</span>
+                                </div>
+                                <div class="rp-stat-tile" style="--st:#00E5FF">
+                                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                                        <circle cx="9" cy="7" r="4" />
+                                        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                                        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                                    </svg>
+                                    <span class="rp-stat-v" data-count="4">0</span>
+                                    <span class="rp-stat-l">Communities</span>
+                                </div>
+                                <div class="rp-stat-tile" style="--st:#FF4D9E">
+                                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <path
+                                            d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                                    </svg>
+                                    <span class="rp-stat-v" data-count="89">0</span>
+                                    <span class="rp-stat-l">Reactions</span>
+                                </div>
+                                <div class="rp-stat-tile" style="--st:#7CFFB2">
+                                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <polyline points="17 1 21 5 17 9" />
+                                        <path d="M3 11V9a4 4 0 0 1 4-4h14" />
+                                    </svg>
+                                    <span class="rp-stat-v" data-count="34">0</span>
+                                    <span class="rp-stat-l">Replies</span>
+                                </div>
+                                <div class="rp-stat-tile" style="--st:#FFB347">
+                                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                                        <line x1="16" y1="2" x2="16" y2="6" />
+                                        <line x1="8" y1="2" x2="8" y2="6" />
+                                        <line x1="3" y1="10" x2="21" y2="10" />
+                                    </svg>
+                                    <span class="rp-stat-v" data-count="12">0</span>
+                                    <span class="rp-stat-l">Active Days</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Level Card -->
+                    <div class="rp-card rp-card-level rp-entrance" data-delay="2">
+                        <div class="rp-card-b">
+                            <div class="rp-level-row">
+                                <div class="rp-level-badge">12</div>
+                                <div class="rp-level-info">
+                                    <div class="rp-level-top">
+                                        <span class="rp-level-n">Level 12</span>
+                                        <span class="rp-level-xp">8,420 / 10,000 XP</span>
+                                    </div>
+                                    <div class="rp-level-bar">
+                                        <div class="rp-level-fill" style="width:84%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions Card -->
+                    <div class="rp-card rp-card-actions rp-entrance" data-delay="3">
+                        <div class="rp-card-h">
+                            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                            </svg>
+                            <span>Actions</span>
+                        </div>
+                        <div class="rp-card-b">
+                            <div class="rp-actions-grid">
+                                <button class="rp-action" id="rp-action-edit" data-action="edit">
+                                    <div class="rp-action-icon" style="--ac:#6C63FF">
+                                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none"
+                                            stroke="currentColor" stroke-width="2">
+                                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                                        </svg>
+                                    </div>
+                                    <span>Edit</span>
+                                </button>
+                                <button class="rp-action" data-action="share">
+                                    <div class="rp-action-icon" style="--ac:#00E5FF">
+                                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none"
+                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <circle cx="18" cy="5" r="3" />
+                                            <circle cx="6" cy="12" r="3" />
+                                            <circle cx="18" cy="19" r="3" />
+                                            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                                            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                                        </svg>
+                                    </div>
+                                    <span>Share</span>
+                                </button>
+                                <button class="rp-action" data-action="copy-id">
+                                    <div class="rp-action-icon" style="--ac:#FF4D9E">
+                                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none"
+                                            stroke="currentColor" stroke-width="2">
+                                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                                        </svg>
+                                    </div>
+                                    <span>Copy ID</span>
+                                </button>
+                                <button class="rp-action" data-action="settings">
+                                    <div class="rp-action-icon" style="--ac:#7CFFB2">
+                                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none"
+                                            stroke="currentColor" stroke-width="2">
+                                            <circle cx="12" cy="12" r="3" />
+                                            <path
+                                                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                                        </svg>
+                                    </div>
+                                    <span>Settings</span>
+                                </button>
+                                <button class="rp-action" data-action="privacy">
+                                    <div class="rp-action-icon" style="--ac:#FFB347">
+                                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none"
+                                            stroke="currentColor" stroke-width="2">
+                                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                                            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                                        </svg>
+                                    </div>
+                                    <span>Privacy</span>
+                                </button>
+                                <button class="rp-action" data-action="appearance">
+                                    <div class="rp-action-icon" style="--ac:#A780FF">
+                                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none"
+                                            stroke="currentColor" stroke-width="2">
+                                            <circle cx="12" cy="12" r="5" />
+                                            <line x1="12" y1="1" x2="12" y2="3" />
+                                            <line x1="12" y1="21" x2="12" y2="23" />
+                                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                                            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                                            <line x1="1" y1="12" x2="3" y2="12" />
+                                            <line x1="21" y1="12" x2="23" y2="12" />
+                                            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                                            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                                        </svg>
+                                    </div>
+                                    <span>Appearance</span>
+                                </button>
+                                <button class="rp-action" data-action="notifications">
+                                    <div class="rp-action-icon" style="--ac:#FFB347">
+                                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none"
+                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                                            <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                                        </svg>
+                                    </div>
+                                    <span>Notifications</span>
+                                </button>
+                                <button class="rp-action" data-action="media">
+                                    <div class="rp-action-icon" style="--ac:#FF4D9E">
+                                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none"
+                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18" />
+                                            <line x1="7" y1="2" x2="7" y2="22" />
+                                            <line x1="17" y1="2" x2="17" y2="22" />
+                                            <line x1="2" y1="12" x2="22" y2="12" />
+                                            <line x1="2" y1="7" x2="7" y2="7" />
+                                            <line x1="2" y1="17" x2="7" y2="17" />
+                                            <line x1="17" y1="7" x2="22" y2="7" />
+                                            <line x1="17" y1="17" x2="22" y2="17" />
+                                        </svg>
+                                    </div>
+                                    <span>Media</span>
+                                </button>
+                                <button class="rp-action" data-action="premium">
+                                    <div class="rp-action-icon" style="--ac:#7CFFB2">
+                                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none"
+                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <polygon
+                                                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                        </svg>
+                                    </div>
+                                    <span>Premium</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Achievements Card -->
+                    <div class="rp-card rp-card-ach rp-entrance" data-delay="4">
+                        <div class="rp-card-h">
+                            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <polygon
+                                    points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                            </svg>
+                            <span>Achievements</span>
+                        </div>
+                        <div class="rp-card-b">
+                            <div class="rp-achievements">
+                                <div class="rp-ach unlocked">
+                                    <div class="rp-ach-i" style="--ai:#6C63FF"><svg viewBox="0 0 24 24" width="18"
+                                            height="18" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                                        </svg></div><span class="rp-ach-n">First Steps</span>
+                                </div>
+                                <div class="rp-ach unlocked">
+                                    <div class="rp-ach-i" style="--ai:#00E5FF"><svg viewBox="0 0 24 24" width="18"
+                                            height="18" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                                        </svg></div><span class="rp-ach-n">Chatterbox</span>
+                                </div>
+                                <div class="rp-ach unlocked">
+                                    <div class="rp-ach-i" style="--ai:#FF4D9E"><svg viewBox="0 0 24 24" width="18"
+                                            height="18" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path
+                                                d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                                        </svg></div><span class="rp-ach-n">Popular</span>
+                                </div>
+                                <div class="rp-ach unlocked">
+                                    <div class="rp-ach-i" style="--ai:#7CFFB2"><svg viewBox="0 0 24 24" width="18"
+                                            height="18" fill="none" stroke="currentColor" stroke-width="2">
+                                            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                                        </svg></div><span class="rp-ach-n">On Fire</span>
+                                </div>
+                                <div class="rp-ach">
+                                    <div class="rp-ach-i locked"><svg viewBox="0 0 24 24" width="18" height="18"
+                                            fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                                            <path d="M2 17l10 5 10-5" />
+                                            <path d="M2 12l10 5 10-5" />
+                                        </svg></div><span class="rp-ach-n">Influencer</span>
+                                </div>
+                                <div class="rp-ach">
+                                    <div class="rp-ach-i locked"><svg viewBox="0 0 24 24" width="18" height="18"
+                                            fill="none" stroke="currentColor" stroke-width="2">
+                                            <circle cx="12" cy="12" r="10" />
+                                            <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
+                                        </svg></div><span class="rp-ach-n">Veteran</span>
+                                </div>
+                                <div class="rp-ach">
+                                    <div class="rp-ach-i locked"><svg viewBox="0 0 24 24" width="18" height="18"
+                                            fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                                            <polyline points="9 12 11 14 15 10" />
+                                        </svg></div><span class="rp-ach-n">Guardian</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Community Info Card -->
+                    <div class="rp-card rp-card-community rp-entrance" data-delay="5">
+                        <div class="rp-card-h">
+                            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                                <circle cx="12" cy="10" r="3" />
+                            </svg>
+                            <span>Community</span>
+                        </div>
+                        <div class="rp-card-b">
+                            <div class="rp-community-info">
+                                <div class="rp-community-icon" id="rp-community-icon">
+                                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                                        <circle cx="9" cy="7" r="4" />
+                                    </svg>
+                                </div>
+                                <div class="rp-community-meta">
+                                    <span class="rp-community-name" id="rp-community-name">Hive</span>
+                                    <span class="rp-community-desc">Home of the Hive community</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Edit Profile View -->
+            <div class="rpanel-view" id="rpanel-edit" style="display:none;">
+                <div class="rpanel-toolbar">
+                    <button class="rpanel-back" id="rpanel-edit-back" aria-label="Back to profile">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="15 18 9 12 15 6" />
+                        </svg>
+                    </button>
+                    <span class="rpanel-title">Edit Profile</span>
+                    <button class="rpanel-save-btn" id="rpanel-save-btn" disabled>
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                        Save
+                    </button>
+                </div>
+
+                <div class="rpanel-scroll">
+                    <!-- Live Preview -->
+                    <div class="rp-edit-preview rp-entrance" data-delay="0">
+                        <div class="rp-edit-preview-banner" id="rpanel-preview-banner">
+                            <div class="rp-edit-preview-orb rpbo-1"></div>
+                            <div class="rp-edit-preview-orb rpbo-2"></div>
+                        </div>
+                        <div class="rp-edit-preview-hero">
+                            <div class="rp-edit-preview-avatar-ring" id="rpanel-preview-avatar-ring">
+                                <img class="rp-edit-preview-avatar" id="rpanel-preview-avatar" src="" alt="Preview">
+                            </div>
+                            <div class="rp-edit-preview-status online"></div>
+                        </div>
+                        <div class="rp-edit-preview-identity">
+                            <span class="rp-edit-preview-username" id="rpanel-preview-username"></span>
+                            <span class="rp-edit-preview-displayname" id="rpanel-preview-displayname"></span>
+                            <span class="rp-edit-preview-bio" id="rpanel-preview-bio">This is my Hive bio.</span>
+                        </div>
+                    </div>
+
+                    <!-- Avatar Card -->
+                    <div class="rp-card rp-edit-card rp-entrance" data-delay="1">
+                        <div class="rp-card-h">
+                            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                <circle cx="12" cy="7" r="4" />
+                            </svg>
+                            <span>Profile Picture</span>
+                        </div>
+                        <div class="rp-card-b">
+                            <div class="rp-edit-avatar-area">
+                                <div class="rp-edit-avatar-upload" id="rpanel-avatar-upload">
+                                    <img class="rp-edit-avatar-preview" id="rpanel-avatar-upload-preview" src=""
+                                        alt="Avatar">
+                                    <div class="rp-edit-avatar-overlay">
+                                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
+                                            stroke="currentColor" stroke-width="2">
+                                            <path
+                                                d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                                            <circle cx="12" cy="13" r="4" />
+                                        </svg>
+                                        <span>Upload</span>
+                                    </div>
+                                    <input type="file" accept="image/*" id="rpanel-avatar-input" style="display:none">
+                                </div>
+                                <div class="rp-edit-avatar-info">
+                                    <span class="rp-edit-avatar-hint">Click or drag to upload</span>
+                                    <span class="rp-edit-avatar-spec">512x512 recommended</span>
+                                    <button class="rp-edit-remove-btn" id="rpanel-avatar-remove">
+                                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none"
+                                            stroke="currentColor" stroke-width="2">
+                                            <line x1="18" y1="6" x2="6" y2="18" />
+                                            <line x1="6" y1="6" x2="18" y2="18" />
+                                        </svg>
+                                        Remove
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cover Card -->
+                    <div class="rp-card rp-edit-card rp-entrance" data-delay="2">
+                        <div class="rp-card-h">
+                            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                                <circle cx="8.5" cy="8.5" r="1.5" />
+                                <polyline points="21 15 16 10 5 21" />
+                            </svg>
+                            <span>Cover Image</span>
+                        </div>
+                        <div class="rp-card-b">
+                            <div class="rp-edit-cover-upload" id="rpanel-cover-upload">
+                                <div class="rp-edit-cover-preview" id="rpanel-cover-preview"></div>
+                                <div class="rp-edit-cover-placeholder" id="rpanel-cover-placeholder">
+                                    <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor"
+                                        stroke-width="1.5">
+                                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                                        <circle cx="8.5" cy="8.5" r="1.5" />
+                                        <polyline points="21 15 16 10 5 21" />
+                                    </svg>
+                                    <span>Upload Cover Image</span>
+                                    <span class="rp-edit-cover-spec">1200x400 recommended</span>
+                                </div>
+                                <div class="rp-edit-cover-overlay">
+                                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <path
+                                            d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                                        <circle cx="12" cy="13" r="4" />
+                                    </svg>
+                                    <span>Change Cover</span>
+                                </div>
+                                <input type="file" accept="image/*" id="rpanel-cover-input" style="display:none">
+                            </div>
+                            <button class="rp-edit-remove-btn" id="rpanel-cover-remove" style="display:none;">
+                                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <line x1="18" y1="6" x2="6" y2="18" />
+                                    <line x1="6" y1="6" x2="18" y2="18" />
+                                </svg>
+                                Remove Cover
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- About Me Card -->
+                    <div class="rp-card rp-edit-card rp-entrance" data-delay="3">
+                        <div class="rp-card-h">
+                            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                <circle cx="12" cy="7" r="4" />
+                            </svg>
+                            <span>About Me</span>
+                        </div>
+                        <div class="rp-card-b">
+                            <div class="rp-bio-section">
+                                <div class="rp-bio-label">Tell the Hive a little about yourself.</div>
+                                <div class="rp-bio-input-wrap">
+                                    <textarea class="rp-bio-input" id="rpanel-bio-input"
+                                        placeholder="Tell everyone about yourself...&#10;&#10;Your hobbies, interests, favorite games, music, or anything you'd like people to know."
+                                        maxlength="250" spellcheck="true" rows="1"></textarea>
+                                    <div class="rp-bio-focus-ring"></div>
+                                </div>
+                                <div class="rp-bio-footer">
+                                    <div class="rp-bio-tip">Express yourself — this is your space</div>
+                                    <div class="rp-bio-counter" id="rpanel-bio-counter">0 / 250</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tips Card -->
+                    <div class="rp-card rp-edit-card rp-entrance" data-delay="4">
+                        <div class="rp-card-h">
+                            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <circle cx="12" cy="12" r="10" />
+                                <line x1="12" y1="16" x2="12" y2="12" />
+                                <line x1="12" y1="8" x2="12.01" y2="8" />
+                            </svg>
+                            <span>Tips</span>
+                        </div>
+                        <div class="rp-card-b">
+                            <div class="rp-edit-tips">
+                                <div class="rp-edit-tip">
+                                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <polyline points="20 6 9 17 4 12" />
+                                    </svg>
+                                    <span>Images are compressed automatically</span>
+                                </div>
+                                <div class="rp-edit-tip">
+                                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <polyline points="20 6 9 17 4 12" />
+                                    </svg>
+                                    <span>Square images work best for avatars</span>
+                                </div>
+                                <div class="rp-edit-tip">
+                                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <polyline points="20 6 9 17 4 12" />
+                                    </svg>
+                                    <span>Drag and drop supported</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- End Edit Profile View -->
+
+            <!-- ═══ APPEARANCE VIEW ═══ -->
+            <div class="rpanel-view" id="rpanel-appearance" style="display:none;">
+                <div class="rpanel-toolbar">
+                    <button class="rpanel-back" id="rpanel-appearance-back" aria-label="Back to profile">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="15 18 9 12 15 6" />
+                        </svg>
+                    </button>
+                    <span class="rpanel-title">Appearance</span>
+                    <button class="rpanel-save-btn" id="rpanel-appearance-save-btn" disabled>
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                        Save
+                    </button>
+                </div>
+                <div class="rpanel-scroll">
+
+                    <!-- Tabs -->
+                    <div class="rp-tabs">
+                        <button class="rp-tab active" data-tab="colors">🎨 Colors</button>
+                        <button class="rp-tab" data-tab="fonts">🔤 Fonts</button>
+                        <button class="rp-tab" data-tab="rings">✨ Profile Rings</button>
+                        <button class="rp-tab" data-tab="effects">⚡ Profile Effects</button>
+                        <button class="rp-tab" data-tab="music">🎵 Profile Music</button>
+                    </div>
+
+                    <!-- ═══ COLORS TAB ═══ -->
+                    <div class="rp-tab-content active" id="rp-tab-colors">
+
+                        <!-- Live Preview -->
+                        <div class="rp-card rp-entrance" data-delay="0">
+                            <div class="rp-card-h">
+                                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                    <circle cx="12" cy="12" r="3" />
+                                </svg>
+                                <span>Live Preview</span>
+                            </div>
+                            <div class="rp-card-b">
+                                <div class="rpanel-appearance-preview" id="appearance-preview">
+                                    <div class="chat-message" id="preview-message">
+                                        <div class="msg-avatar-wrap" id="preview-avatar-wrap">
+                                            <img class="msg-avatar" id="preview-avatar" src="" alt="Preview" loading="lazy">
+                                        </div>
+                                        <div class="msg-body">
+                                            <div class="msg-header">
+                                                <span class="msg-username" id="preview-username">User</span>
+                                                <span class="rpanel-appearance-preview-badge">★</span>
+                                                <span class="msg-timestamp" id="preview-time">Now</span>
+                                            </div>
+                                            <div class="msg-content" id="preview-content">Hey everyone! This is how your messages will look :)</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Chat Text Color -->
+                        <div class="rp-card rp-entrance" data-delay="1">
+                            <div class="rp-card-h">
+                                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                                </svg>
+                                <span>Chat Text Color</span>
+                            </div>
+                            <div class="rp-card-b">
+                                <div class="rpanel-appearance-desc">Choose the color of your chat text.</div>
+                                <div class="rpanel-appearance-picker" id="text-color-picker">
+                                    <div class="rpanel-appearance-current" id="text-current-swatch"></div>
+                                    <input type="color" id="text-color-input"
+                                        class="rpanel-appearance-hidden-input" value="#6C63FF">
+                                    <button class="rpanel-appearance-custom-btn" id="text-custom-btn">
+                                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none"
+                                            stroke="currentColor" stroke-width="2">
+                                            <circle cx="12" cy="12" r="10" />
+                                            <path d="M12 16v-4M12 8h.01" />
+                                        </svg>
+                                        Custom
+                                    </button>
+                                </div>
+                                <div class="rpanel-appearance-swatches" id="text-swatches"></div>
+                            </div>
+                        </div>
+
+                        <!-- Username Color -->
+                        <div class="rp-card rp-entrance" data-delay="2">
+                            <div class="rp-card-h">
+                                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                                </svg>
+                                <span>Username Color</span>
+                            </div>
+                            <div class="rp-card-b">
+                                <div class="rpanel-appearance-desc">Customize your username color, or keep your rank's default color.</div>
+                                <div class="rpanel-appearance-picker" id="username-color-picker">
+                                    <div class="rpanel-appearance-current" id="username-current-swatch"></div>
+                                    <input type="color" id="username-color-input"
+                                        class="rpanel-appearance-hidden-input" value="#FFFFFF">
+                                    <button class="rpanel-appearance-custom-btn" id="username-custom-btn">
+                                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none"
+                                            stroke="currentColor" stroke-width="2">
+                                            <circle cx="12" cy="12" r="10" />
+                                            <path d="M12 16v-4M12 8h.01" />
+                                        </svg>
+                                        Custom
+                                    </button>
+                                    <button class="rpanel-appearance-reset-btn" id="username-reset-btn" style="display:none">
+                                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none"
+                                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="1 4 1 10 7 10" />
+                                            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+                                        </svg>
+                                        Reset to Rank Color
+                                    </button>
+                                </div>
+                                <div class="rpanel-appearance-swatches" id="username-swatches"></div>
+                            </div>
+                        </div>
+
+                    </div>
+                    <!-- ═══ END COLORS TAB ═══ -->
+
+                    <!-- ═══ FONTS TAB ═══ -->
+                    <div class="rp-tab-content" id="rp-tab-fonts">
+
+                        <!-- Profile Font -->
+                        <div class="rp-card rp-entrance" data-delay="3">
+                            <div class="rp-card-h">
+                                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M4 7V4h16v3" />
+                                    <path d="M9 20h6" />
+                                    <path d="M12 4v16" />
+                                </svg>
+                                <span>🔤 Profile Font</span>
+                            </div>
+                            <div class="rp-card-b">
+                                <div class="rpanel-appearance-desc">Choose the font used for your username and profile throughout Hive.</div>
+                                <div class="rp-font-grid" id="profile-font-grid"></div>
+                                <button class="rp-font-show-more" id="show-more-fonts-btn">Search Fonts</button>
+                            </div>
+                        </div>
+
+                        <!-- Chat Text Font -->
+                        <div class="rp-card rp-entrance" data-delay="3">
+                            <div class="rp-card-h">
+                                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                                </svg>
+                                <span>🔤 Chat Text Font</span>
+                            </div>
+                            <div class="rp-card-b">
+                                <div class="rpanel-appearance-desc">Choose the font used for the text of your messages in chat.</div>
+                                <div class="rp-font-grid" id="chat-text-font-grid"></div>
+                                <button class="rp-font-show-more" id="chat-text-font-show-more">Search Fonts</button>
+                            </div>
+                        </div>
+
+                    </div>
+                    <!-- ═══ END FONTS TAB ═══ -->
+
+                    <!-- ═══ PROFILE RINGS TAB ═══ -->
+                    <div class="rp-tab-content" id="rp-tab-rings">
+
+                        <div class="rp-card rp-entrance" data-delay="4">
+                            <div class="rp-card-h">
+                                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <circle cx="12" cy="12" r="10" />
+                                    <circle cx="12" cy="12" r="6" />
+                                </svg>
+                                <span>Profile Ring / Frame</span>
+                            </div>
+                            <div class="rp-card-b">
+                                <div class="rpanel-appearance-desc">Choose a unique frame that appears around your profile picture throughout Hive.</div>
+                                <div class="rp-ring-grid" id="profile-ring-grid"></div>
+                                <button class="rp-ring-show-more" id="ring-view-more">
+                                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                                    Browse All Rings
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+                    <!-- ═══ END PROFILE RINGS TAB ═══ -->
+
+                    <!-- ═══ PROFILE EFFECTS TAB ═══ -->
+                    <div class="rp-tab-content" id="rp-tab-effects">
+
+                        <div class="rp-card rp-entrance" data-delay="5">
+                            <div class="rp-card-h">
+                                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                                </svg>
+                                <span>Profile Effects</span>
+                            </div>
+                            <div class="rp-card-b">
+                                <div class="rpanel-appearance-desc">Choose a visual effect that appears on your profile avatar throughout Hive.</div>
+                                <div class="rp-effect-grid" id="profile-effect-grid"></div>
+                                <button class="rp-effect-show-more" id="effect-view-more">
+                                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                                    Browse All Effects
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+                    <!-- ═══ END PROFILE EFFECTS TAB ═══ -->
+
+                    <!-- ═══ PROFILE MUSIC TAB ═══ -->
+                    <div class="rp-tab-content" id="rp-tab-music">
+
+                        <div class="rp-card rp-entrance" data-delay="6">
+                            <div class="rp-card-h">
+                                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M9 18V5l12-2v13" />
+                                    <circle cx="6" cy="18" r="3" />
+                                    <circle cx="18" cy="16" r="3" />
+                                </svg>
+                                <span>Profile Music</span>
+                            </div>
+                            <div class="rp-card-b">
+                                <div class="rpanel-appearance-desc">Add a song that plays when someone opens your profile. Paste a direct audio URL (mp3, ogg, wav, m4a...).</div>
+
+                                <div class="rp-music-preview" id="music-preview">
+                                    <div class="rp-music-preview-icon">
+                                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M9 18V5l12-2v13" />
+                                            <circle cx="6" cy="18" r="3" />
+                                            <circle cx="18" cy="16" r="3" />
+                                        </svg>
+                                    </div>
+                                    <div class="rp-music-preview-info">
+                                        <span class="rp-music-preview-title" id="music-preview-title">No music set</span>
+                                        <span class="rp-music-preview-artist" id="music-preview-artist">Add a track to personalize your profile</span>
+                                    </div>
+                                    <button class="rp-music-play-btn" id="music-preview-play" aria-label="Preview music">
+                                        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" stroke="none"><polygon points="6 3 20 12 6 21 6 3"/></svg>
+                                    </button>
+                                    <audio id="music-preview-audio" preload="none"></audio>
+                                </div>
+
+                                <div class="rp-music-field">
+                                    <label class="rp-music-label">Audio URL</label>
+                                    <input type="url" class="rp-music-input" id="music-url-input" placeholder="https://.../song.mp3" autocomplete="off" spellcheck="false">
+                                </div>
+
+                                <div class="rp-music-upload">
+                                    <button type="button" class="rp-music-upload-btn" id="music-upload-btn">
+                                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                            <polyline points="17 8 12 3 7 8" />
+                                            <line x1="12" y1="3" x2="12" y2="15" />
+                                        </svg>
+                                        Upload Music
+                                    </button>
+                                    <span class="rp-music-upload-hint">or paste a URL above — MP3, OGG, WAV, M4A, AAC (max 25MB)</span>
+                                    <input type="file" id="music-file-input" accept="audio/*,.mp3,.ogg,.wav,.m4a,.aac,.webm" style="display:none;">
+                                </div>
+
+                                <div class="rp-music-upload-status" id="music-upload-status" style="display:none;">
+                                    <span class="rp-music-upload-spinner"></span>
+                                    <span id="music-upload-status-text">Uploading...</span>
+                                </div>
+
+                                <div class="rp-music-field">
+                                    <label class="rp-music-label">Title</label>
+                                    <input type="text" class="rp-music-input" id="music-title-input" placeholder="Song title" maxlength="100" autocomplete="off">
+                                </div>
+
+                                <div class="rp-music-field">
+                                    <label class="rp-music-label">Artist</label>
+                                    <input type="text" class="rp-music-input" id="music-artist-input" placeholder="Artist name" maxlength="100" autocomplete="off">
+                                </div>
+
+                                <button class="rp-music-remove" id="music-remove-btn" style="display:none;">
+                                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                                    </svg>
+                                    Remove Music
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+                    <!-- ═══ END PROFILE MUSIC TAB ═══ -->
+
+                </div>
+            </div>
+            <!-- ═══ END APPEARANCE VIEW ═══ -->
+
+        </aside>
+
+        <!-- ═══════════ NOTIFICATION POPUP ═══════════ -->
+        <div class="notif-overlay" id="notif-overlay" style="display:none;">
+            <div class="notif-popup" id="notif-popup" role="dialog" aria-modal="true"
+                aria-labelledby="notif-popup-title">
+                <div class="notif-popup-header">
+                    <div>
+                        <div class="notif-popup-subtitle">Notifications</div>
+                        <h2 class="notif-popup-title" id="notif-popup-title">Activity</h2>
+                    </div>
+                    <div class="notif-popup-actions">
+                        <button class="icon-btn" id="notif-mark-all" title="Mark all as read">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <polyline points="20 6 9 17 4 12" />
+                            </svg>
+                        </button>
+                        <button class="icon-btn notif-popup-close" id="notif-close" aria-label="Close notifications">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18" />
+                                <line x1="6" y1="6" x2="18" y2="18" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="notif-popup-body" id="notif-scroll">
+                    <!-- Skeleton -->
+                    <div class="notif-skeleton" id="notif-skeleton">
+                        <div class="notif-skel-item">
+                            <div class="notif-skel-avatar"></div>
+                            <div class="notif-skel-content">
+                                <div class="notif-skel-line w60"></div>
+                                <div class="notif-skel-line w80"></div>
+                                <div class="notif-skel-line w30"></div>
+                            </div>
+                        </div>
+                        <div class="notif-skel-item">
+                            <div class="notif-skel-avatar"></div>
+                            <div class="notif-skel-content">
+                                <div class="notif-skel-line w50"></div>
+                                <div class="notif-skel-line w70"></div>
+                                <div class="notif-skel-line w25"></div>
+                            </div>
+                        </div>
+                        <div class="notif-skel-item">
+                            <div class="notif-skel-avatar"></div>
+                            <div class="notif-skel-content">
+                                <div class="notif-skel-line w65"></div>
+                                <div class="notif-skel-line w90"></div>
+                                <div class="notif-skel-line w35"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notification list -->
+                    <div class="notif-list" id="notif-list"></div>
+
+                    <!-- Empty state -->
+                    <div class="notif-empty" id="notif-empty" style="display:none;">
+                        <div class="notif-empty-icon">
+                            <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor"
+                                stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                            </svg>
+                        </div>
+                        <h3 class="notif-empty-title">You're all caught up</h3>
+                        <p class="notif-empty-text">No notifications yet.</p>
+                    </div>
+
+                    <!-- Load more -->
+                    <div class="notif-load-more" id="notif-load-more" style="display:none;">
+                        <div class="notif-spinner"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- ═══════════ END NOTIFICATION POPUP ═══════════ -->
+    </div>
+    <!-- ═══════════ END PROFILE PANEL ═══════════ -->
+
+    <!-- Tooltip -->
+    <div class="tooltip" id="tooltip" role="tooltip"></div>
+
+    <!-- Emoji Picker (body-level to avoid overflow clipping) -->
+    <div class="emoji-picker" id="emoji-picker" style="display:none;">
+        <div class="emoji-picker-header">
+            <input type="text" class="emoji-search" id="emoji-search" placeholder="Search emojis..." autocomplete="off"
+                spellcheck="false">
+        </div>
+        <div class="emoji-category-tabs" id="emoji-category-tabs">
+            <button class="emoji-tab active" data-cat="recent" title="Recent">🕐</button>
+            <button class="emoji-tab" data-cat="faces" title="Faces">😀</button>
+            <button class="emoji-tab" data-cat="hands" title="Hands">👋</button>
+            <button class="emoji-tab" data-cat="nature" title="Nature">🌿</button>
+            <button class="emoji-tab" data-cat="objects" title="Objects">🍔</button>
+            <button class="emoji-tab" data-cat="symbols" title="Symbols">✨</button>
+        </div>
+        <div class="emoji-body" id="emoji-body">
+            <!-- Built dynamically by JS -->
+        </div>
+    </div>
+
+    <!-- ═══════════ USER PROFILE POPUP ═══════════ -->
+    <div class="up-overlay" id="up-overlay" style="display:none;">
+        <div class="user-popup" id="user-popup">
+            <!-- Banner -->
+            <div class="up-banner" id="up-banner">
+                <div class="up-banner-img" id="up-banner-img"></div>
+                <div class="up-banner-orb upbo-1"></div>
+                <div class="up-banner-orb upbo-2"></div>
+                <div class="up-banner-orb upbo-3"></div>
+                <div class="up-banner-orb upbo-4"></div>
+                <div class="up-banner-shimmer"></div>
+            </div>
+            <!-- Profile Music Player (top) -->
+            <div class="up-music" id="up-music" style="display:none;">
+                <div class="up-music-icon" id="up-music-icon">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 18V5l12-2v13" />
+                        <circle cx="6" cy="18" r="3" />
+                        <circle cx="18" cy="16" r="3" />
+                    </svg>
+                </div>
+                <div class="up-music-info">
+                    <span class="up-music-title" id="up-music-title">Now playing</span>
+                    <span class="up-music-artist" id="up-music-artist"></span>
+                </div>
+                <button class="up-music-toggle" id="up-music-toggle" aria-label="Play/pause profile music">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" stroke="none"><polygon points="6 3 20 12 6 21 6 3"/></svg>
+                </button>
+                <audio id="up-music-audio" preload="auto"></audio>
+            </div>
+            <!-- Header -->
+            <div class="up-header">
+                <div class="up-avatar-wrap" id="up-avatar-wrap">
+                    <div class="up-avatar-ring">
+                        <img class="up-avatar" id="up-avatar" src="" alt="">
+                    </div>
+                    <div class="up-status-dot online" id="up-status-dot"></div>
+                </div>
+                <div class="up-header-actions">
+                    <button class="up-action-btn up-primary-btn" id="up-msg-btn" data-tip="Send Message">
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                        </svg>
+                        Message
+                    </button>
+                    <button class="up-action-btn up-icon-btn" id="up-friend-btn" data-tip="Add Friend">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                            <circle cx="8.5" cy="7" r="4" />
+                            <line x1="20" y1="8" x2="20" y2="14" />
+                            <line x1="23" y1="11" x2="17" y2="11" />
+                        </svg>
+                    </button>
+                    <button class="up-action-btn up-icon-btn" id="up-more-btn" data-tip="More">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="1" />
+                            <circle cx="12" cy="5" r="1" />
+                            <circle cx="12" cy="19" r="1" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <!-- Scrollable Body -->
+            <div class="up-body">
+                <!-- Skeleton Loading State -->
+                <div class="up-skeleton" id="up-skeleton">
+                    <div class="up-skel-identity">
+                        <div class="up-skel-line skel-w40 skel-h20"></div>
+                        <div class="up-skel-line skel-w25 skel-h14"></div>
+                        <div class="up-skel-line skel-w60 skel-h12"></div>
+                    </div>
+                    <div class="up-skel-card">
+                        <div class="up-skel-line skel-w30 skel-h12"></div>
+                        <div class="up-skel-line skel-w100 skel-h10"></div>
+                        <div class="up-skel-line skel-w80 skel-h10"></div>
+                    </div>
+                    <div class="up-skel-card">
+                        <div class="up-skel-line skel-w30 skel-h12"></div>
+                        <div class="up-skel-stats">
+                            <div class="up-skel-stat"></div>
+                            <div class="up-skel-stat"></div>
+                            <div class="up-skel-stat"></div>
+                        </div>
+                    </div>
+                    <div class="up-skel-card">
+                        <div class="up-skel-line skel-w30 skel-h12"></div>
+                        <div class="up-skel-chips">
+                            <div class="up-skel-chip"></div>
+                            <div class="up-skel-chip"></div>
+                            <div class="up-skel-chip"></div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Profile Content (hidden until loaded) -->
+                <div class="up-content" id="up-content" style="display:none;">
+                    <!-- Identity -->
+                    <div class="up-identity" id="up-identity">
+                        <div class="up-username-row">
+                            <span class="up-username" id="up-username"></span>
+                            <span class="up-discrim" id="up-discrim"></span>
+                            <span class="up-badges-row" id="up-badges-row"></span>
+                        </div>
+                        <div class="up-display-row" id="up-display-row"></div>
+                        <div class="up-rank-row" id="up-rank-row"></div>
+                        <div class="up-meta-row">
+                            <span class="up-meta-item" id="up-joined">
+                                <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                                    <line x1="16" y1="2" x2="16" y2="6" />
+                                    <line x1="8" y1="2" x2="8" y2="6" />
+                                    <line x1="3" y1="10" x2="21" y2="10" />
+                                </svg>
+                                <span id="up-joined-text">Joined Jan 1, 2025</span>
+                            </span>
+                            <span class="up-meta-sep">&#183;</span>
+                            <span class="up-meta-item" id="up-localtime">
+                                <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10" />
+                                    <polyline points="12 6 12 12 16 14" />
+                                </svg>
+                                <span id="up-localtime-text">Local time</span>
+                            </span>
+                        </div>
+                    </div>
+                    <!-- Bio Card -->
+                    <div class="up-card rp-entrance" data-delay="0">
+                        <div class="up-card-h">
+                            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                <circle cx="12" cy="7" r="4" />
+                            </svg>
+                            About Me
+                        </div>
+                        <div class="up-card-b">
+                            <div class="up-bio" id="up-bio">This user hasn't written a bio yet.</div>
+                        </div>
+                    </div>
+                    <!-- Actions Card -->
+                    <div class="up-card rp-entrance" data-delay="1">
+                        <div class="up-card-h">
+                            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                            </svg>
+                            Actions
+                        </div>
+                        <div class="up-card-b">
+                            <div class="up-actions-grid">
+                                <button class="up-action-tile" data-ac="var(--primary)" data-tip="Mention">
+                                    <div class="up-action-tile-icon">
+                                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none"
+                                            stroke="currentColor" stroke-width="2">
+                                            <circle cx="12" cy="12" r="4" />
+                                            <path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-3.92 7.94" />
+                                        </svg>
+                                    </div>
+                                    <span>Mention</span>
+                                </button>
+                                <button class="up-action-tile" data-ac="var(--secondary)" data-tip="Reply">
+                                    <div class="up-action-tile-icon">
+                                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none"
+                                            stroke="currentColor" stroke-width="2">
+                                            <polyline points="9 17 4 12 9 7" />
+                                            <path d="M20 18v-2a4 4 0 0 0-4-4H4" />
+                                        </svg>
+                                    </div>
+                                    <span>Reply</span>
+                                </button>
+                                <button class="up-action-tile" data-ac="var(--accent)" data-tip="Share Profile">
+                                    <div class="up-action-tile-icon">
+                                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none"
+                                            stroke="currentColor" stroke-width="2">
+                                            <circle cx="18" cy="5" r="3" />
+                                            <circle cx="6" cy="12" r="3" />
+                                            <circle cx="18" cy="19" r="3" />
+                                            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                                            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                                        </svg>
+                                    </div>
+                                    <span>Share</span>
+                                </button>
+                                <button class="up-action-tile" data-ac="var(--green)" data-tip="Copy User ID">
+                                    <div class="up-action-tile-icon">
+                                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none"
+                                            stroke="currentColor" stroke-width="2">
+                                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                                        </svg>
+                                    </div>
+                                    <span>Copy ID</span>
+                                </button>
+                                <button class="up-action-tile" data-ac="var(--amber)" data-tip="Block User">
+                                    <div class="up-action-tile-icon">
+                                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none"
+                                            stroke="currentColor" stroke-width="2">
+                                            <circle cx="12" cy="12" r="10" />
+                                            <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+                                        </svg>
+                                    </div>
+                                    <span>Block</span>
+                                </button>
+                                <button class="up-action-tile" data-ac="var(--red)" data-tip="Report User">
+                                    <div class="up-action-tile-icon">
+                                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none"
+                                            stroke="currentColor" stroke-width="2">
+                                            <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
+                                            <line x1="4" y1="22" x2="4" y2="15" />
+                                        </svg>
+                                    </div>
+                                    <span>Report</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Profile Info Card -->
+                    <div class="up-card rp-entrance" data-delay="2">
+                        <div class="up-card-h">
+                            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <circle cx="12" cy="12" r="10" />
+                                <line x1="2" y1="12" x2="22" y2="12" />
+                                <path
+                                    d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                            </svg>
+                            Profile Information
+                        </div>
+                        <div class="up-card-b">
+                            <div class="up-info-grid">
+                                <div class="up-info-field"><span class="up-info-label">Country</span><span
+                                        class="up-info-value" id="up-country">Nigeria</span></div>
+                                <div class="up-info-field"><span class="up-info-label">Language</span><span
+                                        class="up-info-value" id="up-language">English</span></div>
+                                <div class="up-info-field"><span class="up-info-label">Joined Hive</span><span
+                                        class="up-info-value" id="up-joined-hive">Jan 2025</span></div>
+                                <div class="up-info-field"><span class="up-info-label">Member Since</span><span
+                                        class="up-info-value" id="up-since">42 days</span></div>
+                                <div class="up-info-field"><span class="up-info-label">Fav Community</span><span
+                                        class="up-info-value" id="up-fav-community">General</span></div>
+                                <div class="up-info-field"><span class="up-info-label">Status</span><span
+                                        class="up-info-value" id="up-status-text">Online</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Stats Card -->
+                    <div class="up-card rp-entrance" data-delay="3">
+                        <div class="up-card-h">
+                            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+                            </svg>
+                            Activity
+                        </div>
+                        <div class="up-card-b">
+                            <div class="up-stats-grid">
+                                <div class="up-stat-tile" style="--st:var(--primary)"><span class="up-stat-val"
+                                        data-stat="messages">0</span><span class="up-stat-lbl">Messages</span></div>
+                                <div class="up-stat-tile" style="--st:var(--secondary)"><span class="up-stat-val"
+                                        data-stat="replies">0</span><span class="up-stat-lbl">Replies</span></div>
+                                <div class="up-stat-tile" style="--st:var(--accent)"><span class="up-stat-val"
+                                        data-stat="reactions">0</span><span class="up-stat-lbl">Reactions</span></div>
+                                <div class="up-stat-tile" style="--st:var(--green)"><span class="up-stat-val"
+                                        data-stat="communities">0</span><span class="up-stat-lbl">Communities</span>
+                                </div>
+                                <div class="up-stat-tile" style="--st:var(--amber)"><span class="up-stat-val"
+                                        data-stat="days">0</span><span class="up-stat-lbl">Active Days</span></div>
+                                <div class="up-stat-tile" style="--st:#F59E0B"><span class="up-stat-val"
+                                        data-stat="streak">0</span><span class="up-stat-lbl">Streak</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Badges Card -->
+                    <div class="up-card rp-entrance" data-delay="4">
+                        <div class="up-card-h">
+                            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M12 15l-2 5l9-13h-5l2-5-9 13h5z" />
+                            </svg>
+                            Badges
+                        </div>
+                        <div class="up-card-b">
+                            <div class="up-badges-grid" id="up-badges-grid"></div>
+                        </div>
+                    </div>
+                    <!-- Mutual Communities Card -->
+                    <div class="up-card rp-entrance" data-delay="5">
+                        <div class="up-card-h">
+                            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                                <circle cx="9" cy="7" r="4" />
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                            </svg>
+                            Mutual Servers
+                        </div>
+                        <div class="up-card-b">
+                            <div class="up-mutual-chips" id="up-mutual-chips"></div>
+                        </div>
+                    </div>
+                    <!-- Roles Card -->
+                    <div class="up-card rp-entrance" data-delay="5">
+                        <div class="up-card-h">
+                            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <polygon
+                                    points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                            </svg>
+                            Roles
+                        </div>
+                        <div class="up-card-b">
+                            <div class="up-role-chips" id="up-role-chips"></div>
+                        </div>
+                    </div>
+                </div><!-- /up-content -->
+            </div>
+            <!-- Footer -->
+            <div class="up-footer">
+                <span class="up-footer-id" id="up-footer-id">User ID: ------</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Lightbox -->
+    <div class="lightbox" id="lightbox" style="display:none;">
+        <button class="lightbox-close" id="lightbox-close" aria-label="Close">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+        </button>
+        <div class="lightbox-content" id="lightbox-content">
+            <img class="lightbox-img" id="lightbox-img" src="" alt="">
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
+    <script src="../utils/auth.js"></script>
+    <script src="rankBadges.js"></script>
+    <script src="hiveEmojis.js"></script>
+    <script src="hiveEmojisExtended.js"></script>
+    <script src="script.js"></script>
+
+    <!-- ═══ SHOW MORE FONTS MODAL ═══ -->
+    <div class="rp-font-modal-overlay" id="font-modal-overlay" style="display:none;">
+        <div class="rp-font-modal">
+            <div class="rp-font-modal-header">
+                <h2 class="rp-font-modal-title">Choose a Font</h2>
+                <button class="rp-font-modal-close" id="font-modal-close" aria-label="Close">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="rp-font-modal-search-wrap">
+                <svg class="rp-font-modal-search-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <input class="rp-font-modal-search" id="font-modal-search" type="text" placeholder="Search fonts..." autocomplete="off">
+            </div>
+            <div class="rp-font-modal-grid" id="font-modal-grid"></div>
+        </div>
+    </div>
+    <!-- ═══ END FONTS MODAL ═══ -->
+
+    <!-- ═══ RINGS MODAL ═══ -->
+    <div class="rp-ring-modal-overlay" id="ring-modal-overlay" style="display:none;">
+        <div class="rp-ring-modal">
+            <div class="rp-ring-modal-header">
+                <span class="rp-ring-modal-title">All Profile Rings</span>
+                <button class="rp-ring-modal-close" id="ring-modal-close">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                </button>
+            </div>
+            <div class="rp-ring-modal-search">
+                <svg class="rp-ring-modal-search-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input class="rp-ring-modal-input" id="ring-filter-input" type="text" placeholder="Search rings..." autocomplete="off">
+            </div>
+            <div class="rp-ring-modal-grid" id="ring-modal-grid"></div>
+        </div>
+    </div>
+    <!-- ═══ END RINGS MODAL ═══ -->
+
+    <!-- ═══ EFFECTS MODAL ═══ -->
+    <div class="rp-effect-modal-overlay" id="effect-modal-overlay" style="display:none;">
+        <div class="rp-effect-modal">
+            <div class="rp-effect-modal-header">
+                <span class="rp-effect-modal-title">All Profile Effects</span>
+                <button class="rp-effect-modal-close" id="effect-modal-close">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                </button>
+            </div>
+            <div class="rp-effect-modal-search">
+                <svg class="rp-effect-modal-search-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input class="rp-effect-modal-input" id="effect-filter-input" type="text" placeholder="Search effects..." autocomplete="off">
+            </div>
+            <div class="rp-effect-modal-grid" id="effect-modal-grid"></div>
+        </div>
+    </div>
+    <!-- ═══ END EFFECTS MODAL ═══ -->
+
+</body>
+
+</html>

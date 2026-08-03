@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hive — Where Teen Communities Come Alive</title>
+    <meta name="description" content="Hive is the next-generation social platform where teens chat, create communities, make friends, and belong.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐝</text></svg>">
+</head>
+<body>
+    <canvas id="particles-canvas"></canvas>
+    <div id="custom-cursor">
+        <svg class="cursor-hex" viewBox="0 0 40 40" width="40" height="40">
+            <defs>
+                <linearGradient id="cursor-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#6C63FF"/>
+                    <stop offset="50%" style="stop-color:#00E5FF"/>
+                    <stop offset="100%" style="stop-color:#FF4D9E"/>
+                </linearGradient>
+                <filter id="cursor-glow-filter">
+                    <feGaussianBlur stdDeviation="3" result="blur"/>
+                    <feMerge>
+                        <feMergeNode in="blur"/>
+                        <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                </filter>
+            </defs>
+            <path class="cursor-hex-path" d="M20 2 L35 10 L35 26 L20 38 L5 26 L5 10 Z" fill="none" stroke="url(#cursor-grad)" stroke-width="1.5" filter="url(#cursor-glow-filter)"/>
+            <circle class="cursor-dot" cx="20" cy="20" r="3" fill="url(#cursor-grad)"/>
+        </svg>
+        <div class="cursor-trail"></div>
+    </div>
+    <div id="mouse-gradient"></div>
+
+    <!-- Navigation -->
+    <nav id="navbar">
+        <div class="nav-inner">
+            <a href="#" class="logo">
+                <svg class="logo-icon" viewBox="0 0 40 40" width="40" height="40">
+                    <defs>
+                        <linearGradient id="logo-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#6C63FF"/>
+                            <stop offset="100%" style="stop-color:#00E5FF"/>
+                        </linearGradient>
+                    </defs>
+                    <path d="M20 2 L35 10 L35 26 L20 38 L5 26 L5 10 Z" fill="url(#logo-grad)" opacity="0.9"/>
+                    <path d="M20 8 L28 13 L28 23 L20 28 L12 23 L12 13 Z" fill="#050816" opacity="0.6"/>
+                    <circle cx="20" cy="18" r="4" fill="white" opacity="0.9"/>
+                </svg>
+                <span class="logo-text">Hive</span>
+            </a>
+            <div class="nav-links">
+                <a href="#features">Features</a>
+                <a href="#communities">Communities</a>
+                <a href="#safety">Safety</a>
+                <a href="#how-it-works">How It Works</a>
+            </div>
+            <div class="nav-actions">
+                <a href="#" class="btn-ghost">Log In</a>
+                <a href="signup/" class="btn-primary magnetic-btn">Join Hive</a>
+            </div>
+            <button class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="Toggle menu">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+        <div class="mobile-menu" id="mobile-menu">
+            <a href="#features">Features</a>
+            <a href="#communities">Communities</a>
+            <a href="#safety">Safety</a>
+            <a href="#how-it-works">How It Works</a>
+            <a href="signup/" class="btn-primary">Join Hive</a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="hero" class="section">
+        <div class="hero-bg">
+            <div class="aurora aurora-1"></div>
+            <div class="aurora aurora-2"></div>
+            <div class="aurora aurora-3"></div>
+            <div class="hex-grid"></div>
+        </div>
+        <div class="hero-content">
+            <div class="hero-badge animate-reveal">
+                <span class="badge-dot"></span>
+                The future of teen communities
+            </div>
+            <h1 class="hero-title animate-reveal">
+                Where Teen Communities<br>
+                <span class="gradient-text">Come Alive.</span>
+            </h1>
+            <p class="hero-subtitle animate-reveal">
+                Hive is the next-generation place where teens chat, create communities, join groups, make friends, share moments, voice chat, and belong.
+            </p>
+            <div class="hero-cta animate-reveal">
+                    <a href="signup/" class="btn-primary btn-large magnetic-btn ripple-btn">
+                    <span>Join Hive</span>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </a>
+                <a href="#communities" class="btn-outline btn-large magnetic-btn ripple-btn">
+                    <span>Explore Communities</span>
+                </a>
+            </div>
+            <div class="hero-stats animate-reveal">
+                <div class="hero-stat">
+                    <span class="hero-stat-number" data-target="500000">0</span>
+                    <span class="hero-stat-label">Active Teens</span>
+                </div>
+                <div class="hero-stat-divider"></div>
+                <div class="hero-stat">
+                    <span class="hero-stat-number" data-target="120000">0</span>
+                    <span class="hero-stat-label">Communities</span>
+                </div>
+                <div class="hero-stat-divider"></div>
+                <div class="hero-stat">
+                    <span class="hero-stat-number">99.9%</span>
+                    <span class="hero-stat-label">Uptime</span>
+                </div>
+            </div>
+        </div>
+        <div class="hero-visual">
+            <div class="phone-mockup phone-1 float-animation">
+                <div class="phone-screen">
+                    <div class="phone-header">
+                        <img class="phone-avatar" src="https://i.pravatar.cc/150?img=12" alt="Gaming Hub" loading="lazy">
+                        <div class="phone-name">Gaming Hub</div>
+                        <div class="phone-status online">42 online</div>
+                    </div>
+                    <div class="phone-messages">
+                        <div class="chat-bubble bubble-other">yo who's up for valorant tonight?</div>
+                        <div class="chat-bubble bubble-self">me! add me</div>
+                        <div class="chat-bubble bubble-other">lets gooo 🔥</div>
+                        <div class="chat-bubble bubble-self">bet, im cracked</div>
+                    </div>
+                    <div class="phone-input">
+                        <span>Type a message...</span>
+                        <div class="send-btn"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="phone-mockup phone-2 float-animation-delayed">
+                <div class="phone-screen">
+                    <div class="phone-header">
+                        <img class="phone-avatar music-avatar" src="https://i.pravatar.cc/150?img=25" alt="Music Lounge" loading="lazy">
+                        <div class="phone-name">Music Lounge</div>
+                        <div class="phone-status online">🎵 Live</div>
+                    </div>
+                    <div class="phone-voice-chat">
+                        <div class="voice-user"><img class="voice-avatar" src="https://i.pravatar.cc/150?img=3" alt="Alex"><span>Alex</span><div class="voice-wave"></div></div>
+                        <div class="voice-user"><img class="voice-avatar" src="https://i.pravatar.cc/150?img=8" alt="Sam"><span>Sam</span><div class="voice-wave"></div></div>
+                        <div class="voice-user"><img class="voice-avatar" src="https://i.pravatar.cc/150?img=15" alt="Jordan"><span>Jordan</span><div class="voice-wave"></div></div>
+                    </div>
+                </div>
+            </div>
+            <div class="floating-cards">
+                <div class="floating-card fc-1">
+                    <div class="fc-icon">🎮</div>
+                    <div class="fc-text">Gaming</div>
+                    <div class="fc-count">12.4K members</div>
+                </div>
+                <div class="floating-card fc-2">
+                    <div class="fc-icon">🎨</div>
+                    <div class="fc-text">Art & Design</div>
+                    <div class="fc-count">8.7K members</div>
+                </div>
+                <div class="floating-card fc-3">
+                    <div class="fc-icon">🎵</div>
+                    <div class="fc-text">Music</div>
+                    <div class="fc-count">15.2K members</div>
+                </div>
+                <div class="floating-card fc-4">
+                    <div class="fc-icon">💻</div>
+                    <div class="fc-text">Coding</div>
+                    <div class="fc-count">6.1K members</div>
+                </div>
+            </div>
+            <div class="notification-float nf-1">
+                <img class="nf-avatar" src="https://i.pravatar.cc/150?img=20" alt="User" loading="lazy">
+                <div class="nf-text">New friend request!</div>
+                <div class="nf-emoji">👋</div>
+            </div>
+            <div class="notification-float nf-2">
+                <div class="nf-emoji">❤️</div>
+                <div class="nf-text">12 reactions</div>
+            </div>
+            <div class="notification-float nf-3">
+                <div class="nf-emoji">🔊</div>
+                <div class="nf-text">Voice chat starting</div>
+            </div>
+            <div class="emoji-float ef-1">🔥</div>
+            <div class="emoji-float ef-2">✨</div>
+            <div class="emoji-float ef-3">💜</div>
+            <div class="emoji-float ef-4">🎉</div>
+            <div class="emoji-float ef-5">🚀</div>
+        </div>
+        <div class="scroll-indicator">
+            <div class="scroll-line"></div>
+            <span>Scroll to explore</span>
+        </div>
+    </section>
+
+    <!-- Why Hive Section -->
+    <section id="why-hive" class="section">
+        <div class="section-inner">
+            <div class="section-header animate-reveal">
+                <span class="section-tag">Why Hive</span>
+                <h2 class="section-title">Built for how teens<br><span class="gradient-text">actually connect</span></h2>
+                <p class="section-subtitle">Everything you need to find your people, share your vibe, and build something real.</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card glass-card animate-reveal">
+                    <div class="feature-icon glow-icon" style="--glow-color: #6C63FF">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    </div>
+                    <h3>Real-time Chat</h3>
+                    <p>Instant messaging with friends and communities. Share text, images, videos, and files in real time.</p>
+                </div>
+                <div class="feature-card glass-card animate-reveal">
+                    <div class="feature-icon glow-icon" style="--glow-color: #00E5FF">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+                    </div>
+                    <h3>Voice Channels</h3>
+                    <p>Drop into voice rooms, hang out, study together, or just vibe. Crystal-clear audio with low latency.</p>
+                </div>
+                <div class="feature-card glass-card animate-reveal">
+                    <div class="feature-icon glow-icon" style="--glow-color: #FF4D9E">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                    </div>
+                    <h3>Private Messaging</h3>
+                    <p>DM your friends with full privacy. Share thoughts, secrets, and late-night conversations safely.</p>
+                </div>
+                <div class="feature-card glass-card animate-reveal">
+                    <div class="feature-icon glow-icon" style="--glow-color: #7CFFB2">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    </div>
+                    <h3>Community Spaces</h3>
+                    <p>Create or join communities around your interests. From gaming to art, coding to K-pop — find your people.</p>
+                </div>
+                <div class="feature-card glass-card animate-reveal">
+                    <div class="feature-icon glow-icon" style="--glow-color: #FFD93D">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    </div>
+                    <h3>Safe Moderation</h3>
+                    <p>AI-powered moderation and human moderators keep Hive safe. Report, block, and control your experience.</p>
+                </div>
+                <div class="feature-card glass-card animate-reveal">
+                    <div class="feature-icon glow-icon" style="--glow-color: #FF6B6B">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+                    </div>
+                    <h3>Fun Reactions</h3>
+                    <p>React with emojis, GIFs, stickers, and custom reactions. Express yourself in every conversation.</p>
+                </div>
+                <div class="feature-card glass-card animate-reveal">
+                    <div class="feature-icon glow-icon" style="--glow-color: #A78BFA">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                    </div>
+                    <h3>Media Sharing</h3>
+                    <p>Share photos, videos, memes, art, and music. Beautiful media previews and galleries.</p>
+                </div>
+                <div class="feature-card glass-card animate-reveal">
+                    <div class="feature-icon glow-icon" style="--glow-color: #06D6A0">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    </div>
+                    <h3>Community Events</h3>
+                    <p>Host watch parties, game nights, study sessions, and more. RSVP, reminders, and event chat.</p>
+                </div>
+                <div class="feature-card glass-card animate-reveal">
+                    <div class="feature-icon glow-icon" style="--glow-color: #E040FB">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    </div>
+                    <h3>Smart Recommendations</h3>
+                    <p>Discover communities and friends based on your interests. The more you engage, the better it gets.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Community Showcase -->
+    <section id="communities" class="section">
+        <div class="section-inner">
+            <div class="section-header animate-reveal">
+                <span class="section-tag">Communities</span>
+                <h2 class="section-title">Find your <span class="gradient-text">tribe</span></h2>
+                <p class="section-subtitle">Thousands of communities for every interest. Jump in, say hi, and make friends.</p>
+            </div>
+            <div class="communities-grid">
+                <div class="community-card glass-card tilt-card animate-reveal" data-tilt>
+                    <div class="community-glow" style="--gc: #6C63FF"></div>
+                    <div class="community-icon">🎮</div>
+                    <h3>Gaming</h3>
+                    <div class="community-stats">
+                        <span class="cs-members">12.4K members</span>
+                        <span class="cs-online"><span class="online-dot"></span>2.1K online</span>
+                    </div>
+                    <div class="community-tags">
+                        <span>Valorant</span><span>Minecraft</span><span>Fortnite</span>
+                    </div>
+                </div>
+                <div class="community-card glass-card tilt-card animate-reveal" data-tilt>
+                    <div class="community-glow" style="--gc: #FF4D9E"></div>
+                    <div class="community-icon">🎵</div>
+                    <h3>Music</h3>
+                    <div class="community-stats">
+                        <span class="cs-members">15.2K members</span>
+                        <span class="cs-online"><span class="online-dot"></span>3.8K online</span>
+                    </div>
+                    <div class="community-tags">
+                        <span>K-Pop</span><span>Lo-fi</span><span>Indie</span>
+                    </div>
+                </div>
+                <div class="community-card glass-card tilt-card animate-reveal" data-tilt>
+                    <div class="community-glow" style="--gc: #FF6B6B"></div>
+                    <div class="community-icon">🎌</div>
+                    <h3>Anime</h3>
+                    <div class="community-stats">
+                        <span class="cs-members">9.8K members</span>
+                        <span class="cs-online"><span class="online-dot"></span>1.9K online</span>
+                    </div>
+                    <div class="community-tags">
+                        <span>Manga</span><span>Cosplay</span><span>Reviews</span>
+                    </div>
+                </div>
+                <div class="community-card glass-card tilt-card animate-reveal" data-tilt>
+                    <div class="community-glow" style="--gc: #7CFFB2"></div>
+                    <div class="community-icon">⚽</div>
+                    <h3>Sports</h3>
+                    <div class="community-stats">
+                        <span class="cs-members">7.3K members</span>
+                        <span class="cs-online"><span class="online-dot"></span>1.2K online</span>
+                    </div>
+                    <div class="community-tags">
+                        <span>Football</span><span>Basketball</span><span>F1</span>
+                    </div>
+                </div>
+                <div class="community-card glass-card tilt-card animate-reveal" data-tilt>
+                    <div class="community-glow" style="--gc: #00E5FF"></div>
+                    <div class="community-icon">💻</div>
+                    <h3>Coding</h3>
+                    <div class="community-stats">
+                        <span class="cs-members">6.1K members</span>
+                        <span class="cs-online"><span class="online-dot"></span>890 online</span>
+                    </div>
+                    <div class="community-tags">
+                        <span>Python</span><span>Web Dev</span><span>AI</span>
+                    </div>
+                </div>
+                <div class="community-card glass-card tilt-card animate-reveal" data-tilt>
+                    <div class="community-glow" style="--gc: #E040FB"></div>
+                    <div class="community-icon">🎨</div>
+                    <h3>Art</h3>
+                    <div class="community-stats">
+                        <span class="cs-members">8.7K members</span>
+                        <span class="cs-online"><span class="online-dot"></span>1.5K online</span>
+                    </div>
+                    <div class="community-tags">
+                        <span>Digital Art</span><span>Drawing</span><span>NFTs</span>
+                    </div>
+                </div>
+                <div class="community-card glass-card tilt-card animate-reveal" data-tilt>
+                    <div class="community-glow" style="--gc: #FFD93D"></div>
+                    <div class="community-icon">👗</div>
+                    <h3>Fashion</h3>
+                    <div class="community-stats">
+                        <span class="cs-members">5.4K members</span>
+                        <span class="cs-online"><span class="online-dot"></span>780 online</span>
+                    </div>
+                    <div class="community-tags">
+                        <span>Streetwear</span><span>Thrift</span><span>DIY</span>
+                    </div>
+                </div>
+                <div class="community-card glass-card tilt-card animate-reveal" data-tilt>
+                    <div class="community-glow" style="--gc: #A78BFA"></div>
+                    <div class="community-icon">📸</div>
+                    <h3>Photography</h3>
+                    <div class="community-stats">
+                        <span class="cs-members">4.2K members</span>
+                        <span class="cs-online"><span class="online-dot"></span>620 online</span>
+                    </div>
+                    <div class="community-tags">
+                        <span>Portrait</span><span>Street</span><span>Edit</span>
+                    </div>
+                </div>
+                <div class="community-card glass-card tilt-card animate-reveal" data-tilt>
+                    <div class="community-glow" style="--gc: #FF6B6B"></div>
+                    <div class="community-icon">😂</div>
+                    <h3>Memes</h3>
+                    <div class="community-stats">
+                        <span class="cs-members">18.9K members</span>
+                        <span class="cs-online"><span class="online-dot"></span>4.2K online</span>
+                    </div>
+                    <div class="community-tags">
+                        <span>Fresh</span><span>OC</span><span>Vines</span>
+                    </div>
+                </div>
+                <div class="community-card glass-card tilt-card animate-reveal" data-tilt>
+                    <div class="community-glow" style="--gc: #06D6A0"></div>
+                    <div class="community-icon">📚</div>
+                    <h3>Study Groups</h3>
+                    <div class="community-stats">
+                        <span class="cs-members">3.8K members</span>
+                        <span class="cs-online"><span class="online-dot"></span>540 online</span>
+                    </div>
+                    <div class="community-tags">
+                        <span>Math</span><span>Science</span><span>AP</span>
+                    </div>
+                </div>
+                <div class="community-card glass-card tilt-card animate-reveal" data-tilt>
+                    <div class="community-glow" style="--gc: #F97316"></div>
+                    <div class="community-icon">🎬</div>
+                    <h3>Movies</h3>
+                    <div class="community-stats">
+                        <span class="cs-members">6.9K members</span>
+                        <span class="cs-online"><span class="online-dot"></span>1.1K online</span>
+                    </div>
+                    <div class="community-tags">
+                        <span>Marvel</span><span>Anime</span><span>Classics</span>
+                    </div>
+                </div>
+                <div class="community-card glass-card tilt-card animate-reveal" data-tilt>
+                    <div class="community-glow" style="--gc: #00E5FF"></div>
+                    <div class="community-icon">🤖</div>
+                    <h3>Technology</h3>
+                    <div class="community-stats">
+                        <span class="cs-members">5.6K members</span>
+                        <span class="cs-online"><span class="online-dot"></span>920 online</span>
+                    </div>
+                    <div class="community-tags">
+                        <span>AI</span><span>Phones</span><span>Setups</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Deep Dive -->
+    <section id="features" class="section">
+        <div class="section-inner">
+            <div class="section-header animate-reveal">
+                <span class="section-tag">Features</span>
+                <h2 class="section-title">Everything you need,<br><span class="gradient-text">nothing you don't</span></h2>
+                <p class="section-subtitle">Powerful features designed for how teens actually use the internet.</p>
+            </div>
+            <div class="features-showcase">
+                <div class="feature-showcase-card glass-card animate-reveal">
+                    <div class="fsc-content">
+                        <div class="fsc-icon glow-icon" style="--glow-color: #6C63FF">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                        </div>
+                        <h3>Lightning-fast Messaging</h3>
+                        <p>Messages delivered in milliseconds. Built on cutting-edge infrastructure for instant, reliable communication.</p>
+                    </div>
+                    <div class="fsc-visual">
+                        <div class="speed-demo">
+                            <div class="speed-line sl-1"></div>
+                            <div class="speed-line sl-2"></div>
+                            <div class="speed-line sl-3"></div>
+                            <div class="speed-bolt">⚡</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="feature-showcase-card glass-card animate-reveal">
+                    <div class="fsc-content">
+                        <div class="fsc-icon glow-icon" style="--glow-color: #00E5FF">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg>
+                        </div>
+                        <h3>Crystal-clear Voice Chat</h3>
+                        <p>HD voice channels with noise suppression, spatial audio, and push-to-talk. Sound like you're in the same room.</p>
+                    </div>
+                    <div class="fsc-visual">
+                        <div class="voice-visual">
+                            <div class="vv-ring vv-ring-1"></div>
+                            <div class="vv-ring vv-ring-2"></div>
+                            <div class="vv-ring vv-ring-3"></div>
+                            <div class="vv-center">🎙️</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="feature-showcase-card glass-card animate-reveal">
+                    <div class="fsc-content">
+                        <div class="fsc-icon glow-icon" style="--glow-color: #FF4D9E">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        </div>
+                        <h3>Beautiful Profiles</h3>
+                        <p>Customize your profile with banners, avatars, bios, status messages, and show off your communities.</p>
+                    </div>
+                    <div class="fsc-visual">
+                        <div class="profile-demo">
+                            <div class="pd-banner"></div>
+                            <img class="pd-avatar" src="https://i.pravatar.cc/150?img=52" alt="Alex Chen" loading="lazy">
+                            <div class="pd-name">Alex Chen</div>
+                            <div class="pd-status">Coding something cool ✨</div>
+                            <div class="pd-badges">
+                                <span>🎮 Gamer</span>
+                                <span>💻 Coder</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="feature-showcase-card glass-card animate-reveal">
+                    <div class="fsc-content">
+                        <div class="fsc-icon glow-icon" style="--glow-color: #7CFFB2">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+                        </div>
+                        <h3>Custom Channels</h3>
+                        <p>Organize communities with text, voice, announcement, and stage channels. Pin messages, set permissions, and more.</p>
+                    </div>
+                    <div class="fsc-visual">
+                        <div class="channels-demo">
+                            <div class="cd-channel active"><span class="cd-hash">#</span> general</div>
+                            <div class="cd-channel"><span class="cd-hash">#</span> memes</div>
+                            <div class="cd-channel"><span class="cd-hash">#</span> off-topic</div>
+                            <div class="cd-channel voice"><span class="cd-hash">🔊</span> hangout</div>
+                            <div class="cd-channel voice"><span class="cd-hash">🔊</span> study session</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="feature-showcase-card glass-card animate-reveal">
+                    <div class="fsc-content">
+                        <div class="fsc-icon glow-icon" style="--glow-color: #E040FB">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+                        </div>
+                        <h3>Custom Emojis & Reactions</h3>
+                        <p>Upload your own emoji packs, react to messages, and express yourself with hundreds of built-in options.</p>
+                    </div>
+                    <div class="fsc-visual">
+                        <div class="emoji-demo">
+                            <span class="ed-emoji" style="--delay: 0">😂</span>
+                            <span class="ed-emoji" style="--delay: 1">🔥</span>
+                            <span class="ed-emoji" style="--delay: 2">💜</span>
+                            <span class="ed-emoji" style="--delay: 3">✨</span>
+                            <span class="ed-emoji" style="--delay: 4">🎉</span>
+                            <span class="ed-emoji" style="--delay: 5">👀</span>
+                            <span class="ed-emoji" style="--delay: 6">💯</span>
+                            <span class="ed-emoji" style="--delay: 7">🫶</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="feature-showcase-card glass-card animate-reveal">
+                    <div class="fsc-content">
+                        <div class="fsc-icon glow-icon" style="--glow-color: #FFD93D">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                        </div>
+                        <h3>Smart Notifications</h3>
+                        <p>Never miss what matters. Custom notification settings, @mentions, quiet hours, and smart digests.</p>
+                    </div>
+                    <div class="fsc-visual">
+                        <div class="notif-demo">
+                            <div class="nd-item"><span class="nd-icon">💬</span>New message from @friend<span class="nd-time">now</span></div>
+                            <div class="nd-item"><span class="nd-icon">🎉</span>You were mentioned in #general<span class="nd-time">2m</span></div>
+                            <div class="nd-item"><span class="nd-icon">👋</span>New member joined!</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="features-bottom-row animate-reveal">
+                <div class="feature-pill"><span class="fp-icon">📱</span> Cross-device Sync</div>
+                <div class="feature-pill"><span class="fp-icon">🌙</span> Dark Mode</div>
+                <div class="feature-pill"><span class="fp-icon">🖼️</span> Media Sharing</div>
+                <div class="feature-pill"><span class="fp-icon">🔔</span> Push Notifications</div>
+                <div class="feature-pill"><span class="fp-icon">🎯</span> Smart Feed</div>
+                <div class="feature-pill"><span class="fp-icon">🔍</span> Search</div>
+                <div class="feature-pill"><span class="fp-icon">📌</span> Pinned Messages</div>
+                <div class="feature-pill"><span class="fp-icon">📎</span> File Sharing</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section id="how-it-works" class="section">
+        <div class="section-inner">
+            <div class="section-header animate-reveal">
+                <span class="section-tag">How It Works</span>
+                <h2 class="section-title">Up and running in<br><span class="gradient-text">three simple steps</span></h2>
+            </div>
+            <div class="steps-container">
+                <div class="step-connector"></div>
+                <div class="step animate-reveal">
+                    <div class="step-number">01</div>
+                    <div class="step-icon glow-icon" style="--glow-color: #6C63FF">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    </div>
+                    <h3>Create Your Account</h3>
+                    <p>Sign up in seconds. Pick a username, set your avatar, and you're in. No phone number required.</p>
+                </div>
+                <div class="step animate-reveal">
+                    <div class="step-number">02</div>
+                    <div class="step-icon glow-icon" style="--glow-color: #00E5FF">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    </div>
+                    <h3>Join Communities</h3>
+                    <p>Browse or search for communities that match your interests. Gaming, music, art — it's all here.</p>
+                </div>
+                <div class="step animate-reveal">
+                    <div class="step-number">03</div>
+                    <div class="step-icon glow-icon" style="--glow-color: #7CFFB2">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    </div>
+                    <h3>Start Chatting</h3>
+                    <p>Jump into conversations, join voice channels, share memes, and start building real friendships.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Safety Section -->
+    <section id="safety" class="section">
+        <div class="section-inner">
+            <div class="section-header animate-reveal">
+                <span class="section-tag">Safety</span>
+                <h2 class="section-title">Your safety is<br><span class="gradient-text">our priority</span></h2>
+                <p class="section-subtitle">Hive is designed from the ground up to be a safe, welcoming space for teens.</p>
+            </div>
+            <div class="safety-grid">
+                <div class="safety-card glass-card animate-reveal">
+                    <div class="safety-icon glow-icon" style="--glow-color: #7CFFB2">🛡️</div>
+                    <h3>Friendly Community</h3>
+                    <p>Our community guidelines ensure everyone feels welcome. Zero tolerance for bullying, hate, or harassment.</p>
+                </div>
+                <div class="safety-card glass-card animate-reveal">
+                    <div class="safety-icon glow-icon" style="--glow-color: #FF4D9E">🚩</div>
+                    <h3>Reporting Tools</h3>
+                    <p>Easy-to-use report buttons on every message and profile. Our trust & safety team responds within minutes.</p>
+                </div>
+                <div class="safety-card glass-card animate-reveal">
+                    <div class="safety-icon glow-icon" style="--glow-color: #6C63FF">🔒</div>
+                    <h3>Privacy Controls</h3>
+                    <p>Control who can DM you, see your profile, or find you in search. You're in control of your experience.</p>
+                </div>
+                <div class="safety-card glass-card animate-reveal">
+                    <div class="safety-icon glow-icon" style="--glow-color: #00E5FF">👨‍👩‍👧‍👦</div>
+                    <h3>Age-appropriate</h3>
+                    <p>Hive is built specifically for teens 13–17. Age verification and parental controls keep everyone safe.</p>
+                </div>
+                <div class="safety-card glass-card animate-reveal">
+                    <div class="safety-icon glow-icon" style="--glow-color: #FFD93D">🤖</div>
+                    <h3>AI Moderation</h3>
+                    <p>Advanced AI detects and removes harmful content before you even see it. 24/7 automated protection.</p>
+                </div>
+                <div class="safety-card glass-card animate-reveal">
+                    <div class="safety-icon glow-icon" style="--glow-color: #E040FB">🔐</div>
+                    <h3>Secure Messaging</h3>
+                    <p>End-to-end encryption for DMs. Your private conversations stay private. Always.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section id="testimonials" class="section">
+        <div class="section-inner">
+            <div class="section-header animate-reveal">
+                <span class="section-tag">Testimonials</span>
+                <h2 class="section-title">Loved by <span class="gradient-text">hundreds of thousands</span></h2>
+            </div>
+            <div class="testimonials-track">
+                <div class="testimonial-card glass-card animate-reveal">
+                    <div class="tc-stars">★★★★★</div>
+                    <p>"Hive is literally the only social app I use now. The communities are so active and everyone is super nice."</p>
+                    <div class="tc-author">
+                        <img class="tc-avatar" src="https://i.pravatar.cc/150?img=47" alt="Maya R. avatar" loading="lazy">
+                        <div>
+                            <div class="tc-name">Maya R.</div>
+                            <div class="tc-role">Gaming Community Member</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-card glass-card animate-reveal">
+                    <div class="tc-stars">★★★★★</div>
+                    <p>"I found my coding friends on Hive. We study together, build projects, and even made an app that got 1K downloads!"</p>
+                    <div class="tc-author">
+                        <img class="tc-avatar" src="https://i.pravatar.cc/150?img=68" alt="Jason K. avatar" loading="lazy">
+                        <div>
+                            <div class="tc-name">Jason K.</div>
+                            <div class="tc-role">Coding Community Lead</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-card glass-card animate-reveal">
+                    <div class="tc-stars">★★★★★</div>
+                    <p>"The voice channels are fire. I hang out with my friends every night. It's like a virtual hangout spot."</p>
+                    <div class="tc-author">
+                        <img class="tc-avatar" src="https://i.pravatar.cc/150?img=45" alt="Zara M. avatar" loading="lazy">
+                        <div>
+                            <div class="tc-name">Zara M.</div>
+                            <div class="tc-role">Music Community Member</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-card glass-card animate-reveal">
+                    <div class="tc-stars">★★★★★</div>
+                    <p>"As a parent, I love that Hive is specifically designed for teens. The safety features give me peace of mind."</p>
+                    <div class="tc-author">
+                        <img class="tc-avatar" src="https://i.pravatar.cc/150?img=32" alt="Parent User avatar" loading="lazy">
+                        <div>
+                            <div class="tc-name">Parent User</div>
+                            <div class="tc-role">Verified Parent</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-card glass-card animate-reveal">
+                    <div class="tc-stars">★★★★★</div>
+                    <p>"I run a 5K member anime community on Hive. The tools are amazing — events, roles, channels. It's perfect."</p>
+                    <div class="tc-author">
+                        <img class="tc-avatar" src="https://i.pravatar.cc/150?img=11" alt="Liam T. avatar" loading="lazy">
+                        <div>
+                            <div class="tc-name">Liam T.</div>
+                            <div class="tc-role">Anime Community Admin</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-card glass-card animate-reveal">
+                    <div class="tc-stars">★★★★★</div>
+                    <p>"Finally a social app that doesn't make me feel weird about being 15. Hive gets it. It's made for us."</p>
+                    <div class="tc-author">
+                        <img class="tc-avatar" src="https://i.pravatar.cc/150?img=26" alt="Aisha B. avatar" loading="lazy">
+                        <div>
+                            <div class="tc-name">Aisha B.</div>
+                            <div class="tc-role">Art Community Member</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Statistics -->
+    <section id="stats" class="section">
+        <div class="section-inner">
+            <div class="stats-grid">
+                <div class="stat-card glass-card animate-reveal">
+                    <div class="stat-number counter" data-target="1000000">0</div>
+                    <div class="stat-suffix">+</div>
+                    <div class="stat-label">Messages Sent</div>
+                    <div class="stat-bar"><div class="stat-bar-fill" style="--fill: 95%"></div></div>
+                </div>
+                <div class="stat-card glass-card animate-reveal">
+                    <div class="stat-number counter" data-target="120000">0</div>
+                    <div class="stat-suffix">+</div>
+                    <div class="stat-label">Communities</div>
+                    <div class="stat-bar"><div class="stat-bar-fill" style="--fill: 80%"></div></div>
+                </div>
+                <div class="stat-card glass-card animate-reveal">
+                    <div class="stat-number counter" data-target="500000">0</div>
+                    <div class="stat-suffix">+</div>
+                    <div class="stat-label">Active Users</div>
+                    <div class="stat-bar"><div class="stat-bar-fill" style="--fill: 88%"></div></div>
+                </div>
+                <div class="stat-card glass-card animate-reveal">
+                    <div class="stat-number">99.9</div>
+                    <div class="stat-suffix">%</div>
+                    <div class="stat-label">Uptime</div>
+                    <div class="stat-bar"><div class="stat-bar-fill" style="--fill: 99%"></div></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Final CTA -->
+    <section id="cta" class="section">
+        <div class="section-inner">
+            <div class="cta-content animate-reveal">
+                <div class="cta-bg">
+                    <div class="cta-orb cta-orb-1"></div>
+                    <div class="cta-orb cta-orb-2"></div>
+                    <div class="cta-orb cta-orb-3"></div>
+                </div>
+                <h2 class="cta-title">Ready to find<br>your <span class="gradient-text">people</span>?</h2>
+                <p class="cta-subtitle">Join hundreds of thousands of teens who already call Hive home. It's free, it's safe, and it's where you belong.</p>
+                <div class="cta-buttons">
+                    <a href="signup/" class="btn-primary btn-xlarge magnetic-btn ripple-btn">
+                        <span>Join Hive — It's Free</span>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    </a>
+                </div>
+                <p class="cta-note">No credit card required. No phone number needed. Just pick a username and go.</p>
+                <div class="cta-avatars">
+                    <img class="cta-avatar" style="--i:0" src="https://i.pravatar.cc/150?img=5" alt="User" loading="lazy">
+                    <img class="cta-avatar" style="--i:1" src="https://i.pravatar.cc/150?img=23" alt="User" loading="lazy">
+                    <img class="cta-avatar" style="--i:2" src="https://i.pravatar.cc/150?img=33" alt="User" loading="lazy">
+                    <img class="cta-avatar" style="--i:3" src="https://i.pravatar.cc/150?img=44" alt="User" loading="lazy">
+                    <img class="cta-avatar" style="--i:4" src="https://i.pravatar.cc/150?img=56" alt="User" loading="lazy">
+                    <div class="cta-avatar-count">+496K</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer id="footer">
+        <div class="footer-inner">
+            <div class="footer-top">
+                <div class="footer-brand">
+                    <a href="#" class="logo">
+                        <svg class="logo-icon" viewBox="0 0 40 40" width="40" height="40">
+                            <defs>
+                                <linearGradient id="footer-logo-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" style="stop-color:#6C63FF"/>
+                                    <stop offset="100%" style="stop-color:#00E5FF"/>
+                                </linearGradient>
+                            </defs>
+                            <path d="M20 2 L35 10 L35 26 L20 38 L5 26 L5 10 Z" fill="url(#footer-logo-grad)" opacity="0.9"/>
+                            <path d="M20 8 L28 13 L28 23 L20 28 L12 23 L12 13 Z" fill="#050816" opacity="0.6"/>
+                            <circle cx="20" cy="18" r="4" fill="white" opacity="0.9"/>
+                        </svg>
+                        <span class="logo-text">Hive</span>
+                    </a>
+                    <p class="footer-tagline">Where teen communities come alive.</p>
+                </div>
+                <div class="footer-links">
+                    <div class="footer-col">
+                        <h4>Product</h4>
+                        <a href="#features">Features</a>
+                        <a href="#communities">Communities</a>
+                        <a href="#safety">Safety</a>
+                        <a href="#how-it-works">How It Works</a>
+                    </div>
+                    <div class="footer-col">
+                        <h4>Company</h4>
+                        <a href="#">About</a>
+                        <a href="#">Blog</a>
+                        <a href="#">Careers</a>
+                        <a href="#">Press</a>
+                    </div>
+                    <div class="footer-col">
+                        <h4>Support</h4>
+                        <a href="#">Help Center</a>
+                        <a href="#">Contact</a>
+                        <a href="#">Status</a>
+                        <a href="#">Feedback</a>
+                    </div>
+                    <div class="footer-col">
+                        <h4>Legal</h4>
+                        <a href="#">Privacy</a>
+                        <a href="#">Terms</a>
+                        <a href="#">Cookies</a>
+                        <a href="#">Guidelines</a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 Hive. All rights reserved.</p>
+                <div class="footer-socials">
+                    <a href="#" aria-label="Discord">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189z"/></svg>
+                    </a>
+                    <a href="#" aria-label="Instagram">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+                    </a>
+                    <a href="#" aria-label="TikTok">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 0 0-.79-.05A6.34 6.34 0 0 0 3.15 15a6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.34-6.34V8.73a8.19 8.19 0 0 0 4.76 1.52v-3.4a4.85 4.85 0 0 1-1-.16z"/></svg>
+                    </a>
+                    <a href="#" aria-label="X">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

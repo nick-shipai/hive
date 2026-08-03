@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hive — Complete Your Profile</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐝</text></svg>">
+</head>
+<body>
+
+    <!-- Background -->
+    <div class="bg-layer">
+        <div class="bg-orb bg-orb-1"></div>
+        <div class="bg-orb bg-orb-2"></div>
+        <div class="bg-orb bg-orb-3"></div>
+        <div class="bg-grid"></div>
+    </div>
+    <canvas id="particles"></canvas>
+
+    <!-- Layout -->
+    <div class="layout">
+
+        <!-- LEFT — Brand -->
+        <div class="left">
+            <div class="left-brand">
+                <svg viewBox="0 0 40 40" width="36" height="36">
+                    <defs>
+                        <linearGradient id="lg" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#6C63FF"/>
+                            <stop offset="100%" stop-color="#00E5FF"/>
+                        </linearGradient>
+                    </defs>
+                    <path d="M20 2 L35 10 L35 26 L20 38 L5 26 L5 10 Z" fill="url(#lg)" opacity="0.9"/>
+                    <path d="M20 8 L28 13 L28 23 L20 28 L12 23 L12 13 Z" fill="#050816" opacity="0.5"/>
+                    <circle cx="20" cy="18" r="3.5" fill="white" opacity="0.9"/>
+                </svg>
+                <span>Hive</span>
+            </div>
+
+            <h1 class="left-title">Welcome to<br><span class="gradient">your hive</span></h1>
+            <p class="left-desc">Set up your profile and start connecting with your community.</p>
+
+            <!-- Futuristic illustration -->
+            <div class="illustration">
+                <svg viewBox="0 0 260 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Central hex -->
+                    <path d="M130 20 L180 50 L180 110 L130 140 L80 110 L80 50 Z"
+                          stroke="rgba(108,99,255,0.3)" stroke-width="1" fill="rgba(108,99,255,0.03)"/>
+                    <path d="M130 35 L168 58 L168 102 L130 125 L92 102 L92 58 Z"
+                          stroke="rgba(0,229,255,0.2)" stroke-width="0.8" fill="rgba(0,229,255,0.02)"/>
+                    <!-- Center dot -->
+                    <circle cx="130" cy="80" r="6" fill="rgba(108,99,255,0.3)"/>
+                    <circle cx="130" cy="80" r="2.5" fill="rgba(108,99,255,0.7)"/>
+                    <!-- Orbiting dots -->
+                    <circle cx="130" cy="42" r="2" fill="rgba(0,229,255,0.6)"/>
+                    <circle cx="165" cy="62" r="1.5" fill="rgba(255,77,158,0.5)"/>
+                    <circle cx="165" cy="98" r="2" fill="rgba(124,255,178,0.5)"/>
+                    <circle cx="130" cy="118" r="1.5" fill="rgba(108,99,255,0.5)"/>
+                    <circle cx="95" cy="98" r="2" fill="rgba(0,229,255,0.5)"/>
+                    <circle cx="95" cy="62" r="1.5" fill="rgba(255,77,158,0.4)"/>
+                    <!-- Connection lines -->
+                    <line x1="130" y1="42" x2="130" y2="74" stroke="rgba(108,99,255,0.12)" stroke-width="0.5"/>
+                    <line x1="165" y1="62" x2="136" y2="77" stroke="rgba(0,229,255,0.1)" stroke-width="0.5"/>
+                    <line x1="165" y1="98" x2="136" y2="83" stroke="rgba(124,255,178,0.1)" stroke-width="0.5"/>
+                    <line x1="130" y1="118" x2="130" y2="86" stroke="rgba(108,99,255,0.1)" stroke-width="0.5"/>
+                    <line x1="95" y1="98" x2="124" y2="83" stroke="rgba(0,229,255,0.1)" stroke-width="0.5"/>
+                    <line x1="95" y1="62" x2="124" y2="77" stroke="rgba(255,77,158,0.1)" stroke-width="0.5"/>
+                    <!-- Outer ring -->
+                    <circle cx="130" cy="80" r="60" stroke="rgba(255,255,255,0.04)" stroke-width="0.5" stroke-dasharray="4 6"/>
+                    <circle cx="130" cy="80" r="85" stroke="rgba(255,255,255,0.03)" stroke-width="0.4" stroke-dasharray="2 8"/>
+                    <!-- Floating labels -->
+                    <rect x="30" y="150" width="60" height="24" rx="6" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.06)" stroke-width="0.5"/>
+                    <circle cx="44" cy="162" r="4" fill="rgba(108,99,255,0.3)"/>
+                    <line x1="52" y1="159" x2="78" y2="159" stroke="rgba(255,255,255,0.08)" stroke-width="0.8"/>
+                    <line x1="52" y1="164" x2="68" y2="164" stroke="rgba(255,255,255,0.05)" stroke-width="0.6"/>
+                    <rect x="170" y="36" width="60" height="24" rx="6" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.06)" stroke-width="0.5"/>
+                    <circle cx="184" cy="48" r="4" fill="rgba(0,229,255,0.3)"/>
+                    <line x1="192" y1="45" x2="218" y2="45" stroke="rgba(255,255,255,0.08)" stroke-width="0.8"/>
+                    <line x1="192" y1="50" x2="208" y2="50" stroke="rgba(255,255,255,0.05)" stroke-width="0.6"/>
+                </svg>
+            </div>
+
+            <!-- Floating accents -->
+            <div class="float-shape fs-1"></div>
+            <div class="float-shape fs-2"></div>
+            <div class="float-shape fs-3"></div>
+        </div>
+
+        <!-- RIGHT — Form -->
+        <div class="right">
+
+            <!-- Mobile logo -->
+            <div class="mob-logo" style="position:absolute;top:24px;left:50%;transform:translateX(-50%);">
+                <a href="../index.html" aria-label="Hive Home">
+                    <svg viewBox="0 0 40 40" width="32" height="32">
+                        <defs>
+                            <linearGradient id="mlg" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#6C63FF"/>
+                                <stop offset="100%" stop-color="#00E5FF"/>
+                            </linearGradient>
+                        </defs>
+                        <path d="M20 2 L35 10 L35 26 L20 38 L5 26 L5 10 Z" fill="url(#mlg)" opacity="0.9"/>
+                        <path d="M20 8 L28 13 L28 23 L20 28 L12 23 L12 13 Z" fill="#050816" opacity="0.5"/>
+                        <circle cx="20" cy="18" r="3.5" fill="white" opacity="0.9"/>
+                    </svg>
+                </a>
+            </div>
+
+            <!-- Card -->
+            <div class="card" id="card">
+
+                <!-- Steps -->
+                <div class="steps">
+                    <div class="step done">
+                        <div class="step-num">
+                            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                        </div>
+                        <span>Account</span>
+                    </div>
+                    <div class="step-line"></div>
+                    <div class="step active">
+                        <div class="step-num">2</div>
+                        <span>Profile</span>
+                    </div>
+                </div>
+
+                <!-- Avatar -->
+                <div class="avatar-wrap">
+                    <div class="avatar" id="avatar" tabindex="0" role="button" aria-label="Upload profile picture">
+                        <div class="avatar-glow"></div>
+                        <div class="avatar-ring"></div>
+                        <div class="avatar-inner">
+                            <div class="avatar-ph" id="avatar-ph">
+                                <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                                    <circle cx="12" cy="13" r="4"/>
+                                </svg>
+                                <span>Add</span>
+                            </div>
+                            <img class="avatar-img" id="avatar-img" alt="">
+                            <div class="avatar-ok" id="avatar-ok">
+                                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="20 6 9 17 4 12"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <input type="file" id="file-input" accept="image/jpeg,image/png,image/gif,image/webp" hidden>
+                    </div>
+                    <span class="avatar-err" id="pic-err"></span>
+                </div>
+
+                <!-- Username (read-only) -->
+                <div class="field" id="username-field">
+                    <label class="field-label">Username</label>
+                    <div class="input-wrap">
+                        <input type="text" id="username" readonly>
+                        <span class="fi">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                <circle cx="12" cy="7" r="4"/>
+                            </svg>
+                        </span>
+                        <div class="focus-glow"></div>
+                    </div>
+                </div>
+
+                <!-- DOB -->
+                <div class="field" id="dob-field">
+                    <label class="field-label">Date of Birth</label>
+                    <div class="dob-grid">
+                        <div class="dob-sel">
+                            <select id="dob-month" aria-label="Month">
+                                <option value="" disabled selected>Month</option>
+                            </select>
+                            <div class="dob-arrow"></div>
+                        </div>
+                        <div class="dob-sel">
+                            <select id="dob-day" aria-label="Day">
+                                <option value="" disabled selected>Day</option>
+                            </select>
+                            <div class="dob-arrow"></div>
+                        </div>
+                        <div class="dob-sel">
+                            <select id="dob-year" aria-label="Year">
+                                <option value="" disabled selected>Year</option>
+                            </select>
+                            <div class="dob-arrow"></div>
+                        </div>
+                    </div>
+                    <span class="dob-hint">Must be 13–17 years old</span>
+                    <span class="dob-err" id="dob-err"></span>
+                </div>
+
+                <!-- Button -->
+                <button type="button" class="btn-go" id="btn-go">
+                    <span class="btn-text">Continue to Hive</span>
+                    <span class="btn-load"><span class="spinner"></span> Saving…</span>
+                    <span class="btn-icon">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M5 12h14M12 5l7 7-7 7"/>
+                        </svg>
+                    </span>
+                </button>
+
+                <!-- Skip -->
+                <p class="skip"><a href="../index.html" id="skip-link">Skip for now</a></p>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast-wrap"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="../utils/auth.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
