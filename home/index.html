@@ -1888,6 +1888,26 @@
         </div>
     </div>
 
+    <!-- GIF Picker Popup -->
+    <div class="gif-picker" id="gif-picker" style="display:none;">
+        <div class="gif-picker-header">
+            <span class="gif-picker-title">GIFs</span>
+            <button class="gif-picker-close" id="gif-picker-close" aria-label="Close GIF picker">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <input type="text" class="gif-search" id="gif-search" placeholder="Search GIFs..." autocomplete="off" spellcheck="false">
+        <div class="gif-picker-body" id="gif-picker-body">
+            <div class="gif-loading" id="gif-loading">
+                <span class="gif-loading-spinner"></span>
+            </div>
+            <div class="gif-grid" id="gif-grid"></div>
+            <div class="gif-loadmore" id="gif-loadmore" style="display:none;">
+                <button class="gif-loadmore-btn" id="gif-loadmore-btn">Load more GIFs</button>
+            </div>
+        </div>
+    </div>
+
     <!-- ═══════════ USER PROFILE POPUP ═══════════ -->
     <div class="up-overlay" id="up-overlay" style="display:none;">
         <div class="user-popup" id="user-popup">

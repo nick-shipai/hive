@@ -1582,6 +1582,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     font-size: 0.92rem;
     font-weight: 700;
     cursor: pointer;
+    color: var(--text-2);
     transition: color 0.2s;
 }
 
@@ -3074,6 +3075,152 @@ input { font-family: inherit; border: none; outline: none; background: none; col
 .emoji-body::-webkit-scrollbar-track { background: transparent; }
 .emoji-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
 .emoji-body::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.14); }
+
+/* ═══════════ GIF PICKER ═══════════ */
+.gif-picker {
+    position: fixed;
+    width: 360px;
+    height: 440px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 0 40px rgba(0,229,255,0.06);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: epIn 0.2s cubic-bezier(0.16,1,0.3,1) forwards;
+    transform-origin: bottom right;
+}
+.gif-picker.closing { animation: epOut 0.12s ease-in forwards; }
+
+.gif-picker-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px 6px;
+}
+.gif-picker-title {
+    font-size: 0.8rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    color: var(--text);
+    background: linear-gradient(90deg, #00E5FF, #6C63FF);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.gif-picker-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px; height: 26px;
+    border: none;
+    border-radius: 7px;
+    background: rgba(255,255,255,0.04);
+    color: var(--text-3);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+.gif-picker-close:hover { background: rgba(255,255,255,0.1); color: var(--text); }
+
+.gif-search {
+    margin: 4px 14px 8px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,0.03);
+    color: var(--text);
+    font-size: 0.82rem;
+    font-family: var(--font);
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+}
+.gif-search::placeholder { color: var(--text-3); }
+.gif-search:focus {
+    border-color: rgba(0,229,255,0.35);
+    box-shadow: 0 0 0 3px rgba(0,229,255,0.08);
+}
+
+.gif-picker-body {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 4px 10px 10px;
+}
+.gif-picker-body::-webkit-scrollbar { width: 5px; }
+.gif-picker-body::-webkit-scrollbar-track { background: transparent; }
+.gif-picker-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+.gif-picker-body::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.14); }
+
+.gif-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 180px;
+}
+.gif-loading-spinner {
+    width: 26px; height: 26px;
+    border: 3px solid rgba(255,255,255,0.08);
+    border-top-color: #00E5FF;
+    border-radius: 50%;
+    animation: gifSpin 0.8s linear infinite;
+}
+@keyframes gifSpin { to { transform: rotate(360deg); } }
+
+.gif-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+}
+.gif-item {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    border: 1px solid transparent;
+    aspect-ratio: 1;
+    background: rgba(255,255,255,0.03);
+    transition: border-color 0.15s, transform 0.15s;
+}
+.gif-item:hover {
+    border-color: rgba(0,229,255,0.4);
+    transform: translateY(-1px);
+}
+.gif-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.gif-loadmore {
+    display: flex;
+    justify-content: center;
+    padding: 8px 0 4px;
+}
+.gif-loadmore-btn {
+    padding: 6px 18px;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px;
+    background: rgba(0,229,255,0.08);
+    color: var(--text-2);
+    font-family: var(--font);
+    font-size: 0.76rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+.gif-loadmore-btn:hover { background: rgba(0,229,255,0.18); color: var(--text); }
+.gif-loadmore-btn:disabled { opacity: 0.5; cursor: default; }
+
+.gif-empty {
+    text-align: center;
+    padding: 40px 10px;
+    color: var(--text-3);
+    font-size: 0.82rem;
+}
 
 /* ── Sections inside body ──────────────── */
 .emoji-section { margin-bottom: 6px; }
@@ -9062,6 +9209,15 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     object-fit: cover;
     border-radius: var(--r-md);
     transition: filter 0.2s;
+}
+
+.msg-gif .msg-img-wrap,
+.msg-gif .msg-attach-img {
+    max-width: 200px;
+}
+
+.msg-gif .msg-attach-img {
+    max-height: 220px;
 }
 
 .msg-grid-2 .msg-attach-img,

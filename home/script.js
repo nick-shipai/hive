@@ -6,8 +6,8 @@
     'use strict';
 
     /* ── Config ──────────────────────────────── */
-    var API_BASE = 'https://ea23-54-202-91-167.ngrok-free.app';
-    var SOCKET_URL = 'https://ea23-54-202-91-167.ngrok-free.app';
+    var API_BASE = 'https://api.hivechat.online';
+    var SOCKET_URL = 'https://api.hivechat.online';
     var MESSAGE_LIMIT = 10;
 
     /* ── State ───────────────────────────────── */
@@ -55,6 +55,8 @@
         notifOffset: 0,
         notifLoading: false,
         notifHasMore: true,
+        // GIF picker
+        gifPickerOpen: false,
     };
 
     /* ── DOM Cache ───────────────────────────── */
@@ -3432,6 +3434,134 @@
         }
     }
 
+    /* ── GIF Picker ──────────────────────────── */
+    var gifState = {
+        loading: false,
+        offset: 0,
+        total: 0,
+        searchQuery: '',
+        selection: null,   // { url, preview } for the attachment
+    };
+    var GIF_LIMIT = 15;
+
+    function positionGifPicker() {
+        var gifBtn = qs('.composer-btn[aria-label="GIF"]');
+        if (gifBtn && dom.gifPicker) {
+            var rect = gifBtn.getBoundingClientRect();
+            var pw = 360, ph = 440, gap = 12;
+            var left = rect.right - pw;
+            var top = rect.top - ph - gap;
+            if (left < 8) left = 8;
+            if (top < 8) top = rect.bottom + gap;
+            if (left + pw > window.innerWidth - 8) left = window.innerWidth - pw - 8;
+            if (top + ph > window.innerHeight - 8) top = window.innerHeight - ph - 8;
+            dom.gifPicker.style.left = left + 'px';
+            dom.gifPicker.style.top = top + 'px';
+        }
+    }
+
+    function openGifPicker() {
+        if (!dom.gifPicker) return;
+        dom.gifPicker.style.display = '';
+        dom.gifPicker.classList.remove('closing');
+        positionGifPicker();
+        if (dom.gifSearch) dom.gifSearch.value = '';
+        gifState.searchQuery = '';
+        loadGifs(true);
+        if (dom.gifSearch) setTimeout(function () { dom.gifSearch.focus(); }, 100);
+    }
+
+    function closeGifPicker() {
+        if (!dom.gifPicker) return;
+        dom.gifPicker.classList.add('closing');
+        setTimeout(function () {
+            dom.gifPicker.style.display = 'none';
+            dom.gifPicker.classList.remove('closing');
+        }, 120);
+    }
+
+    function toggleGifPicker() {
+        if (!dom.gifPicker) return;
+        if (dom.gifPicker.style.display === 'none' || !dom.gifPicker.style.display) {
+            openGifPicker();
+        } else {
+            closeGifPicker();
+        }
+    }
+
+    function renderGifGrid(gifs, append) {
+        if (!dom.gifGrid) return;
+        if (!append) dom.gifGrid.innerHTML = '';
+        gifs.forEach(function (g) {
+            var item = document.createElement('button');
+            item.type = 'button';
+            item.className = 'gif-item';
+            item.setAttribute('aria-label', 'Send GIF');
+            item.innerHTML = '<img src="' + escapeHtml(g.thumb) + '" alt="" loading="lazy">';
+            item.addEventListener('click', function () {
+                gifState.selection = {
+                    url: g.url,
+                    preview: g.thumb,
+                };
+                sendGif();
+            });
+            dom.gifGrid.appendChild(item);
+        });
+    }
+
+    function showGifLoading(show) {
+        if (dom.gifLoading) dom.gifLoading.style.display = show ? '' : 'none';
+        if (dom.gifLoadMore) dom.gifLoadMore.style.display = 'none';
+    }
+
+    function loadGifs(reset) {
+        if (!dom.gifGrid) return;
+        if (gifState.loading) return;
+        if (reset) {
+            gifState.offset = 0;
+            if (dom.gifGrid) dom.gifGrid.innerHTML = '';
+        }
+        gifState.loading = true;
+        showGifLoading(true);
+
+        var q = gifState.searchQuery ? '&q=' + encodeURIComponent(gifState.searchQuery) : '';
+        apiGet('/api/gifs?offset=' + gifState.offset + '&limit=' + GIF_LIMIT + q)
+            .then(function (data) {
+                gifState.loading = false;
+                showGifLoading(false);
+                if (data && data.gifs && data.gifs.length) {
+                    renderGifGrid(data.gifs, true);
+                    gifState.offset += data.gifs.length;
+                    if (dom.gifLoadMore) {
+                        dom.gifLoadMore.style.display = (data.gifs.length >= GIF_LIMIT) ? '' : 'none';
+                    }
+                } else if (dom.gifGrid) {
+                    dom.gifGrid.innerHTML = '<div class="gif-empty">No GIFs found</div>';
+                }
+            })
+            .catch(function () {
+                gifState.loading = false;
+                showGifLoading(false);
+            });
+    }
+
+    function sendGif() {
+        var sel = gifState.selection;
+        if (!sel || !sel.url) return;
+        // Represent the GIF as a client-side file so the normal sendMessage flow
+        // (optimistic message + upload + confirm/reconcile) handles it end-to-end.
+        var fakeFile = new File([sel.url], 'gif.gif', { type: 'image/gif' });
+        fakeFile._gifUrl = sel.url;
+        fakeFile._gifPreview = sel.preview;
+        attachState.files = [fakeFile];
+        if (dom.composerInput) dom.composerInput.textContent = '';
+        updateSendButton();
+        closeGifPicker();
+        sendMessage();
+    }
+
+    /* ── Hashtag Autocomplete ─────────────────── */
+
     /* ── Hashtag Autocomplete ─────────────────── */
     var hashtagState = {
         active: false,
@@ -3918,6 +4048,24 @@
     }
 
     function uploadAttachmentToR2(file, cb, onProgress) {
+        // GIF picked from the picker is sent directly (it's already a remote URL)
+        if (file && file._gifUrl) {
+            var gifAtt = {
+                attachment_type: 'image',
+                attachment_url: file._gifUrl,
+                attachment_key: '',
+                attachment_name: 'gif.gif',
+                attachment_size: 0,
+                mime_type: 'image/gif',
+                attachment_width: null,
+                attachment_height: null,
+                attachment_duration: null,
+                thumbnail_url: null,
+            };
+            if (onProgress) onProgress(100);
+            cb(gifAtt);
+            return;
+        }
         var formData = new FormData();
         formData.append('file', file);
         var token = HiveAuth.getToken();
@@ -4191,7 +4339,9 @@
         var gradId = 'ug' + idx + '_' + Math.random().toString(36).slice(2,6);
 
         if (type === 'image') {
-            return '<div class="msg-att msg-att-image">' +
+            var isGif = mime === 'image/gif' || /\.gif($|\?)/i.test(url);
+            var gifClass = isGif ? ' msg-gif' : '';
+            return '<div class="msg-att msg-att-image' + gifClass + '">' +
                 '<div class="msg-img-wrap">' +
                     '<img src="' + escapeHtml(url) + '" alt="' + esc(name) + '" class="msg-attach-img" loading="lazy">' +
                     '<button class="msg-img-open" data-lightbox-url="' + escapeHtml(url) + '" aria-label="Open full image">' +
@@ -4333,7 +4483,8 @@
             attachHtml = renderAttachmentHtml(msg);
         }
 
-        var optUsernameColor = msg.username_color ? 'color:' + escapeHtml(msg.username_color) : '';
+        // Username color: explicit username_color wins, otherwise fall back to the rank color
+        var optUsernameColor = msg.username_color ? 'color:' + escapeHtml(msg.username_color) : 'color:' + getRankColor(msg.rank);
         var optFontStyle = msg.profile_font ? 'font-family:\'' + escapeHtml(msg.profile_font) + '\',sans-serif' : '';
         var optCombinedStyle = (optUsernameColor || optFontStyle) ? ' style="' + optUsernameColor + (optUsernameColor && optFontStyle ? ';' : '') + optFontStyle + '"' : '';
         var optTextColor = msg.chat_text_color ? 'color:' + escapeHtml(msg.chat_text_color) : '';
@@ -4504,6 +4655,23 @@
         });
 
         // ── Appearance update (real-time color + font change) ─
+        // Look up the sender's current rank (from in-memory state) so username_color
+        // can fall back to the rank color when unset — matching createMessageElement.
+        function rankFromSender(userId) {
+            var rank = null;
+            for (var i = 0; i < state.messages.length; i++) {
+                if ((state.messages[i].sender_id || state.messages[i].user_id) == userId) {
+                    rank = state.messages[i].rank;
+                    break;
+                }
+            }
+            if (!rank) {
+                var m = state.members.get(userId);
+                rank = m ? m.rank : null;
+            }
+            return rank || null;
+        }
+
         socket.on('user:appearance_updated', function (data) {
             if (!data || !data.userId) return;
             var selector = '#chat-messages-inner [data-msg-id]';
@@ -4515,9 +4683,9 @@
                 var usernameEl = el.querySelector('.msg-username');
                 if (usernameEl) {
                     if (data.username_color !== null && data.username_color !== undefined) {
-                        usernameEl.style.color = data.username_color || '';
+                        usernameEl.style.color = data.username_color || getRankColor(rankFromSender(data.userId));
                     } else {
-                        usernameEl.style.color = '';
+                        usernameEl.style.color = getRankColor(rankFromSender(data.userId));
                     }
                     if (data.profile_font !== null && data.profile_font !== undefined) {
                         usernameEl.style.fontFamily = data.profile_font ? "'" + data.profile_font + "', sans-serif" : '';
@@ -4846,6 +5014,9 @@
                     } else if (dom.emojiPicker && dom.emojiPicker.style.display !== 'none' && dom.emojiPicker.style.display !== '') {
                         e.preventDefault();
                         closeEmojiPicker();
+                    } else if (dom.gifPicker && dom.gifPicker.style.display !== 'none' && dom.gifPicker.style.display !== '') {
+                        e.preventDefault();
+                        closeGifPicker();
                     } else if (state.replyingTo) {
                         e.preventDefault();
                         cancelReply();
@@ -4860,6 +5031,45 @@
             emojiBtn.addEventListener('click', function (e) {
                 e.stopPropagation();
                 toggleEmojiPicker();
+            });
+        }
+
+        // GIF button
+        var gifBtn = qs('.composer-btn[aria-label="GIF"]');
+        if (gifBtn) {
+            gifBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                toggleGifPicker();
+            });
+        }
+        if (dom.gifPickerClose) {
+            dom.gifPickerClose.addEventListener('click', function (e) {
+                e.stopPropagation();
+                closeGifPicker();
+            });
+        }
+        if (dom.gifSearch) {
+            dom.gifSearch.addEventListener('keydown', function (e) {
+                e.stopPropagation();
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    gifState.searchQuery = dom.gifSearch.value.trim();
+                    loadGifs(true);
+                }
+            });
+            dom.gifSearch.addEventListener('input', function () {
+                var val = this.value.trim();
+                if (gifState.searchTimer) clearTimeout(gifState.searchTimer);
+                gifState.searchTimer = setTimeout(function () {
+                    gifState.searchQuery = val;
+                    loadGifs(true);
+                }, 400);
+            });
+        }
+        if (dom.gifLoadMoreBtn) {
+            dom.gifLoadMoreBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                loadGifs(false);
             });
         }
 
@@ -4903,6 +5113,11 @@
             if (dom.emojiPicker && dom.emojiPicker.style.display !== 'none' && dom.emojiPicker.style.display !== '') {
                 if (!dom.emojiPicker.contains(e.target) && !e.target.closest('.composer-btn[aria-label="Emoji"]')) {
                     closeEmojiPicker();
+                }
+            }
+            if (dom.gifPicker && dom.gifPicker.style.display !== 'none' && dom.gifPicker.style.display !== '') {
+                if (!dom.gifPicker.contains(e.target) && !e.target.closest('.composer-btn[aria-label="GIF"]')) {
+                    closeGifPicker();
                 }
             }
             if (hashtagState.active && dom.hashtagPanel) {
@@ -7364,6 +7579,13 @@
         dom.emojiSearch = $('emoji-search');
         dom.emojiBody = $('emoji-body');
         dom.emojiCategoryTabs = $('emoji-category-tabs');
+        dom.gifPicker = $('gif-picker');
+        dom.gifSearch = $('gif-search');
+        dom.gifGrid = $('gif-grid');
+        dom.gifLoading = $('gif-loading');
+        dom.gifLoadMore = $('gif-loadmore');
+        dom.gifLoadMoreBtn = $('gif-loadmore-btn');
+        dom.gifPickerClose = $('gif-picker-close');
         // Home presence elements
         dom.homeOnlineList = $('home-online-list');
         dom.homeOfflineList = $('home-offline-list');

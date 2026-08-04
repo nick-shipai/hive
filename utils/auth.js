@@ -13,7 +13,7 @@
 (function () {
     'use strict';
 
-    var API_BASE = 'https://ea23-54-202-91-167.ngrok-free.app';
+    var API_BASE = 'https://api.hivechat.online';
     var TOKEN_KEY = 'hive_token';
     var USER_KEY = 'hive_user';
 
