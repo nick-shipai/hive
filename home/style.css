@@ -83,6 +83,11 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     z-index: 10;
 }
 
+/* Mobile bottom navigation — hidden by default, shown on small screens */
+.bottom-nav {
+    display: none;
+}
+
 .rail-top, .rail-bottom {
     display: flex;
     flex-direction: column;
@@ -600,6 +605,12 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     color: var(--text-3);
     transition: all 0.2s;
 }
+
+/* Mobile-only topbar avatar/settings/online — hidden on desktop */
+.mobile-topbar-avatar,
+#mobile-topbar-settings,
+#mobile-topbar-online { display: none; }
+.mobile-topbar-avatar img { display: block; }
 
 .topbar-btn:hover {
     background: var(--surface-hover);
@@ -1336,17 +1347,170 @@ input { font-family: inherit; border: none; outline: none; background: none; col
 @media (max-width: 900px) {
     .app { grid-template-columns: 1fr; }
     .rail { display: none; }
+
+    /* Mobile bottom navigation bar */
+    .bottom-nav {
+        display: flex;
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 60px;
+        background: rgba(5, 8, 22, 0.95);
+        border-top: 1px solid var(--border);
+        z-index: 100;
+        justify-content: space-around;
+        align-items: stretch;
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+    .bottom-nav-item {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        color: var(--text-3);
+        position: relative;
+        transition: color 0.2s var(--ease);
+        min-width: 0;
+    }
+    .bottom-nav-item svg { width: 22px; height: 22px; }
+    .bottom-nav-label {
+        font-size: 10px;
+        font-weight: 600;
+        line-height: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+        padding: 0 2px;
+    }
+    .bottom-nav-item:hover,
+    .bottom-nav-item:active { color: var(--text); }
+    .bottom-nav-item.active {
+        color: var(--text);
+        background: var(--primary-dim);
+    }
+    .bottom-nav-item.active svg { filter: drop-shadow(0 0 8px rgba(108,99,255,0.4)); }
+    .bottom-nav-badge {
+        position: absolute;
+        top: 5px;
+        right: calc(50% - 22px);
+        min-width: 16px;
+        height: 16px;
+        padding: 0 4px;
+        border-radius: 9px;
+        background: #FF4D9E;
+        color: #fff;
+        font-size: 10px;
+        font-weight: 700;
+        line-height: 16px;
+        text-align: center;
+    }
+
+    /* Give main content room so the fixed bottom nav never covers it */
+    .main { padding-bottom: 60px; }
+    .chat-composer { padding-bottom: max(env(safe-area-inset-bottom), 0px); }
+
+    /* Mobile: Communities / Chats / Friends become full screens above the bottom nav.
+       Only visible while one of those nav views is active (body.side-open). */
     .sidebar { display: none; }
+
+    body.side-open .sidebar {
+        display: flex;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: calc(60px + env(safe-area-inset-bottom));
+        z-index: 90;
+        width: 100%;
+        max-width: none;
+        background: var(--bg-2);
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+    }
+    body.side-open .sidebar-header {
+        padding: 16px 16px 12px;
+        border-bottom: 1px solid var(--border);
+        background: var(--bg-2);
+        position: sticky;
+        top: 0;
+        z-index: 2;
+    }
+    body.side-open .sidebar-panel {
+        min-height: 0;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+    body.side-open .sidebar-search {
+        flex-shrink: 0;
+    }
+    body.side-open .community-list,
+    body.side-open .dm-list,
+    body.side-open .friends-list,
+    body.side-open .friends-incoming-list {
+        flex: 1;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 12px;
+    }
+    body.side-open .user-panel {
+        border-top: 1px solid var(--border);
+    }
+
     .right-sidebar { display: none; }
     .rpanel { width: 100%; }
     .quick-actions { grid-template-columns: repeat(2, 1fr); }
     .featured-grid { grid-template-columns: repeat(2, 1fr); }
-    .topbar-topic { display: none; }
     .rp-actions-grid { grid-template-columns: repeat(3, 1fr); }
     .rp-achievements { grid-template-columns: repeat(4, 1fr); }
     .rp-effect-modal-grid { grid-template-columns: repeat(3, 1fr); }
     .rp-ring-modal-grid { grid-template-columns: repeat(3, 1fr); }
-}
+
+    /* Mobile home topbar: search on the left, avatar/settings/online on the right */
+    .home-view .topbar-left { display: none; }
+    .home-view .topbar { justify-content: space-between; gap: 0; }
+    .home-view .topbar-topic { display: none; }
+    .home-view #topbar-notif-btn,
+    .home-view .topbar-btn[aria-label="Members"],
+    .home-view .topbar-btn[aria-label="Pinned"] {
+        display: none;
+    }
+    .home-view .topbar-right {
+        flex: 1;
+        justify-content: space-between;
+    }
+    .home-view .topbar-search {
+        flex: 0 1 auto;
+        max-width: none;
+        justify-content: flex-start;
+        min-width: 0;
+    }
+    .home-view .topbar-search input {
+        width: 100%;
+        min-width: 0;
+    }
+    .mobile-topbar-avatar {
+        display: flex;
+        width: 32px; height: 32px;
+        border-radius: 50%;
+        padding: 0;
+        overflow: hidden;
+    }
+    .mobile-topbar-avatar img {
+        width: 100%; height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+    .mobile-topbar-avatar,
+    #mobile-topbar-settings,
+    #mobile-topbar-online {
+        display: flex;
+        flex-shrink: 0;
+    }
 
 @media (max-width: 600px) {
     .content { padding: 16px; }
@@ -3318,6 +3482,47 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     .rpanel--expanded { width: 100%; }
 }
 
+/* ── MOBILE PROFILE SCREEN OVERRIDES ─────────────
+   These come AFTER the base .rpanel rules on purpose,
+   so on phones the profile is a full-width screen that
+   stops above the bottom nav. The base rules (position
+   absolute, width 380px, z-index 5) would otherwise win. */
+@media (max-width: 900px) {
+    .rpanel {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: calc(60px + env(safe-area-inset-bottom));
+        width: 100%;
+        max-width: none;
+        border-left: none;
+        border-right: none;
+        z-index: 1000;
+        animation: none;
+        overflow: hidden;
+    }
+    .rpanel-view {
+        min-height: 0;
+    }
+    .rpanel--expanded { width: 100%; }
+    .rpanel-collapse-handle { display: none; }
+    .rpanel-toolbar {
+        padding: 12px 16px;
+        min-height: 48px;
+    }
+    .rpanel-scroll {
+        flex: 1;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 24px;
+    }
+    .rpanel-banner { height: 120px; }
+    .rpanel-hero {
+        padding: 16px;
+    }
+}
+
 @keyframes rpanelSlideIn {
     from { opacity: 0; transform: translateX(24px); }
     to { opacity: 1; transform: translateX(0); }
@@ -4490,6 +4695,55 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     opacity: 0;
     transform: scale(0.95) translateY(10px);
     transition: opacity 0.18s var(--ease), transform 0.18s var(--ease);
+}
+
+/* ── Mobile: user popup is a full-screen sheet ── */
+@media (max-width: 900px) {
+    .up-overlay {
+        background: rgba(5, 7, 19, 0.55);
+    }
+    .user-popup {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: calc(60px + env(safe-area-inset-bottom));
+        width: 100%;
+        max-width: none;
+        max-height: none;
+        height: calc(100dvh - 60px - env(safe-area-inset-bottom));
+        border: none;
+        border-radius: 0;
+        margin: 0;
+    }
+    .user-popup.up-center {
+        margin: 0;
+    }
+
+    /* Mobile back button */
+    .up-back-btn {
+        display: flex;
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        right: auto;
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        align-items: center;
+        justify-content: center;
+        background: rgba(5, 8, 22, 0.6);
+        border: 1px solid var(--border);
+        color: var(--text);
+        z-index: 20;
+        box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+        cursor: pointer;
+    }
+    .up-back-btn:hover { background: var(--surface-hover); }
+}
+/* Back button hidden on desktop */
+@media (min-width: 901px) {
+    .up-back-btn { display: none; }
 }
 
 /* ── Banner ──────────────────────────────────── */
@@ -10521,6 +10775,55 @@ input { font-family: inherit; border: none; outline: none; background: none; col
 
 @keyframes notifSpin {
     to { transform: rotate(360deg); }
+}
+
+/* ── Mobile: Notifications as a full screen (not a popup) ──
+   Covers the whole screen EXCEPT the fixed bottom-nav strip,
+   which stays visible and tappable underneath it. */
+@media (max-width: 900px) {
+    .notif-overlay {
+        align-items: stretch;
+        justify-content: stretch;
+        padding: 0;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: calc(60px + env(safe-area-inset-bottom));
+        background: var(--bg-2);
+        backdrop-filter: none;
+    }
+
+    .notif-popup {
+        width: 100%;
+        max-height: none;
+        height: 100%;
+        border: none;
+        border-radius: 0;
+        box-shadow: none;
+        opacity: 1;
+        transform: none;
+    }
+
+    .notif-overlay.visible .notif-popup {
+        opacity: 1;
+        transform: none;
+    }
+
+    .notif-popup-header {
+        padding: 18px 16px 14px;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .notif-popup-body {
+        flex: 1;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* Mobile: keep the bottom nav above the notification screen so it stays tappable */
+@media (max-width: 900px) {
+    .bottom-nav { z-index: 2000; }
 }
 
 /* ── Responsive: Ring Modal Grid ──────────── */

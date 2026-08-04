@@ -50,6 +50,8 @@
         // Notification panel
         notifOpen: false,
         notifCloseTimeout: null,
+        onlineUsersOpen: false,
+        onlinePush: false,
         notifNotifications: [],
         notifUnreadCount: 0,
         notifOffset: 0,
@@ -91,6 +93,8 @@
         var u = state.user;
         if (!u) return;
         if (dom.userAvatar) dom.userAvatar.src = getAvatarUrl(u);
+        var mobileAvatarImg = $('mobile-topbar-avatar-img');
+        if (mobileAvatarImg) mobileAvatarImg.src = getAvatarUrl(u);
         if (dom.userName) dom.userName.textContent = u.display_name || u.username || 'User';
         if (dom.userTag) dom.userTag.textContent = '@' + (u.username || 'user');
     }
@@ -831,6 +835,15 @@
         // Update counts (exclude AI bots from the count)
         if (onlineNum) onlineNum.textContent = onlineUsers.length;
         if (offlineNum) offlineNum.textContent = offlineUsers.length;
+        var onlineBadge = $('mobile-topbar-online-badge');
+        if (onlineBadge) {
+            if (onlineUsers.length > 0) {
+                onlineBadge.textContent = onlineUsers.length > 99 ? '99+' : onlineUsers.length;
+                onlineBadge.style.display = '';
+            } else {
+                onlineBadge.style.display = 'none';
+            }
+        }
 
         // Bind click handlers for AI member cards
         bindHomeMemberCardClicks(onlineList);
@@ -1055,7 +1068,10 @@
     function renderUserPanel() {
         var user = state.user;
         if (!user) return;
-        if (dom.userAvatar) dom.userAvatar.src = getAvatarUrl(user);
+        var avatarUrl = getAvatarUrl(user);
+        if (dom.userAvatar) dom.userAvatar.src = avatarUrl;
+        var mobileAvatarImg = $('mobile-topbar-avatar-img');
+        if (mobileAvatarImg) mobileAvatarImg.src = avatarUrl;
         if (dom.userName) dom.userName.innerHTML = escapeHtml(user.username) + createRankBadgeHtml(user.rank, 'rank-badge-sm');
         if (dom.userTag) dom.userTag.textContent = '#' + user.id.slice(0, 4).toUpperCase();
     }
@@ -1295,85 +1311,76 @@
         return match ? match[1] : null;
     }
 
-    function handlePopState(e) {
-        if (state.notifOpen) {
-            closeNotifications(false);
-            return;
+    // Unified: the ONE place that maps the current URL to the screen that should be visible.
+    // Every screen + overlay (profile, notifications, edit, appearance) is keyed off this,
+    // so as soon as the URL no longer matches a screen, that screen hides.
+    function getCurrentRoute() {
+        var hash = window.location.hash;
+        var sv = (window.history.state && window.history.state.view) || null;
+        if (hash === '#/profile/edit' || sv === 'profile-edit') return 'edit';
+        if (hash === '#/profile/appearance' || sv === 'profile-appearance') return 'appearance';
+        if (hash === '#/profile' || sv === 'profile') return 'profile';
+        if (hash === '#/notifications' || sv === 'notifications') return 'notifications';
+        if (sv === 'online') return 'online';
+        if (hash === '#/friends' || sv === 'friends') return 'friends';
+        if (hash === '#/communities' || sv === 'communities') return 'communities';
+        if (isDmRoute() || sv === 'dm') return 'dm';
+        if (hash.indexOf('#/community/') === 0) return 'chat';
+        return 'home';
+    }
+
+    // Show ONLY the screen the URL matches; hide every other screen.
+    // Runs on every popstate and after every navigation.
+    function syncVisibilityForRoute() {
+        var route = getCurrentRoute();
+        var currentView = state.activeView || 'home';
+
+        // Close any full-screen panel whose URL no longer matches.
+        if (route !== 'notifications' && state.notifOpen) closeNotifications(false);
+        if (route !== 'online' && onlineUsersOpen) closeOnlineUsers(false);
+
+        var isProfileRouteNow = (route === 'profile' || route === 'edit' || route === 'appearance');
+        if (!isProfileRouteNow && (profileOpen || editProfileOpen || appearanceOpen)) {
+            editProfileOpen = false;
+            appearanceOpen = false;
+            profileOpen = false;
+            var rpanel = $('rpanel');
+            if (rpanel) hide(rpanel);
+            var rightSidebar = qs('.right-sidebar');
+            if (rightSidebar) show(rightSidebar);
         }
-        if (isNotifRoute() || (e.state && e.state.view === 'notifications')) {
+
+        // Render the correct base screen for the current URL.
+        if (route === 'notifications') {
             openNotifications();
             return;
         }
-        if (isEditProfileRoute()) {
-            if (!editProfileOpen) openEditProfile();
+        if (route === 'edit') { openEditProfile(); return; }
+        if (route === 'appearance') { openAppearance(); return; }
+        if (route === 'profile') { if (!profileOpen) openProfile(); return; }
+        if (route === 'online') { openOnlineUsers(); return; }
+
+        if (route === 'friends') { showFriendsView(); return; }
+        if (route === 'communities') { showCommunitiesView(); return; }
+        if (route === 'chat') {
+            var communityId = getCommunityIdFromUrl();
+            if (communityId) openCommunity(communityId);
+            else showHomeView();
             return;
         }
-        if (isAppearanceRoute()) {
-            if (!appearanceOpen) openAppearance();
-            return;
-        }
-        if (isProfileRoute()) {
-            if (editProfileOpen) {
-                editProfileOpen = false;
-                var editView = $('rpanel-edit');
-                var profileView = $('rpanel-profile');
-                if (editView) hide(editView);
-                if (profileView) show(profileView);
-                populateProfile();
-            }
-            if (appearanceOpen) {
-                appearanceOpen = false;
-                var appearanceView = $('rpanel-appearance');
-                var profileView2 = $('rpanel-profile');
-                if (appearanceView) hide(appearanceView);
-                if (profileView2) show(profileView2);
-                populateProfile();
-            }
-            if (!profileOpen) openProfile();
-            return;
-        }
-        if (editProfileOpen) {
-            editProfileOpen = false;
-        }
-        if (appearanceOpen) {
-            appearanceOpen = false;
-        }
-        if (profileOpen) {
-            var rpanel = $('rpanel');
-            if (rpanel) hide(rpanel);
-            profileOpen = false;
-            var rightSidebar = qs('.right-sidebar');
-            if (rightSidebar) show(rightSidebar);
-            return;
-        }
-        if (isDmRoute()) {
+        if (route === 'dm') {
             var convId = getDmConversationIdFromUrl();
-            if (convId) {
-                openDmConversation(convId);
-            } else {
-                showDmView();
-            }
+            if (convId) openDmConversation(convId);
+            else showDmView();
             return;
         }
-        if (isFriendsRoute()) {
-            showFriendsView();
-            return;
-        }
-        if (isCommunitiesRoute()) {
-            showCommunitiesView();
-            return;
-        }
-        var communityId = null;
-        if (e.state && e.state.communityId) {
-            communityId = e.state.communityId;
-        } else {
-            communityId = getCommunityIdFromUrl();
-        }
-        if (communityId) {
-            openCommunity(communityId);
-        } else {
-            showHomeView();
-        }
+        // default → home
+        if (currentView === 'chat') leaveCurrentRoom();
+        showHomeView();
+    }
+
+    function handlePopState(e) {
+        syncVisibilityForRoute();
     }
 
     function getCommunityIdFromUrl() {
@@ -1383,45 +1390,8 @@
     }
 
     function handleInitialRoute() {
-        if (isNotifRoute()) {
-            openNotifications();
-            return;
-        }
-        if (isFriendsRoute()) {
-            showFriendsView();
-            return;
-        }
-        if (isEditProfileRoute()) {
-            openEditProfile();
-            return;
-        }
-        if (isAppearanceRoute()) {
-            openAppearance();
-            return;
-        }
-        if (isProfileRoute()) {
-            openProfile();
-            return;
-        }
-        if (isDmRoute()) {
-            var convId = getDmConversationIdFromUrl();
-            if (convId) {
-                openDmConversation(convId);
-            } else {
-                showDmView();
-            }
-            return;
-        }
-        if (isCommunitiesRoute()) {
-            showCommunitiesView();
-            return;
-        }
-        var communityId = getCommunityIdFromUrl();
-        if (communityId) {
-            openCommunity(communityId);
-        } else {
-            showHomeView();
-        }
+        // On a fresh load, the URL decides what's visible — same logic as every nav/popstate.
+        syncVisibilityForRoute();
     }
 
     /* ── View Switching ──────────────────────── */
@@ -1438,6 +1408,21 @@
         hide(dom.sidebarFriendsPanel);
     }
 
+    // On mobile, the sidebar overlay is only shown for the nav-panel views
+    // (communities / chats / friends). Home and chat hide it.
+    function syncSidebarVisibility(viewName) {
+        var body = document.body;
+        if (viewName === 'communities' || viewName === 'dm' || viewName === 'friends') {
+            body.classList.add('side-open');
+            body.classList.remove('chat-open');
+        } else if (viewName === 'chat') {
+            body.classList.add('chat-open');
+            body.classList.remove('side-open');
+        } else {
+            body.classList.remove('side-open', 'chat-open');
+        }
+    }
+
     function setActiveRailIcon(viewName) {
         var icons = document.querySelectorAll('.rail-icon[data-nav]');
         for (var i = 0; i < icons.length; i++) {
@@ -1445,6 +1430,14 @@
         }
         var activeIcon = document.querySelector('.rail-icon[data-nav="' + viewName + '"]');
         if (activeIcon) activeIcon.classList.add('active');
+
+        // Keep the mobile bottom-nav in sync with the active view
+        var bottomIcons = document.querySelectorAll('.bottom-nav-item[data-nav]');
+        for (var b = 0; b < bottomIcons.length; b++) {
+            bottomIcons[b].classList.remove('active');
+        }
+        var activeBottom = document.querySelector('.bottom-nav-item[data-nav="' + viewName + '"]');
+        if (activeBottom) activeBottom.classList.add('active');
     }
 
     function showHomeView() {
@@ -1457,6 +1450,7 @@
         state.chatRestricted = false;
         state.members.clear();
         state.activeView = 'home';
+        syncSidebarVisibility('home');
         hideAllViews();
         show(dom.homeView);
         show(dom.homeSidebar);
@@ -1473,6 +1467,7 @@
     function showChatView() {
         hideAllViews();
         state.activeView = 'chat';
+        syncSidebarVisibility('chat');
         show(dom.chatView);
         show(dom.chatSidebar);
         dom.chatView.classList.add('view-enter');
@@ -1504,6 +1499,7 @@
         state.chatRestricted = false;
         state.members.clear();
         state.activeView = 'dm';
+        syncSidebarVisibility('dm');
         hideAllViews();
         show(dom.homeView);
         show(dom.homeSidebar);
@@ -1531,6 +1527,7 @@
         state.chatRestricted = false;
         state.members.clear();
         state.activeView = 'friends';
+        syncSidebarVisibility('friends');
         hideAllViews();
         show(dom.homeView);
         show(dom.homeSidebar);
@@ -1861,6 +1858,7 @@
         state.chatRestricted = false;
         state.members.clear();
         state.activeView = 'friends';
+        syncSidebarVisibility('friends');
         hideAllViews();
         show(dom.homeView);
         show(dom.homeSidebar);
@@ -1880,6 +1878,7 @@
         state.currentDmConversation = null;
         state.members.clear();
         state.activeView = 'communities';
+        syncSidebarVisibility('communities');
         hideAllViews();
         show(dom.homeView);
         show(dom.homeSidebar);
@@ -1905,6 +1904,16 @@
                         dom.chatsRailBadge.style.display = '';
                     } else {
                         dom.chatsRailBadge.style.display = 'none';
+                    }
+                }
+                // Mirror the same count into the mobile bottom-nav Chats badge
+                var bottomChatsBadge = document.getElementById('bottom-chats-badge');
+                if (bottomChatsBadge) {
+                    if (total > 0) {
+                        bottomChatsBadge.textContent = total > 99 ? '99+' : total;
+                        bottomChatsBadge.style.display = '';
+                    } else {
+                        bottomChatsBadge.style.display = 'none';
                     }
                 }
             })
@@ -2314,6 +2323,9 @@
         show(notifOverlay);
         notifOverlay.classList.add('visible');
 
+        // Highlight the Notifications item in both rail and mobile bottom-nav
+        setActiveRailIcon('notifications');
+
         loadNotifications();
     }
 
@@ -2341,6 +2353,81 @@
 
         profileOpen = false;
         appearanceOpen = false;
+    }
+
+    /* ── Online Users panel ─────────────────── */
+    var onlineUsersOpen = false;
+
+    function openOnlineUsers() {
+        if (onlineUsersOpen) return;
+        onlineUsersOpen = true;
+
+        var overlay = $('online-overlay');
+        if (!overlay) return;
+
+        // Close any other open overlay
+        if (state.notifOpen) closeNotifications(false);
+        document.body.classList.remove('side-open');
+
+        show(overlay);
+        overlay.classList.add('visible');
+
+        // Build the online list from home presence data (fall back to a fresh fetch)
+        var listEl = $('online-list');
+        var emptyEl = $('online-empty');
+        if (!listEl || !emptyEl) return;
+
+        var onlineHtml = '';
+        var anyOnline = false;
+        state.homeMembers.forEach(function (member) {
+            var isBot = member.is_bot || member.rank === 'bot';
+            if (member.online || isBot) {
+                onlineHtml += createHomeMemberCardHtml(member, false);
+                anyOnline = true;
+            }
+        });
+
+        if (anyOnline) {
+            listEl.innerHTML = onlineHtml;
+            show(listEl);
+            hide(emptyEl);
+            bindHomeMemberCardClicks(listEl);
+        } else {
+            hide(listEl);
+            show(emptyEl);
+        }
+
+        if (state.homeMembers.size === 0) {
+            loadHomePresence().then(function () {
+                if (!onlineUsersOpen) return;
+                var h = '';
+                var any = false;
+                state.homeMembers.forEach(function (member) {
+                    var isBot = member.is_bot || member.rank === 'bot';
+                    if (member.online || isBot) { h += createHomeMemberCardHtml(member, false); any = true; }
+                });
+                if (any) { listEl.innerHTML = h; show(listEl); hide(emptyEl); bindHomeMemberCardClicks(listEl); }
+                else { hide(listEl); show(emptyEl); }
+            });
+        }
+    }
+
+    function closeOnlineUsers(updateHistory) {
+        if (updateHistory === undefined) updateHistory = true;
+        var overlay = $('online-overlay');
+        if (!overlay) return;
+
+        onlineUsersOpen = false;
+        overlay.classList.remove('visible');
+
+        var t = setTimeout(function () {
+            hide(overlay);
+            clearTimeout(t);
+        }, 220);
+
+        if (updateHistory && state.onlinePush) {
+            state.onlinePush = false;
+        }
     }
 
     function loadNotifications() {
@@ -5169,39 +5256,30 @@
             });
         }
 
-        // Rail navigation (Home, Communities, Chats, etc.)
-        var railNavIcons = document.querySelectorAll('.rail-icon[data-nav]');
+        // Rail navigation (Home, Communities, Chats, etc.) — also binds the mobile bottom-nav.
+        // Each nav sets the URL, then syncVisibilityForRoute() shows the matching screen and
+        // hides every other screen (profile, notifications, etc.), including for the current popstate.
+        var railNavIcons = document.querySelectorAll('.rail-icon[data-nav], .bottom-nav-item[data-nav]');
         for (var i = 0; i < railNavIcons.length; i++) {
             railNavIcons[i].addEventListener('click', function (e) {
                 e.preventDefault();
                 var nav = this.getAttribute('data-nav');
+                if (nav === 'search') { showToast('Search coming soon'); return; }
+                if (nav === 'settings') { showToast('Settings coming soon'); return; }
+
                 if (nav === 'home') {
                     window.history.pushState({}, '', '/home/');
-                    showHomeView();
                 } else if (nav === 'communities') {
-                    window.history.pushState({}, '', '/home/#/communities');
-                    showCommunitiesView();
+                    window.history.pushState({ view: 'communities' }, '', '/home/#/communities');
                 } else if (nav === 'chats') {
-                    window.history.pushState({}, '', '/home/');
-                    showDmView();
-                } else if (nav === 'search') {
-                    showToast('Search coming soon');
+                    window.history.pushState({ view: 'dm' }, '', '/home/');
                 } else if (nav === 'friends') {
                     window.history.pushState({ view: 'friends' }, '', '/home/#/friends');
-                    showFriendsView();
                 } else if (nav === 'notifications') {
-                    if (profileOpen) {
-                        profileOpen = false;
-                    }
-                    if (editProfileOpen) {
-                        editProfileOpen = false;
-                    }
-                    appearanceOpen = false;
                     window.history.pushState({ view: 'notifications' }, '', '/home/#/notifications');
-                    openNotifications();
-                } else if (nav === 'settings') {
-                    showToast('Settings coming soon');
                 }
+                // After the URL updates, enforce that only the matching screen is visible.
+                syncVisibilityForRoute();
             });
         }
 
@@ -5493,6 +5571,9 @@
         var rightSidebar = qs('.right-sidebar');
         if (!rpanel || !profileView) return;
 
+        // On mobile, close the sidebar overlay so the profile shows cleanly on top
+        document.body.classList.remove('side-open');
+
         hide(editView);
         if (appearanceView) hide(appearanceView);
         show(profileView);
@@ -5504,7 +5585,9 @@
         triggerProfileEntrance();
         animateStatCounters();
 
-        window.history.pushState({ view: 'profile' }, '', '/home/#/profile');
+        if (!isProfileRoute()) {
+            window.history.pushState({ view: 'profile' }, '', '/home/#/profile');
+        }
     }
 
     function closeProfile() {
@@ -5516,6 +5599,9 @@
         if (rightSidebar) show(rightSidebar);
         profileOpen = false;
         appearanceOpen = false;
+        setActiveRailIcon(state.activeView);
+        // Restore the sidebar overlay on mobile if we're still in a nav-panel view
+        syncSidebarVisibility(state.activeView);
 
         window.history.back();
     }
@@ -5649,6 +5735,44 @@
             userPanel.addEventListener('click', function (e) {
                 if (e.target.closest('.ua-btn')) return;
                 openProfile();
+            });
+        }
+
+        // Mobile home topbar: avatar opens the profile, settings shows a toast
+        var mobileAvatarBtn = $('mobile-topbar-avatar');
+        if (mobileAvatarBtn) {
+            mobileAvatarBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                openProfile();
+            });
+        }
+        var mobileSettingsBtn = $('mobile-topbar-settings');
+        if (mobileSettingsBtn) {
+            mobileSettingsBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                showToast('Settings coming soon');
+            });
+        }
+        var mobileOnlineBtn = $('mobile-topbar-online');
+        if (mobileOnlineBtn) {
+            mobileOnlineBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                if (onlineUsersOpen) {
+                    closeOnlineUsers(true);
+                } else {
+                    window.history.pushState({ view: 'online' }, '', '/home/');
+                    state.onlinePush = true;
+                    openOnlineUsers();
+                }
+            });
+        }
+        var onlineCloseBtn = $('online-close');
+        if (onlineCloseBtn) {
+            onlineCloseBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                closeOnlineUsers(true);
+                window.history.back();
             });
         }
 
@@ -5928,7 +6052,9 @@
         updateSaveBtn();
         triggerEditEntrance();
 
-        window.history.pushState({ view: 'profile-edit' }, '', '/home/#/profile/edit');
+        if (!isEditProfileRoute()) {
+            window.history.pushState({ view: 'profile-edit' }, '', '/home/#/profile/edit');
+        }
     }
 
     function closeEditProfile() {
@@ -6640,7 +6766,9 @@
         loadAppearanceSettings();
         triggerAppearanceEntrance();
 
-        window.history.pushState({ view: 'profile-appearance' }, '', '/home/#/profile/appearance');
+        if (!isAppearanceRoute()) {
+            window.history.pushState({ view: 'profile-appearance' }, '', '/home/#/profile/appearance');
+        }
     }
 
     function closeAppearance() {
@@ -8122,6 +8250,15 @@
             };
         }
 
+        // Mobile back button — closes the user popup
+        var upBackBtn = $('up-back-btn');
+        if (upBackBtn) {
+            upBackBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                closeUserPopup();
+            });
+        }
+
         // Wire action tiles
         var tiles = dom.userPopup.querySelectorAll('.up-action-tile');
         tiles.forEach(function (tile) {
@@ -8349,6 +8486,14 @@
     function positionPopup(anchorEl) {
         var popup = dom.userPopup;
         if (!popup) return;
+
+        // On mobile the popup is a fixed full-screen sheet — skip anchor positioning.
+        if (window.innerWidth <= 900) {
+            popup.style.top = '';
+            popup.style.left = '';
+            popup.classList.remove('up-center');
+            return;
+        }
 
         popup.style.top = '';
         popup.style.left = '';
