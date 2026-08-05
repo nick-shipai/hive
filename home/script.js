@@ -3486,9 +3486,9 @@
                 tabs[i].classList.toggle('active', tabs[i].getAttribute('data-cat') === 'recent');
             }
         }
-        /* Position */
+        /* Position (desktop only — on mobile CSS anchors it full-width to the bottom) */
         var emojiBtn = qs('.composer-btn[aria-label="Emoji"]');
-        if (emojiBtn) {
+        if (emojiBtn && window.innerWidth > 900) {
             var rect = emojiBtn.getBoundingClientRect();
             var pw = 350, ph = 440, gap = 12;
             var left = rect.right - pw;
@@ -3532,6 +3532,8 @@
     var GIF_LIMIT = 15;
 
     function positionGifPicker() {
+        // Desktop only — on mobile CSS anchors it full-width to the bottom.
+        if (window.innerWidth <= 900) return;
         var gifBtn = qs('.composer-btn[aria-label="GIF"]');
         if (gifBtn && dom.gifPicker) {
             var rect = gifBtn.getBoundingClientRect();

@@ -1511,6 +1511,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
         display: flex;
         flex-shrink: 0;
     }
+}
 
 @media (max-width: 600px) {
     .content { padding: 16px; }
@@ -3317,6 +3318,51 @@ input { font-family: inherit; border: none; outline: none; background: none; col
 .gif-picker-body::-webkit-scrollbar-track { background: transparent; }
 .gif-picker-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
 .gif-picker-body::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.14); }
+
+/* ── Mobile: emoji + gif pickers become a full-width bottom sheet ── */
+@media (max-width: 900px) {
+    .emoji-picker,
+    .gif-picker {
+        position: fixed;
+        left: 0 !important;
+        right: 0;
+        bottom: calc(60px + env(safe-area-inset-bottom));
+        top: auto;
+        width: 100%;
+        max-width: 100%;
+        height: min(60dvh, 480px);
+        border-radius: 16px 16px 0 0;
+        border-left: none;
+        border-right: none;
+        border-bottom: none;
+        transform-origin: bottom center;
+        z-index: 9999;
+    }
+    .gif-picker-body {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    .gif-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+    }
+    .emoji-body {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    .emoji-grid {
+        grid-template-columns: repeat(6, 1fr);
+        gap: 3px;
+    }
+    .emoji-item .hive-emoji {
+        width: 28px;
+        height: 28px;
+    }
+}
 
 .gif-loading {
     display: flex;
