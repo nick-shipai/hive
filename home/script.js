@@ -2435,15 +2435,28 @@
     var callActiveType = null;   // 'video' | 'voice' — currently in-call type (community calls)
     var localCallStream = null;
     var currentCallCommunityId = null;
+    var currentCallConversationId = null;  // non-null when in a DM call
+    var currentCallMaxSlots = 5;
     var myUserId = null;
     var callParticipants = [];   // [{ userId, username, slot }]
     var peerConnections = {};    // userId → RTCPeerConnection (mesh)
     var pendingStreams = {};     // userId → MediaStream (buffered until callParticipants is updated)
+    var offeredToWatchers = {};  // userId → true (offer already sent via call:viewer-joined after joining)
+    var isScreenSharing = false;
+    var storedCameraVideoTrack = null; // camera track saved while screen-sharing, to restore
+    var screenStream = null;           // current getDisplayMedia stream (stopped on call end)
     var mySlot = 0;
+    var handStates = {};           // userId → true/false (raised hand indicator)
+    var handRaised = false;        // this user's own raised-hand state
+    var isSwitchingCamera = false;
     var ICE_SERVERS = [
         { urls: "stun:stun.l.google.com:19302" },
         { urls: "turn:turn.hivechat.online:3478", username: "hive", credential: "Bright2010" }
     ];
+
+    // Incoming DM call state
+    var incomingCallData = null;  // { callerUserId, callerUsername, callerAvatar, callType, conversationId }
+    var outgoingCallTimeout = null;  // timeout to auto-cancel invite if not accepted
 
     function getMyUserId() {
         if (myUserId) return myUserId;
@@ -2457,12 +2470,23 @@
     }
 
     /**
-     * Send a community call signal to the backend (start / end).
-     * In community chat this records the call in the DB + writes a system
-     * message into the chat history. On start we append the confirmed system
-     * message locally (the initiator is excluded from the socket broadcast).
+     * Send a call signal to the backend (start / end).
+     * Supports both community calls and DM calls.
      */
     function sendCallSignal(callType, status) {
+        if (currentCallConversationId) {
+            return apiPost('/api/calls/dm', {
+                conversationId: currentCallConversationId,
+                callType: callType,
+                status: status,
+            }).then(function (data) {
+                if (status === 'start' && data.msg) {
+                    appendMessage(data.msg);
+                }
+            }).catch(function (err) {
+                console.error('[HIVE] Failed to send DM call signal:', err);
+            });
+        }
         if (!state.currentCommunity) return Promise.resolve();
         return apiPost('/api/calls/community', {
             communityId: state.currentCommunity.id,
@@ -2477,13 +2501,83 @@
         });
     }
 
+    /* ── Incoming DM Call Popup ─────────────────── */
+    function showIncomingCallPopup(data) {
+        incomingCallData = data;
+        var overlay = $('incoming-call-overlay');
+        if (!overlay) return;
+        var avatar = $('incoming-call-avatar');
+        var name = $('incoming-call-name');
+        if (avatar) {
+            var avatarUrl = getAvatarUrl({ id: data.callerUserId, profile_picture: data.callerAvatar, username: data.callerUsername });
+            avatar.src = avatarUrl;
+        }
+        if (name) name.textContent = data.callerUsername || 'Unknown';
+        overlay.style.display = 'flex';
+        requestAnimationFrame(function () { overlay.classList.add('visible'); });
+    }
+
+    function hideIncomingCallPopup() {
+        incomingCallData = null;
+        var overlay = $('incoming-call-overlay');
+        if (!overlay) return;
+        overlay.classList.remove('visible');
+        setTimeout(function () { overlay.style.display = 'none'; }, 300);
+    }
+
+    function acceptIncomingCall() {
+        if (!incomingCallData || !state.socket) return;
+        var data = incomingCallData;
+        hideIncomingCallPopup();
+
+        callActiveType = data.callType || 'video';
+        currentCallConversationId = data.conversationId;
+        currentCallMaxSlots = 2;
+
+        // Get local stream and open call overlay
+        var videoEnabled = callActiveType === 'video';
+        getLocalCallStream(videoEnabled).then(function (stream) {
+            openCallOverlay();
+            setParticipantControls(true);
+            syncMicButton(true);
+            syncCamButton(false); // privacy-first: camera off by default
+
+            state.socket.emit('call:accept', {
+                conversationId: data.conversationId,
+            });
+        }).catch(function (err) {
+            console.error('[WEBRTC] Failed to get stream for DM call:', err);
+        });
+    }
+
+    function declineIncomingCall() {
+        if (!incomingCallData || !state.socket) return;
+        state.socket.emit('call:decline', {
+            conversationId: incomingCallData.conversationId,
+        });
+        hideIncomingCallPopup();
+    }
+
+    function cancelOutgoingCall() {
+        if (!currentCallConversationId || !state.socket) return;
+        state.socket.emit('call:cancel', {
+            conversationId: currentCallConversationId,
+            participants: [getMyUserId(), state.currentDmUserId],
+        });
+        closeCallOverlay();
+    }
+
     function createPeerConnection(targetUserId) {
         var pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
 
         pc.onicecandidate = function (event) {
-            if (event.candidate && currentCallCommunityId && state.socket && targetUserId) {
+            var callScope = currentCallConversationId
+                ? { conversationId: currentCallConversationId }
+                : { communityId: currentCallCommunityId };
+            if (event.candidate && (callScope.conversationId || callScope.communityId) && state.socket && targetUserId) {
                 state.socket.emit('call:ice-candidate', {
-                    communityId: currentCallCommunityId,
+                    communityId: callScope.communityId || null,
+                    conversationId: callScope.conversationId || null,
                     candidate: event.candidate.toJSON(),
                     targetUserId: targetUserId,
                 });
@@ -2492,7 +2586,24 @@
 
         pc.ontrack = function (event) {
             if (event.streams && event.streams[0]) {
-                // Find the slot for this user
+                var isDm = !!currentCallConversationId;
+                // DM mode: always route remote user to slot 1
+                if (isDm) {
+                    var slotEl = document.getElementById('call-slot-1');
+                    if (slotEl) {
+                        var video = slotEl.querySelector('.call-slot-video');
+                        var fallback = slotEl.querySelector('.call-slot-fallback');
+                        if (video) {
+                            video.srcObject = event.streams[0];
+                            fadeVideoIn(video);
+                            if (fallback) fallback.style.display = 'none';
+                            slotEl.classList.add('call-slot-active');
+                            slotEl.classList.remove('call-slot-empty');
+                        }
+                    }
+                    return;
+                }
+                // Community mode: find the slot for this user
                 var participant = callParticipants.find(function (p) { return p.userId === targetUserId; });
                 if (participant && participant.slot > 0) {
                     var slotEl = document.getElementById('call-slot-' + participant.slot);
@@ -2501,13 +2612,13 @@
                         var fallback = slotEl.querySelector('.call-slot-fallback');
                         if (video) {
                             video.srcObject = event.streams[0];
+                            fadeVideoIn(video);
                             if (fallback) fallback.style.display = 'none';
                             slotEl.classList.add('call-slot-active');
                             slotEl.classList.remove('call-slot-empty');
                         }
                     }
                 } else {
-                    // Slot not assigned yet — buffer the stream
                     pendingStreams[targetUserId] = event.streams[0];
                 }
             }
@@ -2551,14 +2662,47 @@
     }
 
     function startCommunityCall(callType) {
+        // DM call mode — use invite flow
+        if (state.currentDmConversation && state.currentDmUserId) {
+            var videoEnabled = callType === 'video';
+            getLocalCallStream(videoEnabled).then(function (stream) {
+                callActiveType = callType;
+                currentCallConversationId = state.currentDmConversation;
+                currentCallMaxSlots = 2;
+
+                openCallOverlay();
+                setParticipantControls(true);
+                syncMicButton(true);
+                syncCamButton(videoEnabled);
+
+                if (state.socket) {
+                    state.socket.emit('call:start', {
+                        conversationId: currentCallConversationId,
+                        callType: callType,
+                        participants: [getMyUserId(), state.currentDmUserId],
+                        callerAvatar: state.me ? state.me.profile_picture : null,
+                    });
+                }
+
+                sendCallSignal(callType, 'start');
+            }).catch(function (err) {
+                console.error('[WEBRTC] Failed to start DM call:', err);
+            });
+            return;
+        }
+
         if (!state.currentCommunity) return;
 
         var videoEnabled = callType === 'video';
         getLocalCallStream(videoEnabled).then(function (stream) {
             callActiveType = callType;
             currentCallCommunityId = state.currentCommunity.id;
+            currentCallMaxSlots = 5;
 
             openCallOverlay();
+            setParticipantControls(true);
+            syncMicButton(true);
+            syncCamButton(videoEnabled);
 
             if (state.socket) {
                 state.socket.emit('call:start', {
@@ -2574,15 +2718,105 @@
     }
 
     function joinCallFromCard(msg) {
-        if (!state.currentCommunity) return;
         callActiveType = msg.call_type || 'video';
-        currentCallCommunityId = msg.community_id || state.currentCommunity.id;
-        openCallOverlay();
-        var joinBtn = $('call-join-btn');
-        if (joinBtn) joinBtn.style.display = '';
-        if (state.socket) {
-            state.socket.emit('call:watch', { communityId: currentCallCommunityId });
+        currentCallMaxSlots = 2;
+        if (msg.conversation_id) {
+            currentCallConversationId = msg.conversation_id;
+        } else {
+            if (!state.currentCommunity) return;
+            currentCallCommunityId = msg.community_id || state.currentCommunity.id;
+            currentCallMaxSlots = 5;
         }
+        openCallOverlay();
+        setParticipantControls(false);
+        if (state.socket) {
+            var watchData = currentCallConversationId
+                ? { conversationId: currentCallConversationId }
+                : { communityId: currentCallCommunityId };
+            state.socket.emit('call:watch', watchData);
+        }
+    }
+
+    // Store the last clicked call card message for the ended popup
+    var _lastCallCardMsg = null;
+
+    function checkCallActiveAndJoin(msg) {
+        _lastCallCardMsg = msg;
+        var token = window.HiveAuth ? window.HiveAuth.getToken() : null;
+        if (!token) { joinCallFromCard(msg); return; }
+
+        var url;
+        if (msg.conversation_id) {
+            url = API_BASE + '/api/calls/status/dm/' + encodeURIComponent(msg.conversation_id);
+        } else if (msg.community_id) {
+            url = API_BASE + '/api/calls/status/community/' + encodeURIComponent(msg.community_id);
+        } else {
+            joinCallFromCard(msg);
+            return;
+        }
+
+        fetch(url, { headers: { 'Authorization': 'Bearer ' + token } })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.success && data.data && data.data.active) {
+                    joinCallFromCard(msg);
+                } else {
+                    showCallEndedPopup(msg);
+                }
+            })
+            .catch(function () {
+                // On network error, try joining anyway
+                joinCallFromCard(msg);
+            });
+    }
+
+    function showCallEndedPopup(msg) {
+        var overlay = $('call-ended-popup');
+        if (!overlay) return;
+        overlay.style.display = 'flex';
+        // Bind Start Call button
+        var startBtn = $('call-ended-start-btn');
+        var cancelBtn = $('call-ended-cancel-btn');
+        if (startBtn) {
+            startBtn.onclick = function () {
+                hideCallEndedPopup();
+                // Start a brand new call
+                var callType = msg.call_type || 'video';
+                callActiveType = callType;
+                if (msg.conversation_id) {
+                    currentCallConversationId = msg.conversation_id;
+                    currentCallCommunityId = null;
+                    currentCallMaxSlots = 2;
+                } else if (msg.community_id) {
+                    currentCallCommunityId = msg.community_id;
+                    currentCallConversationId = null;
+                    currentCallMaxSlots = 5;
+                } else {
+                    return;
+                }
+                var videoEnabled = callType === 'video';
+                getLocalCallStream(videoEnabled).then(function () {
+                    openCallOverlay();
+                    setParticipantControls(true);
+                    syncMicButton(true);
+                    syncCamButton(videoEnabled);
+                    sendCallSignal(callType, 'start');
+                }).catch(function (err) {
+                    console.error('[WEBRTC] Failed to start call from ended popup:', err);
+                });
+            };
+        }
+        if (cancelBtn) {
+            cancelBtn.onclick = function () {
+                hideCallEndedPopup();
+            };
+        }
+    }
+
+    function hideCallEndedPopup() {
+        var overlay = $('call-ended-popup');
+        if (overlay) overlay.style.display = 'none';
+        _lastCallCardMsg = null;
     }
 
     function getCallTargetInfo() {
@@ -2616,9 +2850,44 @@
         callParticipants = [];
         peerConnections = {};
         pendingStreams = {};
+        offeredToWatchers = {};
+        handStates = {};
+        handRaised = false;
         mySlot = 0;
 
-        // Reset grid to 5 empty slots
+        // DM mode: use 2-person layout
+        var isDm = !!currentCallConversationId;
+        overlay.classList.toggle('call-dm-mode', isDm);
+
+        if (isDm) {
+            // Set up DM remote video in the main area
+            var grid = $('call-participant-grid');
+            if (grid) {
+                // Ensure slot 1 exists and is marked as DM remote
+                var slot1 = $('call-slot-1');
+                if (slot1) {
+                    slot1.classList.add('call-dm-remote');
+                    slot1.style.display = '';
+                }
+            }
+            // Hide viewer chip for DM
+            var chip = $('call-viewer-chip');
+            if (chip) chip.style.display = 'none';
+        } else {
+            // Community mode: remove DM-specific classes
+            var grid2 = $('call-participant-grid');
+            if (grid2) {
+                var allSlots = grid2.querySelectorAll('.call-participant-slot');
+                for (var i = 0; i < allSlots.length; i++) {
+                    allSlots[i].classList.remove('call-dm-remote');
+                }
+            }
+        }
+
+        // Watch-only by default until the user joins or starts the call
+        setParticipantControls(false);
+
+        // Reset grid based on max slots
         updateParticipantGrid([]);
 
         // Show a local-cam placeholder only if no stream is active yet
@@ -2641,6 +2910,7 @@
         if (!overlay) return;
         callOpen = false;
         overlay.classList.remove('visible');
+        overlay.classList.remove('call-dm-mode');
         stopCallTimer();
         setTimeout(function () { hide(overlay); }, 200);
 
@@ -2655,13 +2925,28 @@
             localCallStream.getTracks().forEach(function (track) { track.stop(); });
             localCallStream = null;
         }
+        // Stop any active screen share
+        if (screenStream) {
+            screenStream.getTracks().forEach(function (track) { track.stop(); });
+            screenStream = null;
+        }
+        isScreenSharing = false;
+        storedCameraVideoTrack = null;
+        setShareButton(false); // reset share UI to "off"
+        var morePopover = $('call-more-popover');
+        if (morePopover) morePopover.classList.remove('open');
+        var moreBtn = $('call-more-btn');
+        if (moreBtn) moreBtn.classList.remove('active');
+        var handBtn = $('call-hand-btn');
+        if (handBtn) handBtn.classList.remove('active');
         var localVideo = $('call-local-video');
         var localFallback = $('call-local-fallback');
         if (localVideo) localVideo.srcObject = null;
         if (localFallback) localFallback.style.display = 'flex';
 
         // Reset all slot videos
-        for (var i = 1; i <= 5; i++) {
+        var maxSlots = currentCallMaxSlots || 5;
+        for (var i = 1; i <= maxSlots; i++) {
             var slotEl = document.getElementById('call-slot-' + i);
             if (slotEl) {
                 var video = slotEl.querySelector('.call-slot-video');
@@ -2676,14 +2961,18 @@
         var joinBtn = $('call-join-btn');
         if (joinBtn) joinBtn.style.display = 'none';
 
-        if (state.socket && currentCallCommunityId) {
-            state.socket.emit('call:leave', { communityId: currentCallCommunityId });
-            // Only end the call if we are the caller (slot 1)
+        if (state.socket && (currentCallCommunityId || currentCallConversationId)) {
+            var leaveData = currentCallConversationId
+                ? { conversationId: currentCallConversationId }
+                : { communityId: currentCallCommunityId };
+            state.socket.emit('call:leave', leaveData);
             if (mySlot === 1) {
-                state.socket.emit('call:stop', { communityId: currentCallCommunityId });
+                state.socket.emit('call:stop', leaveData);
             }
         }
         currentCallCommunityId = null;
+        currentCallConversationId = null;
+        currentCallMaxSlots = 5;
         callParticipants = [];
         mySlot = 0;
 
@@ -2699,10 +2988,230 @@
         else { btn.classList.toggle('active', isOn); }
     }
 
+    function setShareButton(active) {
+        var btn = $('call-share-btn');
+        if (btn) btn.classList.toggle('active', active === true);
+    }
+
+    // Watch-only mode → only the Join button. Joined → full controls.
+    function setParticipantControls(joined) {
+        var ids = ['call-mute-btn', 'call-cam-btn'];
+        ids.forEach(function (id) {
+            var el = $(id);
+            if (el) el.style.display = joined ? '' : 'none';
+        });
+        var joinBtn = $('call-join-btn');
+        if (joinBtn) joinBtn.style.display = joined ? 'none' : '';
+        var moreBtn = $('call-more-btn');
+        if (moreBtn) moreBtn.style.display = joined ? '' : 'none';
+        var popover = $('call-more-popover');
+        if (popover && !joined) {
+            popover.classList.remove('open');
+            moreBtn && moreBtn.classList.remove('active');
+        }
+        var bar = qs('.call-controls');
+        if (bar) bar.classList.toggle('joined-mode', joined);
+    }
+
+    // Reflect microphone on/off in the button icon + label
+    function syncMicButton(enabled) {
+        var btn = $('call-mute-btn');
+        if (btn) btn.classList.toggle('active', enabled);
+    }
+
+    // Reflect camera on/off in the button icon + label + local preview
+    function syncCamButton(enabled) {
+        var btn = $('call-cam-btn');
+        if (btn) btn.classList.toggle('active', enabled);
+        var localVideo = $('call-local-video');
+        var localFallback = $('call-local-fallback');
+        if (localFallback) localFallback.style.display = enabled ? 'none' : 'flex';
+        if (localVideo) localVideo.style.display = enabled ? '' : 'none';
+        // The flip-camera button only makes sense when the camera is actually on
+        var flipBtn = btn ? qs('#call-cam-flip-btn, #call-flip-btn') : null;
+        if (flipBtn) flipBtn.style.display = enabled ? '' : 'none';
+    }
+
+    // Toggle your own raised hand and broadcast it to everyone
+    function toggleRaiseHand() {
+        var activeKey = currentCallConversationId || currentCallCommunityId;
+        if (!activeKey) return;
+        handRaised = !handRaised;
+        var btn = $('call-hand-btn');
+        if (btn) btn.classList.toggle('active', handRaised);
+        if (state.socket) {
+            state.socket.emit('call:raise-hand', {
+                communityId: currentCallCommunityId || null,
+                conversationId: currentCallConversationId || null,
+                raised: handRaised,
+            });
+        }
+        handStates[getMyUserId()] = handRaised;
+        updateHandIndicators();
+    }
+
+    // Sync all tile hand indicators to the current handStates map
+    function updateHandIndicators() {
+        callParticipants.forEach(function (p) {
+            if (!p.slot || p.slot < 1) return;
+            var slotEl = document.getElementById('call-slot-' + p.slot);
+            if (!slotEl) return;
+            var raised = !!handStates[p.userId];
+            var handEl = slotEl.querySelector('.call-slot-hand');
+            if (handEl) handEl.style.display = raised ? 'flex' : 'none';
+            slotEl.classList.toggle('call-hand-raised', raised);
+        });
+    }
+
+    // Switch camera between front (user) and back (environment) when possible
+    function toggleCamera() {
+        if (!localCallStream || isSwitchingCamera) return;
+        var track = localCallStream.getVideoTracks()[0];
+        if (!track) {
+            showToast('No camera available');
+            return;
+        }
+        var capabilities;
+        try { capabilities = track.getCapabilities(); } catch (e) { capabilities = {}; }
+        var settings;
+        try { settings = track.getSettings(); } catch (e) { settings = {}; }
+        var hasFacing = capabilities.facingMode && capabilities.facingMode.length > 1
+            || Array.isArray(capabilities.facingMode) && capabilities.facingMode.length;
+        if (!hasFacing) {
+            showToast('Switching cameras is not supported on this device');
+            return;
+        }
+        var next = settings.facingMode === 'environment' ? 'user'
+            : settings.facingMode === 'user' ? 'environment'
+            : (track.readyState === 'live' ? 'user' : 'environment');
+        isSwitchingCamera = true;
+        track.applyConstraints({ advanced: [{ facingMode: next }] })
+            .then(function () {
+                // Keep our own preview showing the new camera
+                var localVideo = $('call-local-video');
+                if (localVideo) localVideo.srcObject = localCallStream;
+            })
+            .catch(function (err) {
+                console.error('[WEBRTC] Camera switch failed:', err);
+                showToast('Could not switch camera');
+            })
+            .finally(function () { isSwitchingCamera = false; });
+    }
+
+    function toggleMoreMenu() {
+        var menu = $('call-more-popover');
+        if (!menu) return;
+        menu.classList.toggle('open');
+        var btn = $('call-more-btn');
+        if (btn) btn.classList.toggle('active', menu.classList.contains('open'));
+    }
+
+    function updateViewerCount(count) {
+        var num = $('call-viewer-count');
+        if (num) {
+            num.textContent = (typeof count === 'number' && count >= 0) ? count : 0;
+        }
+    }
+
+    function fadeVideoIn(videoEl) {
+        if (!videoEl) return;
+        videoEl.style.opacity = '0';
+        requestAnimationFrame(function () {
+            videoEl.style.opacity = '1';
+        });
+    }
+
+    // Replace the outgoing video track on the local stream AND every peer sender.
+    // Using replaceTrack avoids renegotiation — smooth switch camera ↔ screen.
+    function replaceLocalVideoTrack(newTrack) {
+        if (localCallStream && newTrack) {
+            var current = localCallStream.getVideoTracks()[0];
+            if (current && current !== newTrack) {
+                localCallStream.removeTrack(current);
+                localCallStream.addTrack(newTrack);
+            }
+        }
+        var localVideo = $('call-local-video');
+        if (localVideo && localCallStream) localVideo.srcObject = localCallStream;
+
+        Object.keys(peerConnections).forEach(function (uid) {
+            var pc = peerConnections[uid];
+            if (!pc) return;
+            var senders = pc.getSenders();
+            senders.forEach(function (sender) {
+                if (sender.track && sender.track.kind === 'video') {
+                    sender.replaceTrack(newTrack).catch(function (err) {
+                        console.error('[WEBRTC] replaceTrack failed for', uid, err);
+                    });
+                }
+            });
+        });
+    }
+
+    function startScreenShare(stream) {
+        var videoTrack = stream.getVideoTracks()[0];
+        if (!videoTrack) {
+            stream.getTracks().forEach(function (t) { t.stop(); });
+            showToast('No screen content to share');
+            return;
+        }
+        screenStream = stream;
+        if (!storedCameraVideoTrack && localCallStream) {
+            storedCameraVideoTrack = localCallStream.getVideoTracks()[0] || null;
+        }
+        isScreenSharing = true;
+        replaceLocalVideoTrack(videoTrack);
+        setShareButton(true);
+        cameraActiveUI(false);
+        videoTrack.onended = function () { stopScreenShare(); };
+    }
+
+    function stopScreenShare() {
+        if (!isScreenSharing) return;
+        if (screenStream) {
+            screenStream.getTracks().forEach(function (t) { t.stop(); });
+            screenStream = null;
+        }
+        isScreenSharing = false;
+        var cameraEnabled = storedCameraVideoTrack ? storedCameraVideoTrack.enabled : true;
+        replaceLocalVideoTrack(storedCameraVideoTrack);
+        storedCameraVideoTrack = null;
+        setShareButton(false);
+        cameraActiveUI(true);
+        syncCamButton(cameraEnabled);
+    }
+
+    function toggleScreenShare() {
+        if (!localCallStream || (!currentCallCommunityId && !currentCallConversationId)) {
+            showToast('Start a call before sharing your screen');
+            return;
+        }
+        if (isScreenSharing) { stopScreenShare(); return; }
+        if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
+            navigator.mediaDevices.getDisplayMedia({ video: true, audio: false })
+                .then(startScreenShare)
+                .catch(function (err) {
+                    if (err && err.name !== 'NotAllowedError') {
+                        showToast('Could not share screen');
+                    }
+                    console.error('[WEBRTC] Screen share failed:', err);
+                });
+        } else {
+            showToast('Screen sharing is not supported on this device');
+        }
+    }
+
+    function cameraActiveUI(on) {
+        var camBtn = $('call-cam-btn');
+        if (camBtn) camBtn.style.display = on ? '' : 'none';
+    }
+
     function updateParticipantGrid(participants) {
         var oldParticipants = callParticipants.slice();
         callParticipants = participants || [];
         var me = getMyUserId();
+        var maxSlots = currentCallMaxSlots || 5;
+        var isDm = !!currentCallConversationId;
 
         // Determine which slots are occupied
         var occupiedSlots = {};
@@ -2719,10 +3228,90 @@
             }
         });
 
-        // Update each slot
+        // DM mode: always show remote user in slot 1
+        if (isDm) {
+            var remoteUser = null;
+            callParticipants.forEach(function (p) {
+                if (p.userId !== me) remoteUser = p;
+            });
+
+            var slot1 = document.getElementById('call-slot-1');
+            if (slot1) {
+                slot1.style.display = '';
+                var video1 = slot1.querySelector('.call-slot-video');
+                var fallback1 = slot1.querySelector('.call-slot-fallback');
+                var nameEl1 = slot1.querySelector('.call-slot-name');
+                var tagEl1 = slot1.querySelector('.call-side-tag-text');
+                var statusEl1 = slot1.querySelector('.call-slot-status');
+
+                if (remoteUser) {
+                    slot1.classList.add('call-slot-active');
+                    slot1.classList.remove('call-slot-empty');
+                    if (nameEl1) nameEl1.textContent = remoteUser.username;
+                    if (tagEl1) tagEl1.textContent = remoteUser.username;
+
+                    // Check if video stream is already on the element
+                    if (video1 && video1.srcObject) {
+                        if (fallback1) fallback1.style.display = 'none';
+                    } else {
+                        if (fallback1) fallback1.style.display = 'flex';
+                        if (statusEl1) statusEl1.textContent = 'Connecting…';
+                    }
+                } else {
+                    slot1.classList.remove('call-slot-active');
+                    slot1.classList.add('call-slot-empty');
+                    if (video1) video1.srcObject = null;
+                    if (fallback1) fallback1.style.display = 'flex';
+                    if (nameEl1) nameEl1.textContent = '';
+                    if (tagEl1) tagEl1.textContent = '';
+                    if (statusEl1) statusEl1.textContent = 'Connecting…';
+                }
+            }
+
+            // Hide slots 2-5
+            for (var j = 2; j <= 5; j++) {
+                var hideSlot = document.getElementById('call-slot-' + j);
+                if (hideSlot) hideSlot.style.display = 'none';
+            }
+
+            // Update call timer label
+            var topName2 = $('call-top-name');
+            if (topName2) topName2.textContent = callParticipants.length + '/2';
+
+            // Flush pending streams — always route remote user to slot 1
+            callParticipants.forEach(function (p) {
+                if (p.userId !== me && pendingStreams[p.userId]) {
+                    var s1 = document.getElementById('call-slot-1');
+                    if (s1) {
+                        var v1 = s1.querySelector('.call-slot-video');
+                        var f1 = s1.querySelector('.call-slot-fallback');
+                        if (v1) {
+                            v1.srcObject = pendingStreams[p.userId];
+                            fadeVideoIn(v1);
+                            if (f1) f1.style.display = 'none';
+                            s1.classList.add('call-slot-active');
+                            s1.classList.remove('call-slot-empty');
+                        }
+                    }
+                    delete pendingStreams[p.userId];
+                }
+            });
+
+            connectMeshToParticipants();
+            return;
+        }
+
+        // Community mode: original grid logic
         for (var i = 1; i <= 5; i++) {
             var slotEl = document.getElementById('call-slot-' + i);
             if (!slotEl) continue;
+
+            if (i > maxSlots) {
+                slotEl.style.display = 'none';
+                continue;
+            } else {
+                slotEl.style.display = '';
+            }
 
             var participant = occupiedSlots[i];
             var video = slotEl.querySelector('.call-slot-video');
@@ -2730,7 +3319,6 @@
             var nameEl = slotEl.querySelector('.call-slot-name');
             var tagEl = slotEl.querySelector('.call-side-tag-text');
             var statusEl = slotEl.querySelector('.call-slot-status');
-            var avatarEl = slotEl.querySelector('.call-slot-avatar');
 
             if (participant) {
                 slotEl.classList.add('call-slot-active');
@@ -2743,22 +3331,10 @@
                     if (participant.userId === me) {
                         tagEl.textContent = 'You';
                     } else if (i === 1) {
-                        tagEl.textContent = 'Host';
+                        tagEl.textContent = currentCallConversationId ? participant.username : 'Host';
                     } else {
                         tagEl.textContent = participant.username;
                     }
-                }
-
-                // Set avatar from homeMembers or default
-                if (avatarEl) {
-                    var memberInfo = state.homeMembers ? state.homeMembers.get(participant.userId) : null;
-                    var avatarUrl = '';
-                    if (memberInfo) {
-                        avatarUrl = getAvatarUrl(memberInfo);
-                    } else {
-                        avatarUrl = 'https://i.pravatar.cc/112?u=' + encodeURIComponent(participant.username);
-                    }
-                    avatarEl.src = avatarUrl;
                 }
 
                 // Hide fallback if we have a video stream, show otherwise
@@ -2775,15 +3351,14 @@
                 if (fallback) fallback.style.display = '';
                 if (nameEl) nameEl.textContent = '';
                 if (tagEl) tagEl.textContent = '';
-                if (statusEl) statusEl.textContent = '';
-                if (avatarEl) avatarEl.src = '';
+                if (statusEl) statusEl.textContent = currentCallConversationId ? 'Connecting…' : 'Waiting for participant…';
             }
         }
 
         // Update call timer label
         var topName = $('call-top-name');
         if (topName) {
-            topName.textContent = callParticipants.length + '/5';
+            topName.textContent = callParticipants.length + '/' + maxSlots;
         }
 
         // Flush any pending streams that arrived before callParticipants was updated
@@ -2795,6 +3370,7 @@
                     var fallback = slotEl.querySelector('.call-slot-fallback');
                     if (video) {
                         video.srcObject = pendingStreams[p.userId];
+                        fadeVideoIn(video);
                         if (fallback) fallback.style.display = 'none';
                         slotEl.classList.add('call-slot-active');
                         slotEl.classList.remove('call-slot-empty');
@@ -2810,7 +3386,7 @@
 
     function connectMeshToParticipants() {
         var me = getMyUserId();
-        if (!me || !localCallStream || !currentCallCommunityId) return;
+        if (!me || !localCallStream || (!currentCallCommunityId && !currentCallConversationId)) return;
 
         callParticipants.forEach(function (participant) {
             if (participant.userId === me) return;
@@ -2826,7 +3402,8 @@
 
     function createOfferToParticipant(participant) {
         var me = getMyUserId();
-        if (!me || !localCallStream || !currentCallCommunityId || !state.socket) return;
+        var callKey = currentCallConversationId || currentCallCommunityId;
+        if (!me || !localCallStream || !callKey || !state.socket) return;
 
         console.log('[WEBRTC] Creating offer to', participant.username, '(' + participant.userId + ')');
         var pc = createPeerConnection(participant.userId);
@@ -2840,7 +3417,8 @@
             return pc.setLocalDescription(offer);
         }).then(function () {
             state.socket.emit('call:offer', {
-                communityId: currentCallCommunityId,
+                communityId: currentCallCommunityId || null,
+                conversationId: currentCallConversationId || null,
                 offer: pc.localDescription.toJSON(),
                 targetUserId: participant.userId,
             });
@@ -3619,12 +4197,12 @@
                         (!isCallEnd ? '<div class="call-card-arrow"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>' : '') +
                     '</div>' +
                 '</div>';
-            // Clicking a "started call" card opens the call overlay for that community.
-            if (!isCallEnd && msg.community_id) {
+            // Clicking a "started call" card checks if the call is active before joining.
+            if (!isCallEnd && (msg.community_id || msg.conversation_id)) {
                 var callCard = el.querySelector('.msg-call-card');
                 callCard.addEventListener('click', function (e) {
                     e.stopPropagation();
-                    joinCallFromCard(msg);
+                    checkCallActiveAndJoin(msg);
                 });
             }
             return el;
@@ -5459,6 +6037,18 @@
             updateChatsBadge();
         });
 
+        // DM system message (e.g. call started/ended) broadcast from backend
+        socket.on('dm:message:new', function (msg) {
+            if (!msg) return;
+            if (state.currentDmConversation && msg.conversation_id == state.currentDmConversation) {
+                msg.sender_id = msg.sender_id || msg.user_id;
+                appendMessage(msg);
+                scrollToBottom(true);
+            }
+            loadDmConversations();
+            updateChatsBadge();
+        });
+
         socket.on('dm:typing', function (data) {
             if (state.currentDmConversation && data.conversationId == state.currentDmConversation) {
                 state.typingUsers = [{ username: data.username, userId: data.userId }];
@@ -5492,21 +6082,87 @@
             }
         });
 
+        // ── Incoming DM Call Events ─────────────────────────
+        socket.on('call:incoming', function (data) {
+            if (!data) return;
+            console.log('[WEBRTC] Incoming call from', data.callerUsername);
+            showIncomingCallPopup(data);
+        });
+
+        socket.on('call:declined', function (data) {
+            if (!data) return;
+            console.log('[WEBRTC] Call declined by', data.declinedByUsername);
+            showToast((data.declinedByUsername || 'User') + ' declined the call');
+            closeCallOverlay();
+        });
+
+        socket.on('call:cancelled', function (data) {
+            if (!data) return;
+            console.log('[WEBRTC] Call cancelled by', data.cancelledByUsername);
+            hideIncomingCallPopup();
+            showToast((data.cancelledByUsername || 'User') + ' cancelled the call');
+        });
+
         // ── WebRTC Group Call Signaling ─────────────────────
         socket.on('call:started', function (data) {
             if (!data) return;
             console.log('[WEBRTC] Call started by', data.username);
             callActiveType = data.callType || 'video';
-            currentCallCommunityId = data.communityId || currentCallCommunityId;
-            if (callOpen) {
-                updateParticipantGrid(data.participants || []);
+            if (data.conversationId) {
+                currentCallConversationId = data.conversationId;
+                currentCallMaxSlots = 2;
+            } else {
+                currentCallCommunityId = data.communityId || currentCallCommunityId;
             }
+
+            // For DM calls, open the overlay if not already open (callee accepting)
+            if (data.conversationId && !callOpen) {
+                openCallOverlay();
+                setParticipantControls(true);
+                syncMicButton(true);
+                syncCamButton(false); // privacy-first: camera off by default
+            }
+
+            if (callOpen) {
+                // Set mySlot from participants so connectMeshToParticipants works
+                var me = getMyUserId();
+                var participants = data.participants || [];
+                participants.forEach(function (p) {
+                    if (p.userId === me) mySlot = p.slot;
+                });
+                updateParticipantGrid(participants);
+            }
+        });
+
+        // Live "watching" count — updates in real time as people open/leave the call
+        socket.on('call:viewer-count', function (data) {
+            if (!data) return;
+            var activeKey = currentCallConversationId || currentCallCommunityId;
+            if (data.communityId === activeKey) {
+                updateViewerCount(data.count);
+            }
+        });
+
+        // A participant raised/lowered their hand — update their tile instantly
+        socket.on('call:raise-hand', function (data) {
+            if (!data) return;
+            var activeKey = currentCallConversationId || currentCallCommunityId;
+            if (data.communityId !== activeKey) return;
+            handStates[data.userId] = !!data.raised;
+            updateHandIndicators();
         });
 
         // A new viewer opened the call — create a PC + offer so they can watch
         socket.on('call:viewer-joined', function (data) {
-            if (!localCallStream || !currentCallCommunityId) return;
+            var activeKey = currentCallConversationId || currentCallCommunityId;
+            if (!localCallStream || !activeKey) return;
             console.log('[WEBRTC] Viewer joined, sending offer to:', data.viewerUsername);
+
+            // This event may arrive on the joiner right after they clicked Join
+            // (connecting them to existing watch-only viewers). Track that we
+            // already sent an offer to this target so callJoinBtn's renegotiate
+            // loop skips it and we never double-offer.
+            offeredToWatchers[data.viewerUserId] = true;
 
             // Ensure the viewer is in callParticipants before creating PC
             // (ontrack needs callParticipants to route the stream to the correct slot)
@@ -5533,7 +6189,8 @@
                 return pc.setLocalDescription(offer);
             }).then(function () {
                 state.socket.emit('call:offer', {
-                    communityId: currentCallCommunityId,
+                    communityId: currentCallCommunityId || null,
+                    conversationId: currentCallConversationId || null,
                     offer: pc.localDescription.toJSON(),
                     targetUserId: data.viewerUserId,
                 });
@@ -5543,9 +6200,11 @@
         });
 
         socket.on('call:participants', function (data) {
-            if (!data || !data.communityId) return;
+            if (!data) return;
+            var activeKey = currentCallConversationId || currentCallCommunityId;
+            if (!activeKey) return;
             console.log('[WEBRTC] Participants update:', data.participants.length, 'participants');
-            if (data.communityId === currentCallCommunityId) {
+            if (data.communityId === activeKey) {
                 var oldParticipants = callParticipants.slice();
                 callParticipants = data.participants || [];
                 mySlot = 0;
@@ -5554,17 +6213,17 @@
                     if (p.userId === me) mySlot = p.slot;
                 });
 
-                // Update Join button visibility
-                var joinBtn = $('call-join-btn');
-                if (joinBtn) {
-                    if (mySlot > 0) {
-                        joinBtn.style.display = 'none';
-                    } else {
-                        joinBtn.style.display = '';
-                    }
-                }
+                // Rebuild raised-hand map from the payload
+                handStates = {};
+                callParticipants.forEach(function (p) {
+                    handStates[p.userId] = !!p.handRaised;
+                });
+
+                // Update Join button + participant controls visibility
+                setParticipantControls(mySlot > 0);
 
                 updateParticipantGrid(data.participants);
+                updateHandIndicators();
             }
         });
 
@@ -5593,7 +6252,8 @@
                     return existingPc.setLocalDescription(answer);
                 }).then(function () {
                     state.socket.emit('call:answer', {
-                        communityId: currentCallCommunityId,
+                        communityId: currentCallCommunityId || null,
+                        conversationId: currentCallConversationId || null,
                         answer: existingPc.localDescription.toJSON(),
                         targetUserId: data.callerUserId,
                     });
@@ -5619,7 +6279,8 @@
                     return pc.setLocalDescription(answer);
                 }).then(function () {
                     state.socket.emit('call:answer', {
-                        communityId: currentCallCommunityId,
+                        communityId: currentCallCommunityId || null,
+                        conversationId: currentCallConversationId || null,
                         answer: pc.localDescription.toJSON(),
                         targetUserId: data.callerUserId,
                     });
@@ -5763,13 +6424,23 @@
         if (callEndBtn) callEndBtn.addEventListener('click', closeCallOverlay);
         var callMinBtn = $('call-min-btn');
         if (callMinBtn) callMinBtn.addEventListener('click', closeCallOverlay);
+
+        // Incoming call popup buttons
+        var incomingAcceptBtn = $('incoming-call-accept');
+        if (incomingAcceptBtn) incomingAcceptBtn.addEventListener('click', function () {
+            acceptIncomingCall();
+        });
+        var incomingDeclineBtn = $('incoming-call-decline');
+        if (incomingDeclineBtn) incomingDeclineBtn.addEventListener('click', function () {
+            declineIncomingCall();
+        });
         var callMuteBtn = $('call-mute-btn');
         if (callMuteBtn) callMuteBtn.addEventListener('click', function () {
             if (localCallStream) {
                 var audioTrack = localCallStream.getAudioTracks()[0];
                 if (audioTrack) {
                     audioTrack.enabled = !audioTrack.enabled;
-                    toggleCallCtrl(this, audioTrack.enabled);
+                    syncMicButton(audioTrack.enabled);
                 }
             }
         });
@@ -5779,27 +6450,66 @@
                 var videoTrack = localCallStream.getVideoTracks()[0];
                 if (videoTrack) {
                     videoTrack.enabled = !videoTrack.enabled;
-                    toggleCallCtrl(this, videoTrack.enabled);
+                    syncCamButton(videoTrack.enabled);
                 }
             }
         });
+        var callShareBtn = $('call-share-btn');
+        if (callShareBtn) callShareBtn.addEventListener('click', function () {
+            toggleScreenShare();
+        });
+        var callHandBtn = $('call-hand-btn');
+        if (callHandBtn) callHandBtn.addEventListener('click', function () {
+            toggleRaiseHand();
+        });
+        var callFlipBtn = $('call-flip-btn');
+        if (callFlipBtn) callFlipBtn.addEventListener('click', function () {
+            toggleCamera();
+            toggleMoreMenu();
+        });
+        var callMoreBtn = $('call-more-btn');
+        if (callMoreBtn) callMoreBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            toggleMoreMenu();
+        });
+        // Close the More popover when clicking anywhere outside of it
+        document.addEventListener('click', function (e) {
+            var popover = $('call-more-popover');
+            if (!popover || !popover.classList.contains('open')) return;
+            var moreBtn = $('call-more-btn');
+            if (moreBtn && moreBtn.contains(e.target)) return;
+            popover.classList.remove('open');
+            if (moreBtn) moreBtn.classList.remove('active');
+        });
         var callJoinBtn = $('call-join-btn');
         if (callJoinBtn) callJoinBtn.addEventListener('click', function () {
-            if (!state.currentCommunity || !currentCallCommunityId) return;
+            var activeKey = currentCallConversationId || currentCallCommunityId;
+            if (!activeKey) return;
 
             var videoEnabled = callActiveType === 'video';
             getLocalCallStream(videoEnabled).then(function (stream) {
-                callJoinBtn.style.display = 'none';
+                setParticipantControls(true);
+                syncMicButton(true);
+                if (videoEnabled) {
+                    var joinVideoTrack = stream.getVideoTracks()[0];
+                    if (joinVideoTrack) joinVideoTrack.enabled = false;
+                }
+                syncCamButton(false);
 
-                // Emit call:join FIRST so call:participants arrives before renegotiation
+                // Emit call:join so call:participants arrives before renegotiation
                 if (state.socket) {
-                    state.socket.emit('call:join', { communityId: currentCallCommunityId });
+                    var joinData = currentCallConversationId
+                        ? { conversationId: currentCallConversationId }
+                        : { communityId: currentCallCommunityId };
+                    state.socket.emit('call:join', joinData);
                 }
 
                 // Add tracks to existing peer connections (from watch-only mode) and renegotiate
                 // Delay slightly to ensure call:participants is processed by peers first
                 setTimeout(function () {
                     Object.keys(peerConnections).forEach(function (uid) {
+                        // Skip watchers we already offered to via call:viewer-joined
+                        if (offeredToWatchers[uid]) return;
                         var pc = peerConnections[uid];
                         stream.getTracks().forEach(function (track) {
                             pc.addTrack(track, stream);
@@ -5808,7 +6518,8 @@
                             return pc.setLocalDescription(offer);
                         }).then(function () {
                             state.socket.emit('call:offer', {
-                                communityId: currentCallCommunityId,
+                                communityId: currentCallCommunityId || null,
+                                conversationId: currentCallConversationId || null,
                                 offer: pc.localDescription.toJSON(),
                                 targetUserId: uid,
                             });
