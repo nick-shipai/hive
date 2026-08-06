@@ -2438,7 +2438,7 @@
     var myUserId = null;
     var callParticipants = [];   // [{ userId, username, slot }]
     var peerConnections = {};    // userId → RTCPeerConnection (mesh)
-    var peerVideoElements = {};  // userId → slot index in DOM
+    var pendingStreams = {};     // userId → MediaStream (buffered until callParticipants is updated)
     var mySlot = 0;
     var ICE_SERVERS = [
         { urls: "stun:stun.l.google.com:19302" },
@@ -2494,7 +2494,7 @@
             if (event.streams && event.streams[0]) {
                 // Find the slot for this user
                 var participant = callParticipants.find(function (p) { return p.userId === targetUserId; });
-                if (participant) {
+                if (participant && participant.slot > 0) {
                     var slotEl = document.getElementById('call-slot-' + participant.slot);
                     if (slotEl) {
                         var video = slotEl.querySelector('.call-slot-video');
@@ -2506,6 +2506,9 @@
                             slotEl.classList.remove('call-slot-empty');
                         }
                     }
+                } else {
+                    // Slot not assigned yet — buffer the stream
+                    pendingStreams[targetUserId] = event.streams[0];
                 }
             }
         };
@@ -2514,7 +2517,7 @@
             console.log('[WEBRTC] ICE state with', targetUserId, ':', pc.iceConnectionState);
             if (pc.iceConnectionState === 'disconnected' || pc.iceConnectionState === 'failed') {
                 var participant = callParticipants.find(function (p) { return p.userId === targetUserId; });
-                if (participant) {
+                if (participant && participant.slot > 0) {
                     var slotEl = document.getElementById('call-slot-' + participant.slot);
                     if (slotEl) {
                         var fallback = slotEl.querySelector('.call-slot-fallback');
@@ -2522,6 +2525,10 @@
                         if (fallback) fallback.style.display = 'flex';
                         if (video) video.srcObject = null;
                     }
+                }
+                // Clean up pending stream if disconnected
+                if (pendingStreams[targetUserId]) {
+                    delete pendingStreams[targetUserId];
                 }
             }
         };
@@ -2608,7 +2615,7 @@
         // Reset participant state
         callParticipants = [];
         peerConnections = {};
-        peerVideoElements = {};
+        pendingStreams = {};
         mySlot = 0;
 
         // Reset grid to 5 empty slots
@@ -2642,7 +2649,7 @@
             if (peerConnections[uid]) peerConnections[uid].close();
         });
         peerConnections = {};
-        peerVideoElements = {};
+        pendingStreams = {};
 
         if (localCallStream) {
             localCallStream.getTracks().forEach(function (track) { track.stop(); });
@@ -2778,6 +2785,24 @@
         if (topName) {
             topName.textContent = callParticipants.length + '/5';
         }
+
+        // Flush any pending streams that arrived before callParticipants was updated
+        callParticipants.forEach(function (p) {
+            if (p.slot > 0 && pendingStreams[p.userId]) {
+                var slotEl = document.getElementById('call-slot-' + p.slot);
+                if (slotEl) {
+                    var video = slotEl.querySelector('.call-slot-video');
+                    var fallback = slotEl.querySelector('.call-slot-fallback');
+                    if (video) {
+                        video.srcObject = pendingStreams[p.userId];
+                        if (fallback) fallback.style.display = 'none';
+                        slotEl.classList.add('call-slot-active');
+                        slotEl.classList.remove('call-slot-empty');
+                    }
+                }
+                delete pendingStreams[p.userId];
+            }
+        });
 
         // Connect mesh to new participants
         connectMeshToParticipants();
@@ -3566,22 +3591,32 @@
         if (msg.message_type === 'system' && (msg.event_type === 'call' || msg.call_type)) {
             var isCallEnd = msg.call_status === 'end';
             var callKind = msg.call_type === 'voice' ? 'voice' : 'video';
-            var callIcon = isCallEnd
-                ? '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>'
-                : (callKind === 'voice'
-                    ? '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>'
-                    : '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>');
-            var callTitle = isCallEnd
-                ? (msg.username ? escapeHtml(msg.username) + ' ended ' : '') + (callKind === 'voice' ? 'a voice call' : 'a video call')
-                : (msg.username ? escapeHtml(msg.username) + ' started ' : '') + (callKind === 'voice' ? 'a voice call' : 'a video call');
-            var callDot = isCallEnd ? 'call-dot end' : 'call-dot' + (callKind === 'voice' ? ' call-dot-voice' : ' call-dot-video');
+            var callAccent = isCallEnd ? 'ended' : callKind;
+            var callIcon = callKind === 'voice'
+                ? '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>'
+                : '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>';
+            var actionText = isCallEnd ? 'ended' : 'started';
+            var kindText = callKind === 'voice' ? 'a voice call' : 'a video call';
             el.innerHTML =
-                '<div class="msg-call-card' + (isCallEnd ? '' : ' clickable') + '">' +
-                    '<span class="' + callDot + '"></span>' +
-                    callIcon +
-                    '<div class="msg-call-text">' +
-                        '<span class="msg-call-title">' + callTitle + '</span>' +
-                        '<span class="msg-call-ts">' + escapeHtml(formatTime(msg.created_at)) + '</span>' +
+                '<div class="msg-call-card call-accent-' + callAccent + (isCallEnd ? '' : ' clickable') + '">' +
+                    '<div class="call-card-glow"></div>' +
+                    '<div class="call-card-inner">' +
+                        '<div class="call-card-icon-ring">' +
+                            (isCallEnd ? '<span class="call-ended-icon">' + callIcon + '</span>' : '<span class="call-live-dot"></span>') +
+                            callIcon +
+                        '</div>' +
+                        '<div class="call-card-info">' +
+                            '<div class="call-card-title">' +
+                                '<span class="call-card-user">' + escapeHtml(msg.username || '') + '</span>' +
+                                '<span class="call-card-action"> ' + actionText + '</span>' +
+                                '<span class="call-card-kind"> ' + kindText + '</span>' +
+                            '</div>' +
+                            '<div class="call-card-meta">' +
+                                '<span class="call-card-time">' + escapeHtml(formatTime(msg.created_at)) + '</span>' +
+                                (!isCallEnd ? '<span class="call-card-join-label">Click to join</span>' : '') +
+                            '</div>' +
+                        '</div>' +
+                        (!isCallEnd ? '<div class="call-card-arrow"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>' : '') +
                     '</div>' +
                 '</div>';
             // Clicking a "started call" card opens the call overlay for that community.
@@ -5473,6 +5508,16 @@
             if (!localCallStream || !currentCallCommunityId) return;
             console.log('[WEBRTC] Viewer joined, sending offer to:', data.viewerUsername);
 
+            // Ensure the viewer is in callParticipants before creating PC
+            // (ontrack needs callParticipants to route the stream to the correct slot)
+            if (!callParticipants.find(function (p) { return p.userId === data.viewerUserId; })) {
+                callParticipants.push({
+                    userId: data.viewerUserId,
+                    username: data.viewerUsername,
+                    slot: 0,
+                });
+            }
+
             if (peerConnections[data.viewerUserId]) {
                 peerConnections[data.viewerUserId].close();
             }
@@ -5526,6 +5571,16 @@
         socket.on('call:offer', function (data) {
             if (!data || !data.offer || !data.callerUserId) return;
             console.log('[WEBRTC] Received offer from', data.callerUsername);
+
+            // Ensure the sender is in callParticipants before creating PC
+            // (ontrack needs callParticipants to route the stream to the correct slot)
+            if (!callParticipants.find(function (p) { return p.userId === data.callerUserId; })) {
+                callParticipants.push({
+                    userId: data.callerUserId,
+                    username: data.callerUsername,
+                    slot: 0,
+                });
+            }
 
             var existingPc = peerConnections[data.callerUserId];
             var remoteDesc = new RTCSessionDescription(data.offer);
