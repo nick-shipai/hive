@@ -2430,6 +2430,426 @@
         }
     }
 
+    /* ── Video Call overlay ─────────────────── */
+    var callOpen = false;
+    var callActiveType = null;   // 'video' | 'voice' — currently in-call type (community calls)
+    var localCallStream = null;
+    var currentCallCommunityId = null;
+    var myUserId = null;
+    var callParticipants = [];   // [{ userId, username, slot }]
+    var peerConnections = {};    // userId → RTCPeerConnection (mesh)
+    var peerVideoElements = {};  // userId → slot index in DOM
+    var mySlot = 0;
+    var ICE_SERVERS = [
+        { urls: "stun:stun.l.google.com:19302" },
+        { urls: "turn:turn.hivechat.online:3478", username: "hive", credential: "Bright2010" }
+    ];
+
+    function getMyUserId() {
+        if (myUserId) return myUserId;
+        try {
+            var token = window.HiveAuth ? window.HiveAuth.getToken() : null;
+            if (!token) return null;
+            var payload = JSON.parse(atob(token.split('.')[1]));
+            myUserId = payload.id;
+            return myUserId;
+        } catch (e) { return null; }
+    }
+
+    /**
+     * Send a community call signal to the backend (start / end).
+     * In community chat this records the call in the DB + writes a system
+     * message into the chat history. On start we append the confirmed system
+     * message locally (the initiator is excluded from the socket broadcast).
+     */
+    function sendCallSignal(callType, status) {
+        if (!state.currentCommunity) return Promise.resolve();
+        return apiPost('/api/calls/community', {
+            communityId: state.currentCommunity.id,
+            callType: callType,
+            status: status,
+        }).then(function (data) {
+            if (status === 'start' && data.msg) {
+                appendMessage(data.msg);
+            }
+        }).catch(function (err) {
+            console.error('[HIVE] Failed to send call signal:', err);
+        });
+    }
+
+    function createPeerConnection(targetUserId) {
+        var pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+
+        pc.onicecandidate = function (event) {
+            if (event.candidate && currentCallCommunityId && state.socket && targetUserId) {
+                state.socket.emit('call:ice-candidate', {
+                    communityId: currentCallCommunityId,
+                    candidate: event.candidate.toJSON(),
+                    targetUserId: targetUserId,
+                });
+            }
+        };
+
+        pc.ontrack = function (event) {
+            if (event.streams && event.streams[0]) {
+                // Find the slot for this user
+                var participant = callParticipants.find(function (p) { return p.userId === targetUserId; });
+                if (participant) {
+                    var slotEl = document.getElementById('call-slot-' + participant.slot);
+                    if (slotEl) {
+                        var video = slotEl.querySelector('.call-slot-video');
+                        var fallback = slotEl.querySelector('.call-slot-fallback');
+                        if (video) {
+                            video.srcObject = event.streams[0];
+                            if (fallback) fallback.style.display = 'none';
+                            slotEl.classList.add('call-slot-active');
+                            slotEl.classList.remove('call-slot-empty');
+                        }
+                    }
+                }
+            }
+        };
+
+        pc.oniceconnectionstatechange = function () {
+            console.log('[WEBRTC] ICE state with', targetUserId, ':', pc.iceConnectionState);
+            if (pc.iceConnectionState === 'disconnected' || pc.iceConnectionState === 'failed') {
+                var participant = callParticipants.find(function (p) { return p.userId === targetUserId; });
+                if (participant) {
+                    var slotEl = document.getElementById('call-slot-' + participant.slot);
+                    if (slotEl) {
+                        var fallback = slotEl.querySelector('.call-slot-fallback');
+                        var video = slotEl.querySelector('.call-slot-video');
+                        if (fallback) fallback.style.display = 'flex';
+                        if (video) video.srcObject = null;
+                    }
+                }
+            }
+        };
+
+        return pc;
+    }
+
+    function getLocalCallStream(videoEnabled) {
+        return navigator.mediaDevices.getUserMedia({
+            video: videoEnabled,
+            audio: true
+        }).then(function (stream) {
+            localCallStream = stream;
+            var localVideo = $('call-local-video');
+            var localFallback = $('call-local-fallback');
+            if (localVideo) localVideo.srcObject = stream;
+            if (localFallback) localFallback.style.display = 'none';
+            return stream;
+        });
+    }
+
+    function startCommunityCall(callType) {
+        if (!state.currentCommunity) return;
+
+        var videoEnabled = callType === 'video';
+        getLocalCallStream(videoEnabled).then(function (stream) {
+            callActiveType = callType;
+            currentCallCommunityId = state.currentCommunity.id;
+
+            openCallOverlay();
+
+            if (state.socket) {
+                state.socket.emit('call:start', {
+                    communityId: currentCallCommunityId,
+                    callType: callType,
+                });
+            }
+
+            sendCallSignal(callType, 'start');
+        }).catch(function (err) {
+            console.error('[WEBRTC] Failed to start call:', err);
+        });
+    }
+
+    function joinCallFromCard(msg) {
+        if (!state.currentCommunity) return;
+        callActiveType = msg.call_type || 'video';
+        currentCallCommunityId = msg.community_id || state.currentCommunity.id;
+        openCallOverlay();
+        var joinBtn = $('call-join-btn');
+        if (joinBtn) joinBtn.style.display = '';
+        if (state.socket) {
+            state.socket.emit('call:watch', { communityId: currentCallCommunityId });
+        }
+    }
+
+    function getCallTargetInfo() {
+        // DM → other participant; community → the community name
+        if (state.currentDmUserId) {
+            var conv = state.dmConversations ? state.dmConversations.filter(function (c) {
+                return c.conversation_id === state.currentDmConversation;
+            })[0] : null;
+            if (conv) {
+                return {
+                    name: conv.other_display_name || conv.other_username || 'Contact',
+                    avatar: getAvatarUrl({ id: conv.other_user_id, profile_picture: conv.other_profile_picture, username: conv.other_username }),
+                };
+            }
+            var other = state.homeMembers.get(state.currentDmUserId);
+            if (other) return { name: other.display_name || other.username, avatar: getAvatarUrl(other) };
+            return { name: 'Contact', avatar: '' };
+        }
+        if (state.currentCommunity) {
+            return { name: state.currentCommunity.name || 'Community', avatar: '' };
+        }
+        return { name: 'Connecting…', avatar: '' };
+    }
+
+    function openCallOverlay(callerInfo) {
+        var overlay = $('call-overlay');
+        if (!overlay) return;
+        callOpen = true;
+
+        // Reset participant state
+        callParticipants = [];
+        peerConnections = {};
+        peerVideoElements = {};
+        mySlot = 0;
+
+        // Reset grid to 5 empty slots
+        updateParticipantGrid([]);
+
+        // Show a local-cam placeholder only if no stream is active yet
+        var localFallback = $('call-local-fallback');
+        if (localFallback) localFallback.style.display = localCallStream ? 'none' : 'flex';
+
+        // Close other overlays so the call is clearly on top
+        if (state.notifOpen) closeNotifications(false);
+        if (onlineUsersOpen) closeOnlineUsers(false);
+        document.body.classList.remove('side-open');
+
+        overlay.style.display = '';
+        requestAnimationFrame(function () { overlay.classList.add('visible'); });
+
+        startCallTimer();
+    }
+
+    function closeCallOverlay() {
+        var overlay = $('call-overlay');
+        if (!overlay) return;
+        callOpen = false;
+        overlay.classList.remove('visible');
+        stopCallTimer();
+        setTimeout(function () { hide(overlay); }, 200);
+
+        // Close all peer connections
+        Object.keys(peerConnections).forEach(function (uid) {
+            if (peerConnections[uid]) peerConnections[uid].close();
+        });
+        peerConnections = {};
+        peerVideoElements = {};
+
+        if (localCallStream) {
+            localCallStream.getTracks().forEach(function (track) { track.stop(); });
+            localCallStream = null;
+        }
+        var localVideo = $('call-local-video');
+        var localFallback = $('call-local-fallback');
+        if (localVideo) localVideo.srcObject = null;
+        if (localFallback) localFallback.style.display = 'flex';
+
+        // Reset all slot videos
+        for (var i = 1; i <= 5; i++) {
+            var slotEl = document.getElementById('call-slot-' + i);
+            if (slotEl) {
+                var video = slotEl.querySelector('.call-slot-video');
+                var fallback = slotEl.querySelector('.call-slot-fallback');
+                if (video) video.srcObject = null;
+                if (fallback) fallback.style.display = 'flex';
+                slotEl.classList.remove('call-slot-active');
+                slotEl.classList.add('call-slot-empty');
+            }
+        }
+
+        var joinBtn = $('call-join-btn');
+        if (joinBtn) joinBtn.style.display = 'none';
+
+        if (state.socket && currentCallCommunityId) {
+            state.socket.emit('call:leave', { communityId: currentCallCommunityId });
+            // Only end the call if we are the caller (slot 1)
+            if (mySlot === 1) {
+                state.socket.emit('call:stop', { communityId: currentCallCommunityId });
+            }
+        }
+        currentCallCommunityId = null;
+        callParticipants = [];
+        mySlot = 0;
+
+        if (callActiveType) {
+            sendCallSignal(callActiveType, 'end');
+            callActiveType = null;
+        }
+    }
+
+    function toggleCallCtrl(btn, isOn) {
+        if (!btn) return;
+        if (isOn === undefined) { btn.classList.toggle('active'); }
+        else { btn.classList.toggle('active', isOn); }
+    }
+
+    function updateParticipantGrid(participants) {
+        var oldParticipants = callParticipants.slice();
+        callParticipants = participants || [];
+        var me = getMyUserId();
+
+        // Determine which slots are occupied
+        var occupiedSlots = {};
+        callParticipants.forEach(function (p) {
+            occupiedSlots[p.slot] = p;
+        });
+
+        // Clean up peer connections for participants who left
+        oldParticipants.forEach(function (oldP) {
+            var stillHere = callParticipants.find(function (p) { return p.userId === oldP.userId; });
+            if (!stillHere && peerConnections[oldP.userId]) {
+                peerConnections[oldP.userId].close();
+                delete peerConnections[oldP.userId];
+            }
+        });
+
+        // Update each slot
+        for (var i = 1; i <= 5; i++) {
+            var slotEl = document.getElementById('call-slot-' + i);
+            if (!slotEl) continue;
+
+            var participant = occupiedSlots[i];
+            var video = slotEl.querySelector('.call-slot-video');
+            var fallback = slotEl.querySelector('.call-slot-fallback');
+            var nameEl = slotEl.querySelector('.call-slot-name');
+            var tagEl = slotEl.querySelector('.call-side-tag-text');
+            var statusEl = slotEl.querySelector('.call-slot-status');
+            var avatarEl = slotEl.querySelector('.call-slot-avatar');
+
+            if (participant) {
+                slotEl.classList.add('call-slot-active');
+                slotEl.classList.remove('call-slot-empty');
+
+                if (nameEl) {
+                    nameEl.textContent = participant.userId === me ? 'You' : participant.username;
+                }
+                if (tagEl) {
+                    if (participant.userId === me) {
+                        tagEl.textContent = 'You';
+                    } else if (i === 1) {
+                        tagEl.textContent = 'Host';
+                    } else {
+                        tagEl.textContent = participant.username;
+                    }
+                }
+
+                // Set avatar from homeMembers or default
+                if (avatarEl) {
+                    var memberInfo = state.homeMembers ? state.homeMembers.get(participant.userId) : null;
+                    var avatarUrl = '';
+                    if (memberInfo) {
+                        avatarUrl = getAvatarUrl(memberInfo);
+                    } else {
+                        avatarUrl = 'https://i.pravatar.cc/112?u=' + encodeURIComponent(participant.username);
+                    }
+                    avatarEl.src = avatarUrl;
+                }
+
+                // Hide fallback if we have a video stream, show otherwise
+                if (video && video.srcObject) {
+                    if (fallback) fallback.style.display = 'none';
+                } else {
+                    if (fallback) fallback.style.display = 'flex';
+                    if (statusEl) statusEl.textContent = participant.userId === me ? '' : 'Connecting…';
+                }
+            } else {
+                slotEl.classList.remove('call-slot-active');
+                slotEl.classList.add('call-slot-empty');
+                if (video) video.srcObject = null;
+                if (fallback) fallback.style.display = '';
+                if (nameEl) nameEl.textContent = '';
+                if (tagEl) tagEl.textContent = '';
+                if (statusEl) statusEl.textContent = '';
+                if (avatarEl) avatarEl.src = '';
+            }
+        }
+
+        // Update call timer label
+        var topName = $('call-top-name');
+        if (topName) {
+            topName.textContent = callParticipants.length + '/5';
+        }
+
+        // Connect mesh to new participants
+        connectMeshToParticipants();
+    }
+
+    function connectMeshToParticipants() {
+        var me = getMyUserId();
+        if (!me || !localCallStream || !currentCallCommunityId) return;
+
+        callParticipants.forEach(function (participant) {
+            if (participant.userId === me) return;
+            if (peerConnections[participant.userId]) return;
+
+            // To avoid duplicate connections, only initiate if our slot is lower
+            // Slot 1 initiates to all, slot 2 initiates to 3-5, etc.
+            if (mySlot < participant.slot) {
+                createOfferToParticipant(participant);
+            }
+        });
+    }
+
+    function createOfferToParticipant(participant) {
+        var me = getMyUserId();
+        if (!me || !localCallStream || !currentCallCommunityId || !state.socket) return;
+
+        console.log('[WEBRTC] Creating offer to', participant.username, '(' + participant.userId + ')');
+        var pc = createPeerConnection(participant.userId);
+        peerConnections[participant.userId] = pc;
+
+        localCallStream.getTracks().forEach(function (track) {
+            pc.addTrack(track, localCallStream);
+        });
+
+        pc.createOffer().then(function (offer) {
+            return pc.setLocalDescription(offer);
+        }).then(function () {
+            state.socket.emit('call:offer', {
+                communityId: currentCallCommunityId,
+                offer: pc.localDescription.toJSON(),
+                targetUserId: participant.userId,
+            });
+        }).catch(function (err) {
+            console.error('[WEBRTC] Failed to create offer for', participant.username, ':', err);
+        });
+    }
+
+    /* Call timer — runs while the call screen is open (UI only) */
+    var callTimer = null;
+    var callSeconds = 0;
+
+    function startCallTimer() {
+        stopCallTimer();
+        callSeconds = 0;
+        updateCallTimerEl();
+        callTimer = setInterval(function () {
+            callSeconds++;
+            updateCallTimerEl();
+        }, 1000);
+    }
+
+    function stopCallTimer() {
+        if (callTimer) { clearInterval(callTimer); callTimer = null; }
+    }
+
+    function updateCallTimerEl() {
+        var el = $('call-top-timer');
+        if (!el) return;
+        var m = Math.floor(callSeconds / 60);
+        var s = callSeconds % 60;
+        el.textContent = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+    }
+
     function loadNotifications() {
         if (state.notifLoading || !state.notifHasMore) return;
         state.notifLoading = true;
@@ -3141,6 +3561,39 @@
         el.className = 'chat-message' + (animate ? ' msg-enter' : '') + (hasReply ? ' has-reply' : '') + (isBot ? ' msg-bot' : '');
         el.setAttribute('data-msg-id', msg.id);
         el.setAttribute('data-sender-id', msg.sender_id || msg.user_id || '');
+
+        // System call events render as a centered "call card" instead of a normal chat message.
+        if (msg.message_type === 'system' && (msg.event_type === 'call' || msg.call_type)) {
+            var isCallEnd = msg.call_status === 'end';
+            var callKind = msg.call_type === 'voice' ? 'voice' : 'video';
+            var callIcon = isCallEnd
+                ? '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>'
+                : (callKind === 'voice'
+                    ? '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>'
+                    : '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>');
+            var callTitle = isCallEnd
+                ? (msg.username ? escapeHtml(msg.username) + ' ended ' : '') + (callKind === 'voice' ? 'a voice call' : 'a video call')
+                : (msg.username ? escapeHtml(msg.username) + ' started ' : '') + (callKind === 'voice' ? 'a voice call' : 'a video call');
+            var callDot = isCallEnd ? 'call-dot end' : 'call-dot' + (callKind === 'voice' ? ' call-dot-voice' : ' call-dot-video');
+            el.innerHTML =
+                '<div class="msg-call-card' + (isCallEnd ? '' : ' clickable') + '">' +
+                    '<span class="' + callDot + '"></span>' +
+                    callIcon +
+                    '<div class="msg-call-text">' +
+                        '<span class="msg-call-title">' + callTitle + '</span>' +
+                        '<span class="msg-call-ts">' + escapeHtml(formatTime(msg.created_at)) + '</span>' +
+                    '</div>' +
+                '</div>';
+            // Clicking a "started call" card opens the call overlay for that community.
+            if (!isCallEnd && msg.community_id) {
+                var callCard = el.querySelector('.msg-call-card');
+                callCard.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    joinCallFromCard(msg);
+                });
+            }
+            return el;
+        }
         var avatarUrl = getAvatarUrl(msg);
 
         var replyHtml = '';
@@ -5004,6 +5457,158 @@
             }
         });
 
+        // ── WebRTC Group Call Signaling ─────────────────────
+        socket.on('call:started', function (data) {
+            if (!data) return;
+            console.log('[WEBRTC] Call started by', data.username);
+            callActiveType = data.callType || 'video';
+            currentCallCommunityId = data.communityId || currentCallCommunityId;
+            if (callOpen) {
+                updateParticipantGrid(data.participants || []);
+            }
+        });
+
+        // A new viewer opened the call — create a PC + offer so they can watch
+        socket.on('call:viewer-joined', function (data) {
+            if (!localCallStream || !currentCallCommunityId) return;
+            console.log('[WEBRTC] Viewer joined, sending offer to:', data.viewerUsername);
+
+            if (peerConnections[data.viewerUserId]) {
+                peerConnections[data.viewerUserId].close();
+            }
+
+            var pc = createPeerConnection(data.viewerUserId);
+            peerConnections[data.viewerUserId] = pc;
+
+            localCallStream.getTracks().forEach(function (track) {
+                pc.addTrack(track, localCallStream);
+            });
+
+            pc.createOffer().then(function (offer) {
+                return pc.setLocalDescription(offer);
+            }).then(function () {
+                state.socket.emit('call:offer', {
+                    communityId: currentCallCommunityId,
+                    offer: pc.localDescription.toJSON(),
+                    targetUserId: data.viewerUserId,
+                });
+            }).catch(function (err) {
+                console.error('[WEBRTC] Failed to create offer for viewer:', err);
+            });
+        });
+
+        socket.on('call:participants', function (data) {
+            if (!data || !data.communityId) return;
+            console.log('[WEBRTC] Participants update:', data.participants.length, 'participants');
+            if (data.communityId === currentCallCommunityId) {
+                var oldParticipants = callParticipants.slice();
+                callParticipants = data.participants || [];
+                mySlot = 0;
+                var me = getMyUserId();
+                callParticipants.forEach(function (p) {
+                    if (p.userId === me) mySlot = p.slot;
+                });
+
+                // Update Join button visibility
+                var joinBtn = $('call-join-btn');
+                if (joinBtn) {
+                    if (mySlot > 0) {
+                        joinBtn.style.display = 'none';
+                    } else {
+                        joinBtn.style.display = '';
+                    }
+                }
+
+                updateParticipantGrid(data.participants);
+            }
+        });
+
+        socket.on('call:offer', function (data) {
+            if (!data || !data.offer || !data.callerUserId) return;
+            console.log('[WEBRTC] Received offer from', data.callerUsername);
+
+            var existingPc = peerConnections[data.callerUserId];
+            var remoteDesc = new RTCSessionDescription(data.offer);
+
+            if (existingPc && existingPc.signalingState !== 'closed') {
+                // Renegotiation — update existing PC
+                existingPc.setRemoteDescription(remoteDesc).then(function () {
+                    return existingPc.createAnswer();
+                }).then(function (answer) {
+                    return existingPc.setLocalDescription(answer);
+                }).then(function () {
+                    state.socket.emit('call:answer', {
+                        communityId: currentCallCommunityId,
+                        answer: existingPc.localDescription.toJSON(),
+                        targetUserId: data.callerUserId,
+                    });
+                }).catch(function (err) {
+                    console.error('[WEBRTC] Failed to handle renegotiation:', err);
+                });
+            } else {
+                // New connection
+                if (existingPc) existingPc.close();
+
+                var pc = createPeerConnection(data.callerUserId);
+                peerConnections[data.callerUserId] = pc;
+
+                if (localCallStream) {
+                    localCallStream.getTracks().forEach(function (track) {
+                        pc.addTrack(track, localCallStream);
+                    });
+                }
+
+                pc.setRemoteDescription(remoteDesc).then(function () {
+                    return pc.createAnswer();
+                }).then(function (answer) {
+                    return pc.setLocalDescription(answer);
+                }).then(function () {
+                    state.socket.emit('call:answer', {
+                        communityId: currentCallCommunityId,
+                        answer: pc.localDescription.toJSON(),
+                        targetUserId: data.callerUserId,
+                    });
+                }).catch(function (err) {
+                    console.error('[WEBRTC] Failed to handle offer:', err);
+                });
+            }
+        });
+
+        socket.on('call:answer', function (data) {
+            if (!data || !data.answer || !data.answererUserId) return;
+            var pc = peerConnections[data.answererUserId];
+            if (!pc) return;
+            console.log('[WEBRTC] Received answer from', data.answererUsername);
+            var remoteDesc = new RTCSessionDescription(data.answer);
+            pc.setRemoteDescription(remoteDesc).catch(function (err) {
+                console.error('[WEBRTC] Failed to set answer:', err);
+            });
+        });
+
+        socket.on('call:ice-candidate', function (data) {
+            if (!data || !data.candidate || !data.senderUserId) return;
+            var pc = peerConnections[data.senderUserId];
+            if (!pc) return;
+            var candidate = new RTCIceCandidate(data.candidate);
+            pc.addIceCandidate(candidate).catch(function (err) {
+                console.error('[WEBRTC] Failed to add ICE candidate:', err);
+            });
+        });
+
+        socket.on('call:leave', function (data) {
+            if (!data || !data.userId) return;
+            console.log('[WEBRTC] Participant left:', data.userId);
+            if (peerConnections[data.userId]) {
+                peerConnections[data.userId].close();
+                delete peerConnections[data.userId];
+            }
+        });
+
+        socket.on('call:stopped', function (data) {
+            console.log('[WEBRTC] Call stopped by', data ? data.username : 'unknown');
+            closeCallOverlay();
+        });
+
         // ── Socket events ──────────────────
         socket.on('notification:new', function (notif) {
             if (!notif) return;
@@ -5077,6 +5682,94 @@
                 showHomeView();
             });
         }
+
+        // Video call button — starts a community video call + signals the backend
+        var videoCallBtn = qs('.chat-topbar-btn[aria-label="Video call"]');
+        if (videoCallBtn) {
+            videoCallBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                startCommunityCall('video');
+            });
+        }
+
+        // Voice call button — starts a community voice call + signals the backend
+        var voiceCallBtn = qs('.chat-topbar-btn[aria-label="Voice call"]');
+        if (voiceCallBtn) {
+            voiceCallBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                startCommunityCall('voice');
+            });
+        }
+
+        // Call overlay controls
+        var callEndBtn = $('call-end-btn');
+        if (callEndBtn) callEndBtn.addEventListener('click', closeCallOverlay);
+        var callMinBtn = $('call-min-btn');
+        if (callMinBtn) callMinBtn.addEventListener('click', closeCallOverlay);
+        var callMuteBtn = $('call-mute-btn');
+        if (callMuteBtn) callMuteBtn.addEventListener('click', function () {
+            if (localCallStream) {
+                var audioTrack = localCallStream.getAudioTracks()[0];
+                if (audioTrack) {
+                    audioTrack.enabled = !audioTrack.enabled;
+                    toggleCallCtrl(this, audioTrack.enabled);
+                }
+            }
+        });
+        var callCamBtn = $('call-cam-btn');
+        if (callCamBtn) callCamBtn.addEventListener('click', function () {
+            if (localCallStream) {
+                var videoTrack = localCallStream.getVideoTracks()[0];
+                if (videoTrack) {
+                    videoTrack.enabled = !videoTrack.enabled;
+                    toggleCallCtrl(this, videoTrack.enabled);
+                }
+            }
+        });
+        var callJoinBtn = $('call-join-btn');
+        if (callJoinBtn) callJoinBtn.addEventListener('click', function () {
+            if (!state.currentCommunity || !currentCallCommunityId) return;
+
+            var videoEnabled = callActiveType === 'video';
+            getLocalCallStream(videoEnabled).then(function (stream) {
+                callJoinBtn.style.display = 'none';
+
+                // Emit call:join FIRST so call:participants arrives before renegotiation
+                if (state.socket) {
+                    state.socket.emit('call:join', { communityId: currentCallCommunityId });
+                }
+
+                // Add tracks to existing peer connections (from watch-only mode) and renegotiate
+                // Delay slightly to ensure call:participants is processed by peers first
+                setTimeout(function () {
+                    Object.keys(peerConnections).forEach(function (uid) {
+                        var pc = peerConnections[uid];
+                        stream.getTracks().forEach(function (track) {
+                            pc.addTrack(track, stream);
+                        });
+                        pc.createOffer().then(function (offer) {
+                            return pc.setLocalDescription(offer);
+                        }).then(function () {
+                            state.socket.emit('call:offer', {
+                                communityId: currentCallCommunityId,
+                                offer: pc.localDescription.toJSON(),
+                                targetUserId: uid,
+                            });
+                        }).catch(function (err) {
+                            console.error('[WEBRTC] Failed to renegotiate with', uid, ':', err);
+                        });
+                    });
+                }, 200);
+            }).catch(function (err) {
+                console.error('[WEBRTC] Failed to get camera for join:', err);
+            });
+        });
+        // Escape closes the call overlay
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && callOpen) closeCallOverlay();
+        });
 
         if (dom.sendBtn) {
             dom.sendBtn.addEventListener('click', sendMessage);

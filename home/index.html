@@ -1975,6 +1975,156 @@
             </div>
         </div>
         <!-- ═══════════ END ONLINE USERS PANEL ═══════════ -->
+
+        <!-- ═══════════ VIDEO CALL OVERLAY ═══════════ -->
+        <div class="call-overlay" id="call-overlay" style="display:none;">
+            <!-- Left view: participant grid -->
+            <div class="call-remote-panel" id="call-remote-panel">
+                <div class="call-participant-grid" id="call-participant-grid">
+                    <!-- Slot 1 -->
+                    <div class="call-participant-slot call-slot-empty" id="call-slot-1">
+                        <video class="call-slot-video" autoplay playsinline></video>
+                        <div class="call-slot-fallback">
+                            <img class="call-slot-avatar" src="" alt="">
+                            <h2 class="call-slot-name"></h2>
+                            <p class="call-slot-status"></p>
+                        </div>
+                        <div class="call-video-shade"></div>
+                        <div class="call-side-tag">
+                            <span class="call-side-dot"></span>
+                            <span class="call-side-tag-text"></span>
+                        </div>
+                    </div>
+                    <!-- Slot 2 -->
+                    <div class="call-participant-slot call-slot-empty" id="call-slot-2">
+                        <video class="call-slot-video" autoplay playsinline></video>
+                        <div class="call-slot-fallback">
+                            <img class="call-slot-avatar" src="" alt="">
+                            <h2 class="call-slot-name"></h2>
+                            <p class="call-slot-status"></p>
+                        </div>
+                        <div class="call-video-shade"></div>
+                        <div class="call-side-tag">
+                            <span class="call-side-dot"></span>
+                            <span class="call-side-tag-text"></span>
+                        </div>
+                    </div>
+                    <!-- Slot 3 -->
+                    <div class="call-participant-slot call-slot-empty" id="call-slot-3">
+                        <video class="call-slot-video" autoplay playsinline></video>
+                        <div class="call-slot-fallback">
+                            <img class="call-slot-avatar" src="" alt="">
+                            <h2 class="call-slot-name"></h2>
+                            <p class="call-slot-status"></p>
+                        </div>
+                        <div class="call-video-shade"></div>
+                        <div class="call-side-tag">
+                            <span class="call-side-dot"></span>
+                            <span class="call-side-tag-text"></span>
+                        </div>
+                    </div>
+                    <!-- Slot 4 -->
+                    <div class="call-participant-slot call-slot-empty" id="call-slot-4">
+                        <video class="call-slot-video" autoplay playsinline></video>
+                        <div class="call-slot-fallback">
+                            <img class="call-slot-avatar" src="" alt="">
+                            <h2 class="call-slot-name"></h2>
+                            <p class="call-slot-status"></p>
+                        </div>
+                        <div class="call-video-shade"></div>
+                        <div class="call-side-tag">
+                            <span class="call-side-dot"></span>
+                            <span class="call-side-tag-text"></span>
+                        </div>
+                    </div>
+                    <!-- Slot 5 -->
+                    <div class="call-participant-slot call-slot-empty" id="call-slot-5">
+                        <video class="call-slot-video" autoplay playsinline></video>
+                        <div class="call-slot-fallback">
+                            <img class="call-slot-avatar" src="" alt="">
+                            <h2 class="call-slot-name"></h2>
+                            <p class="call-slot-status"></p>
+                        </div>
+                        <div class="call-video-shade"></div>
+                        <div class="call-side-tag">
+                            <span class="call-side-dot"></span>
+                            <span class="call-side-tag-text"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right view: local video + all controls -->
+            <div class="call-local-pane" id="call-local-panel">
+                <div class="call-local-video-wrap">
+                    <video class="call-local-video" id="call-local-video" autoplay muted playsinline></video>
+                    <div class="call-local-fallback" id="call-local-fallback">
+                        <span class="call-local-emoji">🐝</span>
+                        <span class="call-local-label">You</span>
+                    </div>
+                    <span class="call-local-tag">You</span>
+
+                    <!-- Top-right corner tools -->
+                    <div class="call-local-tools">
+                        <span class="call-badge">● ENCRYPTED</span>
+                        <button class="call-min-btn" id="call-min-btn" aria-label="Minimize call">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="5" y1="12" x2="19" y2="12" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- All call controls live in the local view -->
+                <div class="call-controls">
+                    <!-- Duration chip -->
+                    <span class="call-timer-chip">
+                        <span class="call-top-name" id="call-top-name">Call</span>
+                        <span class="call-top-timer" id="call-top-timer">00:00</span>
+                    </span>
+
+                    <button class="call-ctl micro" id="call-mute-btn" aria-label="Mute" title="Mute">
+                    <span class="call-ctl-ico">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                            <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                            <line x1="12" y1="19" x2="12" y2="23" />
+                            <line x1="8" y1="23" x2="16" y2="23" />
+                        </svg>
+                    </span>
+                    <span class="call-ctl-label">Mute</span>
+                </button>
+                <button class="call-ctl end" id="call-end-btn" aria-label="End call" title="End call">
+                    <span class="call-ctl-ico">
+                        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                        </svg>
+                    </span>
+                    <span class="call-ctl-label">End</span>
+                </button>
+                <button class="call-ctl cam" id="call-cam-btn" aria-label="Toggle camera" title="Camera">
+                        <span class="call-ctl-ico">
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polygon points="23 7 16 12 23 17 23 7" />
+                                <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+                            </svg>
+                        </span>
+                        <span class="call-ctl-label">Camera</span>
+                    </button>
+                    <button class="call-ctl join" id="call-join-btn" aria-label="Join call" title="Join" style="display:none;">
+                        <span class="call-ctl-ico">
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                                <circle cx="4" cy="11" r="1.6" fill="currentColor" stroke="none"/>
+                                <circle cx="8.2" cy="11" r="1.6" fill="currentColor" stroke="none"/>
+                            </svg>
+                        </span>
+                        <span class="call-ctl-label">Join</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- ═══════════ END VIDEO CALL OVERLAY ═══════════ -->
     </div>
     <!-- ═══════════ END PROFILE PANEL ═══════════ -->
 

@@ -1,5 +1,5 @@
-/* ============================================
-   HIVE — Home / App Shell
+﻿/* ============================================
+   HIVE â€” Home / App Shell
    Discord-like premium dark UI
    ============================================ */
 
@@ -54,13 +54,13 @@ input { font-family: inherit; border: none; outline: none; background: none; col
 ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.14); }
 ::selection { background: rgba(108,99,255,0.3); color: #fff; }
 
-/* ── Particles ──────────────────────────────── */
+/* â”€â”€ Particles â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 #particles {
     position: fixed; inset: 0;
     z-index: 0; pointer-events: none;
 }
 
-/* ── App Layout ─────────────────────────────── */
+/* â”€â”€ App Layout â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .app {
     display: grid;
     grid-template-columns: var(--rail-w) var(--sidebar-w) 1fr var(--right-w);
@@ -69,9 +69,9 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     z-index: 1;
 }
 
-/* ══════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    NAV RAIL
-   ══════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .rail {
     display: flex;
     flex-direction: column;
@@ -83,7 +83,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     z-index: 10;
 }
 
-/* Mobile bottom navigation — hidden by default, shown on small screens */
+/* Mobile bottom navigation â€” hidden by default, shown on small screens */
 .bottom-nav {
     display: none;
 }
@@ -178,9 +178,9 @@ input { font-family: inherit; border: none; outline: none; background: none; col
 
 .tooltip.visible { opacity: 1; }
 
-/* ══════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    COMMUNITY SIDEBAR
-   ══════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .sidebar {
     display: flex;
     flex-direction: column;
@@ -513,9 +513,9 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     color: var(--text);
 }
 
-/* ══════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    MAIN AREA
-   ══════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .main {
     display: flex;
     flex-direction: column;
@@ -606,7 +606,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     transition: all 0.2s;
 }
 
-/* Mobile-only topbar avatar/settings/online — hidden on desktop */
+/* Mobile-only topbar avatar/settings/online â€” hidden on desktop */
 .mobile-topbar-avatar,
 #mobile-topbar-settings,
 #mobile-topbar-online { display: none; }
@@ -637,7 +637,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     padding: 20px 24px;
 }
 
-/* ── Welcome Banner ─────────────────────────── */
+/* â”€â”€ Welcome Banner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .welcome-banner {
     position: relative;
     border-radius: var(--r-lg);
@@ -712,7 +712,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     line-height: 1.5;
 }
 
-/* ── Section Labels ─────────────────────────── */
+/* â”€â”€ Section Labels â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .section-label {
     font-size: 0.72rem;
     font-weight: 700;
@@ -723,7 +723,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     margin-top: 8px;
 }
 
-/* ── Quick Actions ──────────────────────────── */
+/* â”€â”€ Quick Actions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .quick-actions {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -767,7 +767,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     color: var(--text-2);
 }
 
-/* ── Continue Cards ─────────────────────────── */
+/* â”€â”€ Continue Cards â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .continue-grid {
     display: flex;
     flex-direction: column;
@@ -823,7 +823,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     flex-shrink: 0;
 }
 
-/* ── Featured Communities ───────────────────── */
+/* â”€â”€ Featured Communities â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .featured-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -969,7 +969,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     transform: translateY(-1px);
 }
 
-/* ── Trending ───────────────────────────────── */
+/* â”€â”€ Trending â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .trending-list {
     display: flex;
     flex-direction: column;
@@ -1019,9 +1019,9 @@ input { font-family: inherit; border: none; outline: none; background: none; col
 
 .trending-heat { font-size: 1rem; }
 
-/* ══════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    RIGHT SIDEBAR
-   ══════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .right-sidebar {
     display: flex;
     flex-direction: column;
@@ -1304,9 +1304,9 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     transform: translateY(-1px);
 }
 
-/* ══════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    ANIMATIONS
-   ══════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(8px); }
     to { opacity: 1; transform: translateY(0); }
@@ -1334,9 +1334,9 @@ input { font-family: inherit; border: none; outline: none; background: none; col
 .friend-item:nth-child(5) { animation-delay: 0.25s; }
 .friend-item:nth-child(6) { animation-delay: 0.3s; }
 
-/* ══════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    RESPONSIVE
-   ══════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 @media (max-width: 1200px) {
     .app { grid-template-columns: var(--rail-w) var(--sidebar-w) 1fr; }
     .right-sidebar { display: none; }
@@ -1525,9 +1525,9 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     .rp-ring-modal-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
-/* ══════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    CHAT VIEW
-   ══════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .home-view, .chat-view {
     display: flex;
     flex-direction: column;
@@ -1715,6 +1715,81 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     transition: background 0.15s;
 }
 
+/* ═══ SYSTEM CALL CARD ═══════════════ */
+.msg-call-card {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    margin: 4px 0;
+    padding: 8px 14px;
+    background: var(--bg-2, rgba(255,255,255,0.03));
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    color: var(--text-2);
+}
+
+/* A "started call" card is clickable → opens the join/viewer overlay */
+.msg-call-card.clickable {
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, transform 0.15s;
+}
+.msg-call-card.clickable:hover {
+    background: rgba(0,229,255,0.06);
+    border-color: rgba(0,229,255,0.35);
+}
+.msg-call-card.clickable:active { transform: scale(0.99); }
+
+.msg-call-card svg {
+    color: var(--text-2);
+    flex-shrink: 0;
+}
+
+.msg-call-text {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    min-width: 0;
+}
+
+.msg-call-title {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.msg-call-ts {
+    font-size: 0.68rem;
+    color: var(--text-3);
+    white-space: nowrap;
+}
+
+.call-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.call-dot-video {
+    background: #00E5FF;
+    box-shadow: 0 0 6px #00E5FF;
+}
+
+.call-dot-voice {
+    background: #7CFFB2;
+    box-shadow: 0 0 6px #7CFFB2;
+}
+
+.call-dot.end {
+    background: var(--text-3);
+    box-shadow: none;
+}
+
 .chat-message:hover {
     background: rgba(255,255,255,0.02);
 }
@@ -1785,7 +1860,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     color: var(--accent);
 }
 
-/* Reply Preview — handled by the section near bottom of file */
+/* Reply Preview â€” handled by the section near bottom of file */
 
 /* Message Image */
 .msg-image {
@@ -2068,9 +2143,9 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     color: #fff;
 }
 
-/* ══════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    CHAT SIDEBAR (RIGHT)
-   ══════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .chat-sidebar {
     display: flex;
     flex-direction: column;
@@ -2177,7 +2252,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
 
 .cs-member:hover { background: var(--surface-hover); }
 
-/* ── Presence Animations ────────────────────────── */
+/* â”€â”€ Presence Animations â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .cs-member.presence-enter {
     animation: presenceSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
@@ -2208,7 +2283,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     }
 }
 
-/* ── Offline member styling ────────────────────── */
+/* â”€â”€ Offline member styling â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .cs-member.is-offline {
     opacity: 0.45;
 }
@@ -2230,7 +2305,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     animation: none !important;
 }
 
-/* ── Online pulse ──────────────────────────────── */
+/* â”€â”€ Online pulse â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .cs-member-status {
     position: absolute;
     bottom: -1px; right: -1px;
@@ -2253,7 +2328,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
 .cs-member-status.dnd { background: var(--red); }
 .cs-member-status.offline { background: var(--text-3); animation: none; }
 
-/* ── Avatar wrap ───────────────────────────────── */
+/* â”€â”€ Avatar wrap â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .cs-member-avatar-wrap {
     position: relative;
     flex-shrink: 0;
@@ -2270,7 +2345,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     transition: filter 0.3s;
 }
 
-/* ── Member info ───────────────────────────────── */
+/* â”€â”€ Member info â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .cs-member-info { flex: 1; min-width: 0; }
 
 .cs-member-info { flex: 1; min-width: 0; }
@@ -2295,7 +2370,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     text-overflow: ellipsis;
 }
 
-/* ── Last seen text for offline members ────────── */
+/* â”€â”€ Last seen text for offline members â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .cs-member-lastseen {
     display: block;
     font-size: 0.62rem;
@@ -2306,7 +2381,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     text-overflow: ellipsis;
 }
 
-/* ── AI Bot Card Styles ────────────────────────── */
+/* â”€â”€ AI Bot Card Styles â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .cs-member.is-ai,
 .friend-item.is-ai {
     background: rgba(108,99,255,0.04);
@@ -2437,9 +2512,9 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     overflow: hidden;
 }
 
-/* ══════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    VIEW TRANSITIONS
-   ══════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .view-enter {
     animation: viewFadeIn 0.3s var(--ease) forwards;
 }
@@ -2449,9 +2524,9 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* ══════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    MESSAGE SKELETON LOADING
-   ══════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .msg-skeleton {
     display: flex;
     gap: 12px;
@@ -2559,9 +2634,9 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* ══════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    REPLY COMPOSER
-   ══════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .reply-composer {
     padding: 0 16px 8px;
     flex-shrink: 0;
@@ -2689,9 +2764,9 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     }
 }
 
-/* ══════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    REPLY BUBBLE (in message)
-   ══════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .msg-reply {
     display: flex;
     gap: 0;
@@ -2801,9 +2876,9 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     overflow: hidden;
 }
 
-/* ══════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    MESSAGE HIGHLIGHT (scroll-to-reply)
-   ══════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .msg-highlight {
     animation: msgHighlightPulse 2s var(--ease) forwards;
 }
@@ -2823,9 +2898,9 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     }
 }
 
-/* ══════════════════════════════════════════════
-   AI MODERATION — BOT MESSAGES
-   ══════════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   AI MODERATION â€” BOT MESSAGES
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .msg-bot {
     position: relative;
     border-left: 3px solid rgba(108,99,255,0.4);
@@ -2865,9 +2940,9 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     filter: drop-shadow(0 0 3px rgba(108,99,255,0.3));
 }
 
-/* ══════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    MUTE BANNER
-   ══════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .mute-banner {
     display: flex;
     align-items: center;
@@ -2931,9 +3006,9 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     pointer-events: none;
 }
 
-/* ══════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    AI WARNING TOAST
-   ══════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .ai-warning-toast {
     position: fixed;
     bottom: 24px;
@@ -2978,17 +3053,17 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     line-height: 1.4;
 }
 
-/* ══════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    AI TYPING AVATAR
-   ══════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .ai-typing-avatar {
     border-color: rgba(108,99,255,0.3) !important;
     box-shadow: 0 0 8px rgba(108,99,255,0.3) !important;
 }
 
-/* ══════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    LOADING OLDER MESSAGES
-   ══════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .loading-older {
     display: flex;
     align-items: center;
@@ -3022,9 +3097,9 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* ══════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    CHAT RESPONSIVE
-   ══════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 @media (max-width: 1200px) {
     .chat-topic { display: none; }
     .chat-topbar-divider:last-of-type { display: none; }
@@ -3035,9 +3110,9 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     .chat-topbar-divider:first-of-type { display: none; }
 }
 
-/* ══════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    RANK BADGES
-   ══════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .rank-badge {
     display: inline-flex;
     align-items: center;
@@ -3156,12 +3231,12 @@ input { font-family: inherit; border: none; outline: none; background: none; col
 .rank-badge.rank-badge-lg { width: 22px; height: 22px; }
 .rank-badge.rank-badge-xl { width: 28px; height: 28px; }
 
-/* ══════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    EMOJI PICKER
-   ══════════════════════════════════════════════ */
-/* ═══════════════════════════════════════════
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    EMOJI PICKER
-   ═══════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .emoji-picker {
     position: fixed;
     width: 350px;
@@ -3181,7 +3256,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
 @keyframes epIn  { from { opacity:0; transform:scale(0.95) translateY(6px); } }
 @keyframes epOut { from { opacity:1; transform:scale(1) translateY(0); } to { opacity:0; transform:scale(0.95) translateY(6px); } }
 
-/* ── Search ────────────────────────────── */
+/* â”€â”€ Search â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .emoji-picker-header { padding: 10px 10px 0; }
 
 .emoji-search {
@@ -3203,7 +3278,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     box-shadow: 0 0 0 3px rgba(108,99,255,0.08);
 }
 
-/* ── Tabs ──────────────────────────────── */
+/* â”€â”€ Tabs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .emoji-category-tabs {
     display: flex;
     gap: 2px;
@@ -3228,7 +3303,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
 .emoji-tab:hover { background: rgba(255,255,255,0.05); color: var(--text-2); }
 .emoji-tab.active { background: rgba(108,99,255,0.12); color: var(--text); }
 
-/* ── Scrollable body ───────────────────── */
+/* â”€â”€ Scrollable body â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .emoji-body {
     flex: 1;
     overflow-y: auto;
@@ -3241,7 +3316,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
 .emoji-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
 .emoji-body::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.14); }
 
-/* ═══════════ GIF PICKER ═══════════ */
+/* â•â•â•â•â•â•â•â•â•â•â• GIF PICKER â•â•â•â•â•â•â•â•â•â•â• */
 .gif-picker {
     position: fixed;
     width: 360px;
@@ -3319,7 +3394,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
 .gif-picker-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
 .gif-picker-body::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.14); }
 
-/* ── Mobile: emoji + gif pickers become a full-width bottom sheet ── */
+/* â”€â”€ Mobile: emoji + gif pickers become a full-width bottom sheet â”€â”€ */
 @media (max-width: 900px) {
     .emoji-picker,
     .gif-picker {
@@ -3432,7 +3507,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     font-size: 0.82rem;
 }
 
-/* ── Sections inside body ──────────────── */
+/* â”€â”€ Sections inside body â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .emoji-section { margin-bottom: 6px; }
 .emoji-section:last-child { margin-bottom: 0; }
 
@@ -3473,7 +3548,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
 .emoji-item .hive-emoji { width: 26px; height: 26px; }
 .emoji-item .hive-emoji svg { width: 100%; height: 100%; }
 
-/* ── No results ────────────────────────── */
+/* â”€â”€ No results â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .emoji-no-results {
     text-align: center;
     padding: 40px 16px;
@@ -3481,7 +3556,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     font-size: 0.8rem;
 }
 
-/* ── Inline in messages ────────────────── */
+/* â”€â”€ Inline in messages â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .hive-emoji-inline {
     display: inline-flex;
     vertical-align: -0.2em;
@@ -3489,7 +3564,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
 }
 .hive-emoji-inline svg { display: inline; }
 
-/* ── Composed in input ─────────────────── */
+/* â”€â”€ Composed in input â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .hive-emoji-composed {
     display: inline-flex;
     vertical-align: middle;
@@ -3498,9 +3573,9 @@ input { font-family: inherit; border: none; outline: none; background: none; col
 }
 .hive-emoji-composed .hive-emoji { width: 20px; height: 20px; }
 
-/* ══════════════════════════════════════════════
-   RIGHT-SIDE PROFILE PANEL — Premium Redesign
-   ══════════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   RIGHT-SIDE PROFILE PANEL â€” Premium Redesign
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .rpanel {
     position: absolute;
     top: 0;
@@ -3519,7 +3594,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     z-index: 5;
 }
 
-/* Expanded state — slide handle widens the panel */
+/* Expanded state â€” slide handle widens the panel */
 .rpanel--expanded {
     width: min(420px, calc(100vw - 220px));
 }
@@ -3528,7 +3603,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     .rpanel--expanded { width: 100%; }
 }
 
-/* ── MOBILE PROFILE SCREEN OVERRIDES ─────────────
+/* â”€â”€ MOBILE PROFILE SCREEN OVERRIDES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    These come AFTER the base .rpanel rules on purpose,
    so on phones the profile is a full-width screen that
    stops above the bottom nav. The base rules (position
@@ -3574,7 +3649,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     to { opacity: 1; transform: translateX(0); }
 }
 
-/* ── Slide-out expand handle ─────────────────── */
+/* â”€â”€ Slide-out expand handle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .rpanel-collapse-handle {
     position: absolute;
     top: 50%;
@@ -3618,7 +3693,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     min-height: 0;
 }
 
-/* ── Toolbar ─────────────────────────────── */
+/* â”€â”€ Toolbar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .rpanel-toolbar {
     display: flex;
     align-items: center;
@@ -3667,7 +3742,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
 .rpanel-toolbar-btn.primary { color: var(--primary); }
 .rpanel-toolbar-btn.primary:hover { background: rgba(108,99,255,0.12); box-shadow: 0 0 12px rgba(108,99,255,0.15); }
 
-/* ── Scroll Container ────────────────────── */
+/* â”€â”€ Scroll Container â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .rpanel-scroll {
     flex: 1;
     overflow-y: auto;
@@ -3681,7 +3756,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
 .rpanel-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.06); border-radius: 3px; }
 .rpanel-scroll::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.1); }
 
-/* ── Banner ──────────────────────────────── */
+/* â”€â”€ Banner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .rpanel-banner {
     position: relative;
     height: 140px;
@@ -3739,7 +3814,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     50% { opacity: 1; }
 }
 
-/* ── Hero / Identity ─────────────────────── */
+/* â”€â”€ Hero / Identity â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .rpanel-hero {
     position: relative;
     padding: 0 16px 14px;
@@ -3854,7 +3929,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
 
 .rpanel-meta-item svg { opacity: 0.5; }
 
-/* ── Cards (shared) ──────────────────────── */
+/* â”€â”€ Cards (shared) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .rp-card {
     background: rgba(255,255,255,0.02);
     border: 1px solid var(--border);
@@ -3886,7 +3961,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
 
 .rp-card-b { padding: 10px 12px; }
 
-/* ── Card Entrance Animations ─────────────── */
+/* â”€â”€ Card Entrance Animations â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .rp-entrance {
     opacity: 0;
     transform: translateY(12px);
@@ -3905,7 +3980,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* ── About Card ──────────────────────────── */
+/* â”€â”€ About Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .rp-about-bio {
     font-size: 0.82rem;
     color: var(--text-2);
@@ -3943,7 +4018,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     font-weight: 500;
 }
 
-/* ── Stats Card ──────────────────────────── */
+/* â”€â”€ Stats Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .rp-stats-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -4015,7 +4090,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     letter-spacing: 0.03em;
 }
 
-/* ── Level Card ──────────────────────────── */
+/* â”€â”€ Level Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .rp-level-row {
     display: flex;
     align-items: center;
@@ -4083,7 +4158,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     50% { transform: translateX(100%); }
 }
 
-/* ── Actions Card ────────────────────────── */
+/* â”€â”€ Actions Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .rp-actions-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -4132,7 +4207,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
 
 .rp-action:hover span { color: var(--text); }
 
-/* ── Achievements Card ───────────────────── */
+/* â”€â”€ Achievements Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .rp-achievements {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -4193,7 +4268,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     line-height: 1.2;
 }
 
-/* ── Community Card ──────────────────────── */
+/* â”€â”€ Community Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .rp-community-info {
     display: flex;
     align-items: center;
@@ -4228,9 +4303,9 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     text-overflow: ellipsis;
 }
 
-/* ══════════════════════════════════════════════
-   EDIT PROFILE PANEL — Premium Redesign
-   ══════════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   EDIT PROFILE PANEL â€” Premium Redesign
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 /* Save Button */
 .rpanel-save-btn {
@@ -4263,7 +4338,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     transform: translateY(0);
 }
 
-/* ── Edit Preview Card ────────────────────── */
+/* â”€â”€ Edit Preview Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .rp-edit-preview {
     margin: 12px 12px 10px;
     border-radius: var(--r-md);
@@ -4376,12 +4451,12 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     white-space: pre-wrap;
 }
 
-/* ── Edit Cards ───────────────────────────── */
+/* â”€â”€ Edit Cards â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .rp-edit-card {
     margin: 0 12px 10px;
 }
 
-/* ── Avatar Upload Area ───────────────────── */
+/* â”€â”€ Avatar Upload Area â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .rp-edit-avatar-area {
     display: flex;
     align-items: center;
@@ -4482,7 +4557,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     transform: scale(1.02);
 }
 
-/* ── Cover Upload Area ────────────────────── */
+/* â”€â”€ Cover Upload Area â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .rp-edit-cover-upload {
     position: relative;
     width: 100%;
@@ -4569,12 +4644,12 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     letter-spacing: 0.04em;
 }
 
-/* ── Remove Cover Button ──────────────────── */
+/* â”€â”€ Remove Cover Button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .rp-edit-card .rp-edit-remove-btn {
     margin-top: 8px;
 }
 
-/* ── Bio Section ──────────────────────────── */
+/* â”€â”€ Bio Section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .rp-bio-section {
     display: flex;
     flex-direction: column;
@@ -4654,7 +4729,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     transition: color 0.3s var(--ease);
 }
 
-/* ── Tips Section ─────────────────────────── */
+/* â”€â”€ Tips Section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .rp-edit-tips {
     display: flex;
     flex-direction: column;
@@ -4675,7 +4750,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     opacity: 0.7;
 }
 
-/* (Old profile modal CSS removed — replaced by .rpanel above) */
+/* (Old profile modal CSS removed â€” replaced by .rpanel above) */
 
 /* Toast */
 .toast-msg { pointer-events: none; }
@@ -4696,10 +4771,10 @@ input { font-family: inherit; border: none; outline: none; background: none; col
 .msg-username:hover { color: var(--primary) !important; }
 
 /* ============================================
-   USER PROFILE POPUP — Premium Redesign
+   USER PROFILE POPUP â€” Premium Redesign
    ============================================ */
 
-/* ── Overlay ─────────────────────────────────── */
+/* â”€â”€ Overlay â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .up-overlay {
     position: fixed;
     inset: 0;
@@ -4707,7 +4782,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     background: transparent;
 }
 
-/* ── Main Card ───────────────────────────────── */
+/* â”€â”€ Main Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .user-popup {
     position: absolute;
     z-index: 1;
@@ -4743,7 +4818,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     transition: opacity 0.18s var(--ease), transform 0.18s var(--ease);
 }
 
-/* ── Mobile: user popup is a full-screen sheet ── */
+/* â”€â”€ Mobile: user popup is a full-screen sheet â”€â”€ */
 @media (max-width: 900px) {
     .up-overlay {
         background: rgba(5, 7, 19, 0.55);
@@ -4792,7 +4867,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     .up-back-btn { display: none; }
 }
 
-/* ── Banner ──────────────────────────────────── */
+/* â”€â”€ Banner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .up-banner {
     position: relative;
     z-index: 2;
@@ -4855,7 +4930,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     50% { opacity: 1; }
 }
 
-/* ── Header / Avatar ─────────────────────────── */
+/* â”€â”€ Header / Avatar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .up-header {
     position: relative;
     z-index: 2;
@@ -4943,7 +5018,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     padding-bottom: 10px;
 }
 
-/* ── Action Buttons ──────────────────────────── */
+/* â”€â”€ Action Buttons â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .up-action-btn {
     display: flex;
     align-items: center;
@@ -5015,7 +5090,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
 
 .up-icon-btn:active { transform: scale(0.93); }
 
-/* ── Body ────────────────────────────────────── */
+/* â”€â”€ Body â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .up-body {
     padding: 12px 20px 16px;
     display: flex;
@@ -5025,7 +5100,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     z-index: 2;
 }
 
-/* ── Identity Block ──────────────────────────── */
+/* â”€â”€ Identity Block â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .up-identity {
     display: flex;
     flex-direction: column;
@@ -5120,7 +5195,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
 .up-meta-item svg { opacity: 0.5; }
 .up-meta-sep { opacity: 0.3; }
 
-/* ── Shared Card ─────────────────────────────── */
+/* â”€â”€ Shared Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .up-card {
     background: rgba(255,255,255,0.02);
     border: 1px solid var(--border);
@@ -5154,7 +5229,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     padding: 14px 16px;
 }
 
-/* ── Bio Card ────────────────────────────────── */
+/* â”€â”€ Bio Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .up-bio {
     font-size: 0.82rem;
     color: var(--text-2);
@@ -5169,7 +5244,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     opacity: 0.7;
 }
 
-/* ── Actions Grid ────────────────────────────── */
+/* â”€â”€ Actions Grid â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .up-actions-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -5224,7 +5299,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
 
 .up-action-tile:hover span { color: var(--text); }
 
-/* ── Profile Info Grid ───────────────────────── */
+/* â”€â”€ Profile Info Grid â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .up-info-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -5256,7 +5331,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     font-weight: 500;
 }
 
-/* ── Stats Grid ──────────────────────────────── */
+/* â”€â”€ Stats Grid â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .up-stats-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -5316,7 +5391,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     letter-spacing: 0.03em;
 }
 
-/* ── Badges Grid ─────────────────────────────── */
+/* â”€â”€ Badges Grid â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .up-badges-grid {
     display: flex;
     flex-wrap: wrap;
@@ -5361,7 +5436,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     line-height: 1.2;
 }
 
-/* ── Mutual Chips ────────────────────────────── */
+/* â”€â”€ Mutual Chips â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .up-mutual-chips {
     display: flex;
     flex-wrap: wrap;
@@ -5406,7 +5481,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     font-style: italic;
 }
 
-/* ── Role Chips ──────────────────────────────── */
+/* â”€â”€ Role Chips â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .up-role-chips {
     display: flex;
     flex-wrap: wrap;
@@ -5433,7 +5508,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     flex-shrink: 0;
 }
 
-/* ── Footer ──────────────────────────────────── */
+/* â”€â”€ Footer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .up-footer {
     display: flex;
     align-items: center;
@@ -5450,7 +5525,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     opacity: 0.6;
 }
 
-/* ── Card Entrance Animations ────────────────── */
+/* â”€â”€ Card Entrance Animations â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .up-card.rp-entrance {
     opacity: 0;
     transform: translateY(12px);
@@ -5476,7 +5551,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     transform: translateY(12px);
 }
 
-/* ── Skeleton Loading ────────────────────────── */
+/* â”€â”€ Skeleton Loading â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .up-skeleton {
     display: flex;
     flex-direction: column;
@@ -5595,7 +5670,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
 
 .up-error-retry:hover { background: #5a52e0; }
 
-/* ── Center Position Fallback ────────────────── */
+/* â”€â”€ Center Position Fallback â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .user-popup.up-center {
     left: 50% !important;
     transform: translateX(-50%) scale(0.95) translateY(10px);
@@ -5610,9 +5685,9 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     transform: translateX(-50%) scale(0.95) translateY(10px);
 }
 
-/* ══════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    CHAT RESTRICTED BANNER
-   ══════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 .chat-restricted-banner {
     display: flex;
@@ -5646,9 +5721,9 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     user-select: none;
 }
 
-/* ══════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    SIDEBAR PANELS (switchable)
-   ══════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .sidebar-panel {
     flex: 1;
     display: flex;
@@ -5977,7 +6052,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     font-size: 0.82rem;
 }
 
-/* ═══════════ FRIENDS PANEL ═══════════ */
+/* â•â•â•â•â•â•â•â•â•â•â• FRIENDS PANEL â•â•â•â•â•â•â•â•â•â•â• */
 
 .friends-count {
     font-size: 0.75rem;
@@ -6259,7 +6334,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     max-width: 260px;
 }
 
-/* ═══════════ END FRIENDS PANEL ═══════════ */
+/* â•â•â•â•â•â•â•â•â•â•â• END FRIENDS PANEL â•â•â•â•â•â•â•â•â•â•â• */
 
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(8px); }
@@ -6271,7 +6346,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     50% { opacity: 0.8; }
 }
 
-/* ═══════════ APPEARANCE PAGE ═══════════ */
+/* â•â•â•â•â•â•â•â•â•â•â• APPEARANCE PAGE â•â•â•â•â•â•â•â•â•â•â• */
 
 .rpanel-appearance-header {
     display: flex;
@@ -6731,7 +6806,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     background: rgba(255,255,255,0.03);
 }
 
-/* ═══════════ TABS ═══════════ */
+/* â•â•â•â•â•â•â•â•â•â•â• TABS â•â•â•â•â•â•â•â•â•â•â• */
 .rp-tabs {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -6789,8 +6864,8 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* ═══════════ PROFILE RINGS ═══════════ */
-/* ── Message Avatar Rings (ornate fantasy style) ── */
+/* â•â•â•â•â•â•â•â•â•â•â• PROFILE RINGS â•â•â•â•â•â•â•â•â•â•â• */
+/* â”€â”€ Message Avatar Rings (ornate fantasy style) â”€â”€ */
 .msg-avatar-wrap {
     position: relative;
     width: 46px; height: 46px;
@@ -7099,7 +7174,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
 .msg-avatar-wrap.ring_demon::before { background: linear-gradient(135deg, #FFD700, #7F1D1D, #B8860B, #FFD700); }
 .msg-avatar-wrap.ring_demon::after { background: #B91C1C; box-shadow: 0 0 8px rgba(185,28,28,0.6); }
 
-/* ── Member Avatar Rings (28×28) ─────────────── */
+/* â”€â”€ Member Avatar Rings (28Ã—28) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 /* All ornate rings share golden base */
 .cs-member-avatar-wrap[class*="ring_"]:not(.ring_none) .cs-member-avatar {
     position: relative;
@@ -7212,7 +7287,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
 .cs-member-avatar-wrap.ring_demon { animation: ringDemonFlare 2s ease-in-out infinite; }
 .cs-member-avatar-wrap.ring_demon::after { background: #B91C1C; box-shadow: 0 0 5px rgba(185,28,28,0.6); }
 
-/* ── Friend Avatar Rings (30×30) ─────────────── */
+/* â”€â”€ Friend Avatar Rings (30Ã—30) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .friend-avatar-wrap[class*="ring_"]:not(.ring_none) .friend-avatar {
     position: relative;
     z-index: 2;
@@ -7324,7 +7399,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
 .friend-avatar-wrap.ring_demon { animation: ringDemonFlare 2s ease-in-out infinite; }
 .friend-avatar-wrap.ring_demon::after { background: #B91C1C; box-shadow: 0 0 5px rgba(185,28,28,0.6); }
 
-/* ── DM Avatar Rings (40×40, same as msg-avatar) ── */
+/* â”€â”€ DM Avatar Rings (40Ã—40, same as msg-avatar) â”€â”€ */
 /* Reuse the exact same golden frame + jewel + box-shadow styles as msg-avatar-wrap */
 .dm-item-avatar-wrap[class*="ring_"]:not(.ring_none) .dm-item-avatar {
     position: relative;
@@ -7450,7 +7525,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
 .dm-item-avatar-wrap.ring_demon { box-shadow: 0 0 18px rgba(127,29,29,0.5); animation: ringDemonFlare 2s ease-in-out infinite; }
 .dm-item-avatar-wrap.ring_demon::after { background: #B91C1C; box-shadow: 0 0 8px rgba(185,28,28,0.6); }
 
-/* ── Ring Grid (Appearance Panel) ───────────── */
+/* â”€â”€ Ring Grid (Appearance Panel) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .rp-ring-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -7552,7 +7627,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     letter-spacing: 0.01em;
 }
 
-/* Ring Variants — icon-only style */
+/* Ring Variants â€” icon-only style */
 
 .rp-ring-none .rp-ring-preview { border: 2px solid rgba(255,255,255,0.08); box-shadow: none; background: transparent; }
 .rp-ring-none.active .rp-ring-preview { border-color: var(--text-3); }
@@ -7746,8 +7821,8 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     background: rgba(255,255,255,0.03);
 }
 
-/* ═══════════ PROFILE EFFECTS ═══════════ */
-/* ── Effect Grid (Appearance Panel) ───────────── */
+/* â•â•â•â•â•â•â•â•â•â•â• PROFILE EFFECTS â•â•â•â•â•â•â•â•â•â•â• */
+/* â”€â”€ Effect Grid (Appearance Panel) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .rp-effect-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -7994,17 +8069,17 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     background: rgba(255,255,255,0.03);
 }
 
-/* ── Profile Effect Animations — NEON POPUP BACKGROUNDS ── */
+/* â”€â”€ Profile Effect Animations â€” NEON POPUP BACKGROUNDS â”€â”€ */
 /* Effects are flashy animated neon gradients that wash over the ENTIRE
    profile popup card (not just the avatar). The same animated wash is used
    on the appearance-panel live preview and the picker card thumbnails.
    Each effect sets 3 neon colors + a motion style. */
 
-/* ── Popup card effect layer ──────────────────── */
+/* â”€â”€ Popup card effect layer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 /* The popup creates a stacking context; ::before paints the neon wash over
    the whole card, ::after adds per-effect particles/sparkles. Content sits
    above because banner/body/header carry their own translucent backgrounds. */
-/* Solid opaque base — nothing shows through the popup */
+/* Solid opaque base â€” nothing shows through the popup */
 .user-popup[class*="effect_"] {
     background: #0a0f2e;
     border-color: var(--eff-line, rgba(108, 99, 255, 0.35));
@@ -8013,7 +8088,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
                 0 0 70px var(--eff-glow, rgba(108, 99, 255, 0.22));
 }
 
-/* Vivid neon wash over the opaque base — normal blend so colors stay pure */
+/* Vivid neon wash over the opaque base â€” normal blend so colors stay pure */
 .user-popup[class*="effect_"]::before {
     content: '';
     position: absolute;
@@ -8047,7 +8122,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     -webkit-backdrop-filter: blur(6px);
 }
 
-/* Animated wash movement — shared by popup, live preview, and thumbnails */
+/* Animated wash movement â€” shared by popup, live preview, and thumbnails */
 @keyframes effWashDrift {
     0%, 100% { background-position: 0% 0%, 100% 0%, 50% 100%; }
     33%      { background-position: 60% 20%, 20% 60%, 100% 40%; }
@@ -8070,7 +8145,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     95%           { opacity: 0.45; }
 }
 
-/* ── Appearance live preview + picker thumbnails ── */
+/* â”€â”€ Appearance live preview + picker thumbnails â”€â”€ */
 .rpanel-appearance-preview[class*="effect_"] {
     position: relative;
     overflow: hidden;
@@ -8121,7 +8196,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.35));
 }
 
-/* ── Per-effect neon palettes + motion ── */
+/* â”€â”€ Per-effect neon palettes + motion â”€â”€ */
 /* Purple / violet family */
 .effect_glow_aura, .effect_royal_light, .effect_magic_runes,
 .effect_galaxy_dust, .effect_cosmic_orbit, .effect_crystal_orbit,
@@ -8241,7 +8316,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
 .effect_prism_light { --eff-c1: #FF6B6B; --eff-c2: #FFD700; --eff-c3: #60A5FA; --eff-dur: 7s; }
 .effect_quantum_light { --eff-c1: #00FF00; --eff-c2: #00FFFF; --eff-c3: #FF00FF; --eff-dur: 4s; }
 
-/* ── Per-effect particle / flash layers on the popup ── */
+/* â”€â”€ Per-effect particle / flash layers on the popup â”€â”€ */
 /* Sparkles / stars / orbit dots layered over the wash via ::after */
 .user-popup[class*="effect_"]::after {
     content: '';
@@ -8253,7 +8328,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     opacity: 0;
 }
 
-/* ── REAL-LOOKING WEATHER / PARTICLE EFFECTS ──
+/* â”€â”€ REAL-LOOKING WEATHER / PARTICLE EFFECTS â”€â”€
    Particles are animated tiled patterns that scroll/drift, giving the
    illusion of falling snow, pouring rain, drifting sparks, etc. The `::after`
    layer sits above the neon wash but below content. */
@@ -8269,7 +8344,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     to   { background-position: 0 520px, 45px 550px, 95px 580px; }
 }
 
-/* ── Snowfall (real falling snow) ── */
+/* â”€â”€ Snowfall (real falling snow) â”€â”€ */
 .user-popup.effect_snowflakes::after {
     content: '';
     position: absolute;
@@ -8288,7 +8363,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     opacity: 0.9;
 }
 
-/* ── Rain (streaking downward lines) ── */
+/* â”€â”€ Rain (streaking downward lines) â”€â”€ */
 .user-popup.effect_rain_mist::after {
     content: '';
     position: absolute;
@@ -8304,7 +8379,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     opacity: 0.55;
 }
 
-/* ── Floating stars / stardust / galaxy dust (soft drift) ── */
+/* â”€â”€ Floating stars / stardust / galaxy dust (soft drift) â”€â”€ */
 .user-popup.effect_floating_stars::after,
 .user-popup.effect_stardust::after,
 .user-popup.effect_shooting_stars::after,
@@ -8329,7 +8404,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
 .user-popup.effect_shooting_stars::after { animation-duration: 8s; }
 .user-popup.effect_galaxy_dust::after { --eff-sp1: #E9D5FF; --eff-sp2: #C084FC; animation-duration: 22s; }
 
-/* ── Sakura petals / falling leaves (slight sway) ── */
+/* â”€â”€ Sakura petals / falling leaves (slight sway) â”€â”€ */
 .user-popup.effect_sakura_petals::after,
 .user-popup.effect_falling_leaves::after {
     content: '';
@@ -8350,7 +8425,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
 }
 .user-popup.effect_falling_leaves::after { --eff-sp1: #4ADE80; --eff-sp2: #22C55E; animation-duration: 8s; }
 
-/* ── Electric sparks / crystal orbit (bright orbiting dots) ── */
+/* â”€â”€ Electric sparks / crystal orbit (bright orbiting dots) â”€â”€ */
 .user-popup.effect_electric_sparks::after,
 .user-popup.effect_crystal_orbit::after,
 .user-popup.effect_cosmic_orbit::after,
@@ -8376,7 +8451,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
 .user-popup.effect_cosmic_orbit::after { --eff-sp1: #C7D2FE; --eff-sp2: #A5B4FC; animation-duration: 12s; }
 .user-popup.effect_magic_runes::after { --eff-sp1: #A78BFA; --eff-sp2: #C4B5FD; animation-duration: 9s; }
 
-/* ── Bubbles (drifting up, soft) ── */
+/* â”€â”€ Bubbles (drifting up, soft) â”€â”€ */
 .user-popup.effect_bubble_flow::after {
     content: '';
     position: absolute;
@@ -8394,7 +8469,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     opacity: 0.6;
 }
 
-/* ── Meteor trail (bright streaks) ── */
+/* â”€â”€ Meteor trail (bright streaks) â”€â”€ */
 .user-popup.effect_meteor_trail::after {
     content: '';
     position: absolute;
@@ -8410,7 +8485,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     opacity: 0.9;
 }
 
-/* ═══════════ THUNDERSTORM — REAL ZIG-ZAG LIGHTNING ═══════════ */
+/* â•â•â•â•â•â•â•â•â•â•â• THUNDERSTORM â€” REAL ZIG-ZAG LIGHTNING â•â•â•â•â•â•â•â•â•â•â• */
 /* Jagged zig-zag bolts drawn as SVG polylines, scattered across the whole
    popup, with a bright screen flash each time a bolt strikes. */
 
@@ -8437,13 +8512,13 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     pointer-events: none;
     border-radius: inherit;
     background-image:
-        /* bolt 1 — large jagged bolt upper-left */
+        /* bolt 1 â€” large jagged bolt upper-left */
         url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 140 260'%3E%3Cpolyline points='60,0 100,55 45,70 95,130 40,150 90,210 65,260' fill='none' stroke='%23FFF7AE' stroke-width='7' stroke-linejoin='round'/%3E%3Cpolyline points='60,0 100,55 45,70 95,130 40,150 90,210 65,260' fill='none' stroke='%23fff' stroke-width='2.5' stroke-linejoin='round'/%3E%3Cpath d='M95 130 L140 150 L110 175' fill='none' stroke='%23FFF7AE' stroke-width='4' stroke-linejoin='round'/%3E%3C/svg%3E"),
-        /* bolt 2 — big jagged bolt top-right */
+        /* bolt 2 â€” big jagged bolt top-right */
         url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 150 230'%3E%3Cpolyline points='20,10 75,60 30,90 90,140 45,170 105,230' fill='none' stroke='%23B9E6FF' stroke-width='7' stroke-linejoin='round'/%3E%3Cpolyline points='20,10 75,60 30,90 90,140 45,170 105,230' fill='none' stroke='%23fff' stroke-width='2.5' stroke-linejoin='round'/%3E%3Cpath d='M75 60 L120 30 L105 75' fill='none' stroke='%23B9E6FF' stroke-width='4' stroke-linejoin='round'/%3E%3C/svg%3E"),
-        /* bolt 3 — smaller bolt lower-left */
+        /* bolt 3 â€” smaller bolt lower-left */
         url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 200'%3E%3Cpolyline points='50,0 85,50 40,80 80,130 55,160 75,200' fill='none' stroke='%23C8E7FF' stroke-width='6' stroke-linejoin='round'/%3E%3Cpolyline points='50,0 85,50 40,80 80,130 55,160 75,200' fill='none' stroke='%23fff' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E"),
-        /* bolt 4 — thin zig-zag lower-right */
+        /* bolt 4 â€” thin zig-zag lower-right */
         url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 130 180'%3E%3Cpolyline points='15,5 60,45 25,75 70,115 40,150 90,180' fill='none' stroke='%23A8D8FF' stroke-width='5' stroke-linejoin='round'/%3E%3Cpolyline points='15,5 60,45 25,75 70,115 40,150 90,180' fill='none' stroke='%23fff' stroke-width='1.8' stroke-linejoin='round'/%3E%3C/svg%3E");
     background-size: 46% 62%, 42% 52%, 34% 46%, 30% 40%;
     background-position: 4% 2%, 58% 4%, 8% 55%, 62% 58%;
@@ -8462,12 +8537,12 @@ input { font-family: inherit; border: none; outline: none; background: none; col
 }
 .user-popup.effect_lightning_arc::before { animation-duration: 5s, 2.4s; }
 
-/* ═══════════ ELECTRIC SPARKS FLASH ═══════════ */
+/* â•â•â•â•â•â•â•â•â•â•â• ELECTRIC SPARKS FLASH â•â•â•â•â•â•â•â•â•â•â• */
 .user-popup.effect_electric_sparks::before {
     animation: effWashDrift 5s ease-in-out infinite, effWashFlash 2.6s ease-in-out infinite;
 }
 
-/* ── Hue-cycling neon effects ── */
+/* â”€â”€ Hue-cycling neon effects â”€â”€ */
 .user-popup.effect_rainbow_glow::before,
 .user-popup.effect_neon_wave::before,
 .user-popup.effect_quantum_light::before,
@@ -8479,7 +8554,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
 .user-popup.effect_digital_glitch::before { animation-duration: 4s, 4s; }
 .user-popup.effect_quantum_light::before { animation-duration: 5s, 3s; }
 
-/* ── Softer breathing washes ── */
+/* â”€â”€ Softer breathing washes â”€â”€ */
 .user-popup.effect_shadow_mist::before,
 .user-popup.effect_mystic_smoke::before,
 .user-popup.effect_violet_mist::before,
@@ -8490,7 +8565,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     animation: effWashDrift 10s ease-in-out infinite, effWashPulse 5s ease-in-out infinite;
 }
 
-/* ── Flickering fire effects ── */
+/* â”€â”€ Flickering fire effects â”€â”€ */
 .user-popup.effect_fire_aura::before,
 .user-popup.effect_phoenix_flame::before,
 .user-popup.effect_lava_flow::before,
@@ -8501,11 +8576,11 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     animation: effWashDrift 6s ease-in-out infinite, effWashFlash 3s ease-in-out infinite;
 }
 
-/* ═══════════ REAL ELEMENT LAYERS ═══════════
+/* â•â•â•â•â•â•â•â•â•â•â• REAL ELEMENT LAYERS â•â•â•â•â•â•â•â•â•â•â•
    Each effect draws its actual visual element (flames, waves, rings, glyphs,
    bolts, arcs...) on the ::after layer so it's unmistakable. */
 
-/* Rising flames — fire family */
+/* Rising flames â€” fire family */
 @keyframes effFlameRise {
     0%   { background-position: 0 100%, 0 100%, 0 100%; opacity: 0.55; }
     50%  { opacity: 0.95; }
@@ -8540,7 +8615,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
 .user-popup.effect_inferno_burst::after { --eff-f1: rgba(255,90,20,0.95); --eff-f2: rgba(255,220,90,0.9); animation-duration: 1.9s; }
 .user-popup.effect_blue_fire::after { --eff-f1: rgba(60,130,255,0.9); --eff-f2: rgba(120,200,255,0.9); animation-duration: 2.4s; }
 
-/* Ocean waves — rolling horizontal wave lines */
+/* Ocean waves â€” rolling horizontal wave lines */
 @keyframes effWaveRoll {
     0%,100% { background-position: 0 0, 0 0, 0 0; }
     50%     { background-position: 120px 0, -90px 0, 40px 0; }
@@ -8563,7 +8638,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     opacity: 0.6;
 }
 
-/* Pulsing energy rings — pulse family */
+/* Pulsing energy rings â€” pulse family */
 @keyframes effPulseRing {
     0%   { background-size: 10% 10%, 10% 10%, 10% 10%; opacity: 0; }
     20%  { opacity: 0.9; }
@@ -8593,7 +8668,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
 .user-popup.effect_neon_pulse::after { --eff-r1: rgba(0,229,255,0.85); --eff-r2: rgba(0,229,255,0.55); --eff-r3: rgba(59,130,246,0.35); }
 .user-popup.effect_nova_explosion::after { --eff-r1: rgba(255,215,0,0.9); --eff-r2: rgba(251,146,60,0.55); --eff-r3: rgba(255,215,0,0.35); animation-duration: 2.2s; }
 
-/* Solar flare — rotating sun rays + bright core */
+/* Solar flare â€” rotating sun rays + bright core */
 @keyframes effRaysSpin {
     from { transform: rotate(0deg); }
     to   { transform: rotate(360deg); }
@@ -8616,7 +8691,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     opacity: 0.75;
 }
 
-/* Matrix rain — falling glyph columns */
+/* Matrix rain â€” falling glyph columns */
 @keyframes effMatrixFall {
     from { background-position: 0 0, 60px 0, 30px 0, 90px 0; }
     to   { background-position: 0 480px, 60px 480px, 30px 480px, 90px 480px; }
@@ -8639,7 +8714,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     opacity: 0.5;
 }
 
-/* Cyber grid — glowing grid lines + moving scan bar */
+/* Cyber grid â€” glowing grid lines + moving scan bar */
 .user-popup.effect_cyber_grid::after {
     content: '';
     position: absolute;
@@ -8662,7 +8737,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     100% { background-position: 0 0, 0 0, 0 240px; }
 }
 
-/* Hex energy — bright hexagonal lattice */
+/* Hex energy â€” bright hexagonal lattice */
 .user-popup.effect_hex_energy::after {
     content: '';
     position: absolute;
@@ -8684,7 +8759,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     100% { background-position: 30px 0, -30px 0, 0 0; filter: hue-rotate(90deg); }
 }
 
-/* Digital glitch — hard-edged RGB split blocks */
+/* Digital glitch â€” hard-edged RGB split blocks */
 @keyframes effGlitchBlocks {
     0%, 90%, 100% { background-position: 0 0, 0 0, 0 0; opacity: 0.5; }
     92% { background-position: 12px 0, -8px 0, 20px 8px; opacity: 0.95; }
@@ -8708,7 +8783,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     animation: effGlitchBlocks 2.6s steps(1) infinite;
 }
 
-/* Aurora — flowing vertical light curtains */
+/* Aurora â€” flowing vertical light curtains */
 @keyframes effAuroraSway {
     0%,100% { background-position: 0 0, 100% 0, 50% 0; }
     50%     { background-position: 120px 0, 80% 0, 0 0; }
@@ -8731,7 +8806,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     opacity: 0.6;
 }
 
-/* Hologram — scanline grid + moving scan bar */
+/* Hologram â€” scanline grid + moving scan bar */
 .user-popup.effect_hologram::after {
     content: '';
     position: absolute;
@@ -8749,7 +8824,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     opacity: 0.6;
 }
 
-/* Rainbow glow — concentric rainbow arcs */
+/* Rainbow glow â€” concentric rainbow arcs */
 .user-popup.effect_rainbow_glow::after {
     content: '';
     position: absolute;
@@ -8771,7 +8846,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     opacity: 0.75;
 }
 
-/* Eclipse — a dark moon drifting across the glow */
+/* Eclipse â€” a dark moon drifting across the glow */
 @keyframes effMoonDrift {
     0%,100% { background-position: 70% 30%, 50% 50%; opacity: 0.7; }
     50%     { background-position: 30% 20%, 50% 50%; opacity: 1; }
@@ -8793,7 +8868,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     animation: effMoonDrift 9s ease-in-out infinite;
 }
 
-/* Sparkle stars — four-point glints for crystal family */
+/* Sparkle stars â€” four-point glints for crystal family */
 @keyframes effSparkleGlint {
     0%, 88%, 100% { background-size: 40% 40%, 30% 30%, 25% 25%; opacity: 0.3; }
     92%           { background-size: 70% 70%, 55% 55%, 40% 40%; opacity: 0.95; }
@@ -8821,7 +8896,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
 .user-popup.effect_diamond_sparkle::after { animation-duration: 2.2s; }
 .user-popup.effect_ice_crystals::after { animation-duration: 3.4s; }
 
-/* Golden crown — golden gem crown silhouette */
+/* Golden crown â€” golden gem crown silhouette */
 @keyframes effCrownGlint {
     0%,100% { opacity: 0.55; filter: drop-shadow(0 0 6px rgba(255,215,0,0.5)); }
     50%     { opacity: 1; filter: drop-shadow(0 0 14px rgba(255,215,0,0.9)); }
@@ -8860,7 +8935,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     opacity: 0;
 }
 
-/* ═══════════ PROFILE MUSIC ═══════════ */
+/* â•â•â•â•â•â•â•â•â•â•â• PROFILE MUSIC â•â•â•â•â•â•â•â•â•â•â• */
 .rp-music-preview {
     display: flex;
     align-items: center;
@@ -8993,7 +9068,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     border-color: rgba(255,71,87,0.4);
 }
 
-/* ── Music upload ── */
+/* â”€â”€ Music upload â”€â”€ */
 .rp-music-upload {
     display: flex;
     align-items: center;
@@ -9072,7 +9147,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     animation: spin 0.7s linear infinite;
 }
 
-/* ── Music player in the user popup ── */
+/* â”€â”€ Music player in the user popup â”€â”€ */
 .up-music {
     display: flex;
     align-items: center;
@@ -9158,9 +9233,9 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     box-shadow: 0 0 14px rgba(108,99,255,0.4);
 }
 
-/* ═══════════ END APPEARANCE ═══════════ */
+/* â•â•â•â•â•â•â•â•â•â•â• END APPEARANCE â•â•â•â•â•â•â•â•â•â•â• */
 
-/* ═══════════ ATTACHMENT SYSTEM ═══════════ */
+/* â•â•â•â•â•â•â•â•â•â•â• ATTACHMENT SYSTEM â•â•â•â•â•â•â•â•â•â•â• */
 
 .attach-menu-wrap {
     position: relative;
@@ -9214,7 +9289,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     opacity: 1;
 }
 
-/* ── Attachment Preview ──────────────────── */
+/* â”€â”€ Attachment Preview â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .attach-preview {
     width: 100%;
@@ -9247,7 +9322,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     display: none;
 }
 
-/* ── Multi-file Preview Grid ────────────── */
+/* â”€â”€ Multi-file Preview Grid â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .attach-prev-grid {
     display: flex;
@@ -9284,7 +9359,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     border-radius: 20px;
 }
 
-/* ── Preview Card ────────────────────────── */
+/* â”€â”€ Preview Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .attach-prev-card {
     position: relative;
@@ -9427,7 +9502,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     transform: scale(1.1) !important;
 }
 
-/* ── Legacy preview classes (unused) ─────── */
+/* â”€â”€ Legacy preview classes (unused) â”€â”€â”€â”€â”€â”€â”€ */
 
 .attach-prev-image,
 .attach-prev-img,
@@ -9445,14 +9520,14 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     display: none;
 }
 
-/* ── Message Attachment Bubbles ──────────── */
+/* â”€â”€ Message Attachment Bubbles â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .msg-attach {
     margin: 4px 0 2px;
     max-width: 420px;
 }
 
-/* ── Multi-file Grid ─────────────────────── */
+/* â”€â”€ Multi-file Grid â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .msg-attach-grid {
     display: grid;
@@ -9477,7 +9552,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     grid-template-columns: 1fr 1fr;
 }
 
-/* ── Image Bubble ────────────────────────── */
+/* â”€â”€ Image Bubble â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .msg-att {
     border-radius: var(--r-md);
@@ -9555,7 +9630,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     border-color: rgba(255,255,255,0.2);
 }
 
-/* ── Video Bubble ────────────────────────── */
+/* â”€â”€ Video Bubble â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .msg-att-video {
     max-width: 420px;
@@ -9736,7 +9811,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     pointer-events: none;
 }
 
-/* ── Audio Bubble ────────────────────────── */
+/* â”€â”€ Audio Bubble â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .msg-att-audio {
     max-width: 360px;
@@ -9837,7 +9912,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     flex-shrink: 0;
 }
 
-/* ── File Attachment Bubble ──────────────── */
+/* â”€â”€ File Attachment Bubble â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .msg-att-file {
     display: flex;
@@ -9891,7 +9966,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     color: var(--text-3);
 }
 
-/* ── Upload Progress Ring ────────────────── */
+/* â”€â”€ Upload Progress Ring â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .msg-attach-pending {
     position: relative;
@@ -9980,9 +10055,9 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     text-shadow: 0 1px 4px rgba(0,0,0,0.5);
 }
 
-/* ══════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    IMAGE LIGHTBOX
-   ══════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 .lightbox {
     position: fixed;
@@ -10064,9 +10139,9 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* ══════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    REPLY ATTACHMENT LABEL
-   ══════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 .msg-reply-att-label {
     display: inline-flex;
@@ -10086,7 +10161,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'%3E%3Crect x='3' y='3' width='18' height='18' rx='2' ry='2'/%3E%3Ccircle cx='8.5' cy='8.5' r='1.5'/%3E%3Cpolyline points='21 15 16 10 5 21'/%3E%3C/svg%3E") center / contain no-repeat;
 }
 
-/* ═══ Bee Daily Limit Card ═══════════════════════════════ */
+/* â•â•â• Bee Daily Limit Card â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .bee-limit-card {
     padding: 14px 18px;
     background: linear-gradient(135deg, rgba(108,99,255,0.12), rgba(255,77,158,0.08));
@@ -10157,7 +10232,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     pointer-events: none;
 }
 
-/* ═══ Hashtag Autocomplete Panel ══════════════════════════ */
+/* â•â•â• Hashtag Autocomplete Panel â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .hashtag-panel {
     position: absolute;
     left: 16px;
@@ -10262,7 +10337,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     color: var(--text-3, rgba(255,255,255,0.3));
 }
 
-/* ═══ Rendered Hashtags in Messages ═══════════════════════ */
+/* â•â•â• Rendered Hashtags in Messages â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .msg-hashtag {
     color: var(--primary);
     font-weight: 600;
@@ -10289,9 +10364,9 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     outline-offset: 1px;
 }
 
-/* ═══════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    NOTIFICATION VIEW (inside #rpanel)
-   ═══════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 .notif-skeleton { padding: 12px; }
 
@@ -10823,7 +10898,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     to { transform: rotate(360deg); }
 }
 
-/* ── Mobile: Notifications as a full screen (not a popup) ──
+/* â”€â”€ Mobile: Notifications as a full screen (not a popup) â”€â”€
    Covers the whole screen EXCEPT the fixed bottom-nav strip,
    which stays visible and tappable underneath it. */
 @media (max-width: 900px) {
@@ -10872,7 +10947,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     .bottom-nav { z-index: 2000; }
 }
 
-/* ── Responsive: Ring Modal Grid ──────────── */
+/* â”€â”€ Responsive: Ring Modal Grid â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 @media (max-width: 600px) {
     .rp-ring-modal {
         width: 95%;
@@ -10909,3 +10984,407 @@ input { font-family: inherit; border: none; outline: none; background: none; col
     }
 }
 
+
+
+
+/* ══════════════════════════════════════════════
+   VIDEO CALL OVERLAY — in-call video screen
+   ══════════════════════════════════════════════ */
+.call-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9000;
+    background: #050816;
+    overflow: hidden;
+    display: flex;
+    animation: callFadeIn 0.25s var(--ease);
+}
+.call-overlay.visible { display: flex !important; }
+
+/* ── Left view · remote call ── */
+.call-remote-panel {
+    position: relative;
+    flex: 1 1 60%;
+    min-width: 0;
+    overflow: hidden;
+    background: #050816;
+    border-right: 1px solid rgba(255,255,255,0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ── Participant Grid (5 slots) ── */
+.call-participant-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr 1fr;
+    gap: 6px;
+    width: calc(100% - 12px);
+    height: calc(100% - 12px);
+    padding: 6px;
+}
+.call-participant-slot {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #0a0f2e;
+    border: 1px solid rgba(255,255,255,0.06);
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.call-participant-slot.call-slot-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background:
+        radial-gradient(200px 180px at 50% 50%, rgba(108,99,255,0.06), transparent 70%),
+        linear-gradient(160deg, rgba(20,26,61,0.4), #0a0f2e);
+    border: 1px dashed rgba(108,99,255,0.15);
+}
+.call-participant-slot.call-slot-empty .call-slot-fallback {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    opacity: 0.5;
+}
+.call-participant-slot.call-slot-empty .call-slot-avatar {
+    width: 40px;
+    height: 40px;
+    border: 1px dashed rgba(108,99,255,0.3);
+    box-shadow: none;
+}
+.call-participant-slot.call-slot-empty .call-slot-name {
+    font-size: 0.72rem;
+    color: rgba(255,255,255,0.35);
+}
+.call-participant-slot.call-slot-empty .call-slot-status {
+    display: none;
+}
+.call-participant-slot.call-slot-empty .call-video-shade,
+.call-participant-slot.call-slot-empty .call-side-tag {
+    display: none;
+}
+.call-participant-slot.call-slot-active {
+    border: 1px solid rgba(108,99,255,0.15);
+}
+.call-slot-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    background: #050816;
+}
+.call-slot-fallback {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background:
+        radial-gradient(300px 250px at 30% 20%, rgba(108,99,255,0.18), transparent 60%),
+        radial-gradient(250px 250px at 80% 80%, rgba(0,229,255,0.1), transparent 55%),
+        #050816;
+}
+.call-slot-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(108,99,255,0.4);
+    box-shadow: 0 0 30px rgba(108,99,255,0.25);
+}
+.call-slot-name {
+    font-family: var(--font-display);
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0;
+    max-width: 90%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.call-slot-status {
+    font-size: 0.65rem;
+    color: var(--text-2);
+    margin: 0;
+    letter-spacing: 0.03em;
+}
+.call-video-shade {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(5,8,22,0.4) 0%, transparent 20%, transparent 75%, rgba(5,8,22,0.5) 100%);
+    pointer-events: none;
+}
+.call-side-tag {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 8px;
+    background: rgba(0,0,0,0.45);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.08);
+    z-index: 3;
+    pointer-events: none;
+}
+.call-side-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #22c55e;
+    box-shadow: 0 0 8px rgba(34,197,94,0.6);
+    animation: callPulse 2s ease-in-out infinite;
+}
+.call-side-tag-text {
+    font-size: 0.62rem;
+    font-weight: 600;
+    color: rgba(255,255,255,0.8);
+    letter-spacing: 0.03em;
+}
+    left: 20px;
+    z-index: 6;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 13px;
+    border-radius: 20px;
+    background: rgba(5,8,22,0.5);
+    border: 1px solid rgba(255,255,255,0.14);
+    backdrop-filter: blur(8px);
+}
+.call-side-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 10px var(--green);
+    animation: callPulse 1.8s var(--ease) infinite;
+}
+.call-side-tag-text {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text);
+}
+
+/* ── Right view · local video (required) ── */
+.call-local-pane {
+    position: relative;
+    flex: 1 1 50%;
+    min-width: 0;
+    overflow: hidden;
+    background:
+        radial-gradient(700px 500px at 80% 0%, rgba(108,99,255,0.18), transparent 60%),
+        radial-gradient(600px 500px at 10% 100%, rgba(0,229,255,0.12), transparent 55%),
+        #0a0f2e;
+}
+.call-local-video-wrap {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+}
+.call-local-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scaleX(-1);
+    background: #0a0f2e;
+}
+.call-local-fallback {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background:
+        radial-gradient(420px 340px at 60% 32%, rgba(108,99,255,0.25), transparent 60%),
+        linear-gradient(160deg, #141a3d, #0a0f2e);
+}
+.call-local-emoji {
+    font-size: 3rem;
+    filter: drop-shadow(0 6px 18px rgba(108,99,255,0.35));
+}
+.call-local-label { font-size: 0.78rem; color: var(--text-2); }
+.call-local-tag {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #fff;
+    background: rgba(0,0,0,0.5);
+    border: 1px solid rgba(255,255,255,0.12);
+    padding: 5px 12px;
+    border-radius: 12px;
+    backdrop-filter: blur(6px);
+}
+
+/* Top-right corner tools */
+.call-local-tools {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    z-index: 6;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.call-badge {
+    font-size: 0.6rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--green);
+    font-weight: 700;
+    padding: 5px 10px;
+    border-radius: 20px;
+    background: rgba(124,255,178,0.1);
+    border: 1px solid rgba(124,255,178,0.25);
+}
+.call-min-btn {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(5,8,22,0.5);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: var(--text-2);
+    cursor: pointer;
+    transition: all 0.2s;
+    backdrop-filter: blur(8px);
+}
+.call-min-btn:hover { background: rgba(255,255,255,0.12); color: var(--text); }
+
+/* Call controls — live inside the local view */
+.call-controls {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 26px;
+    padding: 30px 20px calc(22px + env(safe-area-inset-bottom));
+    background: linear-gradient(180deg, transparent, rgba(5,8,22,0.75));
+}
+.call-timer-chip {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+    padding: 9px 14px;
+    border-radius: 16px;
+    background: rgba(5,8,22,0.55);
+    border: 1px solid rgba(255,255,255,0.12);
+    backdrop-filter: blur(8px);
+}
+.call-top-name {
+    font-family: var(--font-display);
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text);
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.call-top-timer {
+    font-size: 0.7rem;
+    color: var(--text-2);
+    font-variant-numeric: tabular-nums;
+}
+.call-ctl {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    width: 58px;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    color: var(--text);
+    transition: all 0.2s var(--ease);
+}
+.call-ctl-label {
+    font-size: 0.62rem;
+    color: var(--text-2);
+    letter-spacing: 0.03em;
+}
+.call-ctl .call-ctl-ico {
+    width: 58px; height: 58px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.14);
+    transition: all 0.2s var(--ease);
+    backdrop-filter: blur(8px);
+}
+.call-ctl:hover .call-ctl-ico { background: rgba(255,255,255,0.2); }
+.call-ctl.micro.active .call-ctl-ico,
+.call-ctl.cam.active .call-ctl-ico {
+    background: rgba(255,77,87,0.35);
+    border-color: var(--red);
+    color: var(--red);
+}
+.call-ctl.end .call-ctl-ico {
+    width: 64px; height: 64px;
+    background: linear-gradient(145deg, #ff5a68, var(--red));
+    border: none;
+    color: #fff;
+    box-shadow: 0 12px 30px rgba(255,71,87,0.45);
+}
+.call-ctl.join .call-ctl-ico {
+    width: 64px; height: 64px;
+    background: linear-gradient(145deg, #7CFFB2, #23A55A);
+    border: none;
+    color: #0a0f2e;
+    box-shadow: 0 12px 30px rgba(124,255,178,0.35);
+}
+.call-ctl.join:hover .call-ctl-ico { transform: scale(1.05); }
+.call-ctl.end:hover .call-ctl-ico { transform: scale(1.07); }
+
+@keyframes callFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+@keyframes callPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.55; transform: scale(0.8); }
+}
+
+@media (max-width: 900px) {
+    .call-overlay { flex-direction: column; }
+    .call-remote-panel {
+        flex: 1 1 55%;
+        border-right: none;
+        border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .call-participant-grid {
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 1fr 1fr 1fr;
+        gap: 4px;
+        padding: 4px;
+        width: calc(100% - 8px);
+        height: calc(100% - 8px);
+    }
+    .call-local-pane { flex: 1 1 45%; }
+    .call-controls { gap: 20px; padding: 22px 14px calc(16px + env(safe-area-inset-bottom)); }
+    .call-local-tools { top: 12px; right: 12px; }
+    .call-side-tag { top: 6px; left: 6px; padding: 2px 6px; }
+    .call-side-tag-text { font-size: 0.55rem; }
+    .call-slot-avatar { width: 40px; height: 40px; }
+    .call-slot-name { font-size: 0.72rem; }
+}
