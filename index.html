@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hive — Where Teen Communities Come Alive</title>
+    <script>
+        if (localStorage.getItem('hive_token')) {
+            window.location.href = '/home/';
+        }
+    </script>
     <meta name="description" content="Hive is the next-generation social platform where teens chat, create communities, make friends, and belong.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
