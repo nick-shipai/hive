@@ -4,15 +4,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hive</title>
+    <title>Hive — Dashboard | Chat, Communities & Friends</title>
+
+    <!-- Primary SEO -->
+    <meta name="description" content="Your Hive dashboard — chat with friends, manage communities, join group video calls, share moments, and stay connected with your people.">
+    <meta name="keywords" content="hive dashboard, teen chat app, community chat, group video call, direct messaging, teen social platform, make friends, online community, hive chat online">
+    <meta name="author" content="Hive Technologies">
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="canonical" href="https://hivechat.online/home/">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://hivechat.online/home/">
+    <meta property="og:title" content="Hive — Dashboard">
+    <meta property="og:description" content="Your Hive dashboard — chat, communities, video calls, and more.">
+    <meta property="og:image" content="https://hivechat.online/assets/hiveicon.png">
+    <meta property="og:image:alt" content="Hive Dashboard">
+    <meta property="og:site_name" content="Hive">
+    <meta property="og:locale" content="en_US">
+
+    <!-- Twitter / X Card -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Hive — Dashboard">
+    <meta name="twitter:description" content="Your Hive dashboard — chat, communities, video calls, and more.">
+    <meta name="twitter:image" content="https://hivechat.online/assets/hiveicon.png">
+
+    <!-- Favicon / App Icons -->
+    <link rel="icon" type="image/png" href="/assets/hiveicon.png">
+    <link rel="apple-touch-icon" href="/assets/hiveicon.png">
+    <link rel="apple-touch-icon" sizes="512x512" href="/assets/hiveicon.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/hiveicon.png">
+
+    <!-- PWA / Mobile -->
+    <meta name="theme-color" content="#6C63FF">
+    <meta name="msapplication-TileColor" content="#6C63FF">
+    <meta name="msapplication-TileImage" content="/assets/hiveicon.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Hive">
+    <meta name="application-name" content="Hive">
+    <meta name="mobile-web-app-capable" content="yes">
+
+    <!-- Additional SEO -->
+    <meta name="format-detection" content="telephone=no">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+
+    <!-- Fonts & Styles -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap"
-        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <link rel="icon" type="image/svg+xml"
-        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐝</text></svg>">
 </head>
 
 <body>
@@ -1989,12 +2030,18 @@
                     <!-- Slot 1 -->
                     <div class="call-participant-slot call-slot-empty" id="call-slot-1">
                         <video class="call-slot-video" autoplay playsinline></video>
+                        <img class="call-slot-avatar" src="" alt="">
+                        <div class="call-slot-camera-off">
+                            <img class="call-slot-co-avatar" src="" alt="">
+                            <span class="call-slot-co-name"></span>
+                            <span class="call-slot-co-label">Camera is off</span>
+                        </div>
                         <div class="call-slot-fallback">
                             <div class="call-slot-ph">
                                 <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
                             </div>
                             <h2 class="call-slot-name"></h2>
-                            <p class="call-slot-status"></p>
+                            <p class="call-slot-status">Waiting for participant…</p>
                         </div>
                         <div class="call-video-shade"></div>
                         <div class="call-side-tag">
@@ -2004,17 +2051,32 @@
                         <div class="call-slot-hand" style="display:none;">
                             <span class="call-hand-emoji">✋</span>
                             <span class="call-slot-hand-label">Raising hand</span>
+                        </div>
+                        <div class="call-slot-mic" style="display:none;">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="1" y1="1" x2="23" y2="23"/>
+                                <path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"/>
+                                <path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2c0 .76-.13 1.49-.35 2.17"/>
+                                <line x1="12" y1="19" x2="12" y2="23"/>
+                                <line x1="8" y1="23" x2="16" y2="23"/>
+                            </svg>
                         </div>
                     </div>
                     <!-- Slot 2 -->
                     <div class="call-participant-slot call-slot-empty" id="call-slot-2">
                         <video class="call-slot-video" autoplay playsinline></video>
+                        <img class="call-slot-avatar" src="" alt="">
+                        <div class="call-slot-camera-off">
+                            <img class="call-slot-co-avatar" src="" alt="">
+                            <span class="call-slot-co-name"></span>
+                            <span class="call-slot-co-label">Camera is off</span>
+                        </div>
                         <div class="call-slot-fallback">
                             <div class="call-slot-ph">
                                 <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
                             </div>
                             <h2 class="call-slot-name"></h2>
-                            <p class="call-slot-status"></p>
+                            <p class="call-slot-status">Waiting for participant…</p>
                         </div>
                         <div class="call-video-shade"></div>
                         <div class="call-side-tag">
@@ -2024,17 +2086,32 @@
                         <div class="call-slot-hand" style="display:none;">
                             <span class="call-hand-emoji">✋</span>
                             <span class="call-slot-hand-label">Raising hand</span>
+                        </div>
+                        <div class="call-slot-mic" style="display:none;">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="1" y1="1" x2="23" y2="23"/>
+                                <path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"/>
+                                <path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2c0 .76-.13 1.49-.35 2.17"/>
+                                <line x1="12" y1="19" x2="12" y2="23"/>
+                                <line x1="8" y1="23" x2="16" y2="23"/>
+                            </svg>
                         </div>
                     </div>
                     <!-- Slot 3 -->
                     <div class="call-participant-slot call-slot-empty" id="call-slot-3">
                         <video class="call-slot-video" autoplay playsinline></video>
+                        <img class="call-slot-avatar" src="" alt="">
+                        <div class="call-slot-camera-off">
+                            <img class="call-slot-co-avatar" src="" alt="">
+                            <span class="call-slot-co-name"></span>
+                            <span class="call-slot-co-label">Camera is off</span>
+                        </div>
                         <div class="call-slot-fallback">
                             <div class="call-slot-ph">
                                 <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
                             </div>
                             <h2 class="call-slot-name"></h2>
-                            <p class="call-slot-status"></p>
+                            <p class="call-slot-status">Waiting for participant…</p>
                         </div>
                         <div class="call-video-shade"></div>
                         <div class="call-side-tag">
@@ -2044,17 +2121,32 @@
                         <div class="call-slot-hand" style="display:none;">
                             <span class="call-hand-emoji">✋</span>
                             <span class="call-slot-hand-label">Raising hand</span>
+                        </div>
+                        <div class="call-slot-mic" style="display:none;">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="1" y1="1" x2="23" y2="23"/>
+                                <path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"/>
+                                <path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2c0 .76-.13 1.49-.35 2.17"/>
+                                <line x1="12" y1="19" x2="12" y2="23"/>
+                                <line x1="8" y1="23" x2="16" y2="23"/>
+                            </svg>
                         </div>
                     </div>
                     <!-- Slot 4 -->
                     <div class="call-participant-slot call-slot-empty" id="call-slot-4">
                         <video class="call-slot-video" autoplay playsinline></video>
+                        <img class="call-slot-avatar" src="" alt="">
+                        <div class="call-slot-camera-off">
+                            <img class="call-slot-co-avatar" src="" alt="">
+                            <span class="call-slot-co-name"></span>
+                            <span class="call-slot-co-label">Camera is off</span>
+                        </div>
                         <div class="call-slot-fallback">
                             <div class="call-slot-ph">
                                 <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
                             </div>
                             <h2 class="call-slot-name"></h2>
-                            <p class="call-slot-status"></p>
+                            <p class="call-slot-status">Waiting for participant…</p>
                         </div>
                         <div class="call-video-shade"></div>
                         <div class="call-side-tag">
@@ -2064,17 +2156,32 @@
                         <div class="call-slot-hand" style="display:none;">
                             <span class="call-hand-emoji">✋</span>
                             <span class="call-slot-hand-label">Raising hand</span>
+                        </div>
+                        <div class="call-slot-mic" style="display:none;">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="1" y1="1" x2="23" y2="23"/>
+                                <path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"/>
+                                <path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2c0 .76-.13 1.49-.35 2.17"/>
+                                <line x1="12" y1="19" x2="12" y2="23"/>
+                                <line x1="8" y1="23" x2="16" y2="23"/>
+                            </svg>
                         </div>
                     </div>
                     <!-- Slot 5 -->
                     <div class="call-participant-slot call-slot-empty" id="call-slot-5">
                         <video class="call-slot-video" autoplay playsinline></video>
+                        <img class="call-slot-avatar" src="" alt="">
+                        <div class="call-slot-camera-off">
+                            <img class="call-slot-co-avatar" src="" alt="">
+                            <span class="call-slot-co-name"></span>
+                            <span class="call-slot-co-label">Camera is off</span>
+                        </div>
                         <div class="call-slot-fallback">
                             <div class="call-slot-ph">
                                 <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
                             </div>
                             <h2 class="call-slot-name"></h2>
-                            <p class="call-slot-status"></p>
+                            <p class="call-slot-status">Waiting for participant…</p>
                         </div>
                         <div class="call-video-shade"></div>
                         <div class="call-side-tag">
@@ -2084,6 +2191,15 @@
                         <div class="call-slot-hand" style="display:none;">
                             <span class="call-hand-emoji">✋</span>
                             <span class="call-slot-hand-label">Raising hand</span>
+                        </div>
+                        <div class="call-slot-mic" style="display:none;">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="1" y1="1" x2="23" y2="23"/>
+                                <path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"/>
+                                <path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2c0 .76-.13 1.49-.35 2.17"/>
+                                <line x1="12" y1="19" x2="12" y2="23"/>
+                                <line x1="8" y1="23" x2="16" y2="23"/>
+                            </svg>
                         </div>
                     </div>
                 </div>

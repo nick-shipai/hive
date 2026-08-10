@@ -2449,6 +2449,9 @@
     var handStates = {};           // userId → true/false (raised hand indicator)
     var handRaised = false;        // this user's own raised-hand state
     var isSwitchingCamera = false;
+    var cameraOffState = {};       // userId → true (remote user has camera off)
+    var participantInfo = {};      // userId → { username, avatarUrl }
+    var micMutedState = {};        // userId → true (remote user has mic muted)
     var ICE_SERVERS = [
         { urls: "stun:stun.l.google.com:19302" },
         { urls: "turn:turn.hivechat.online:3478", username: "hive", credential: "Bright2010" }
@@ -2587,39 +2590,84 @@
         pc.ontrack = function (event) {
             if (event.streams && event.streams[0]) {
                 var isDm = !!currentCallConversationId;
+                var stream = event.streams[0];
+
+                // Helper: apply stream to a slot and wire up camera-off detection
+                function applyStreamToSlot(slotNum, userId) {
+                    var slotEl = document.getElementById('call-slot-' + slotNum);
+                    if (!slotEl) return;
+                    var video = slotEl.querySelector('.call-slot-video');
+                    slotEl.classList.add('call-slot-active');
+                    slotEl.classList.remove('call-slot-empty');
+
+                    // Populate avatar for camera-off state
+                    var info = participantInfo[userId];
+                    if (info) {
+                        var avatarEl = slotEl.querySelector('.call-slot-avatar');
+                        if (avatarEl) avatarEl.src = info.avatarUrl || '';
+                    }
+
+                    // Detect camera on/off via track mute/unmute events
+                    var videoTracks = stream.getVideoTracks();
+                    var hasEnabledVideo = videoTracks.some(function (t) { return t.enabled; });
+
+                    if (hasEnabledVideo) {
+                        // Camera is on — show live video
+                        if (video) {
+                            video.srcObject = stream;
+                            fadeVideoIn(video);
+                        }
+                        setSlotLiveVideo(slotNum);
+                    } else {
+                        // Camera is off — assign stream (for audio) but show placeholder
+                        if (video) {
+                            video.srcObject = stream;
+                            video.style.visibility = 'hidden';
+                        }
+                        cameraOffState[userId] = true;
+                        if (info) {
+                            setSlotCameraOff(slotNum, info.username, info.avatarUrl);
+                        } else {
+                            // Fallback: show camera-off overlay without avatar info yet
+                            var camOffEl = slotEl.querySelector('.call-slot-camera-off');
+                            if (camOffEl) camOffEl.style.display = 'flex';
+                        }
+                        // Refresh grid so the slot displays camera-off state immediately
+                        updateParticipantGrid(callParticipants);
+                    }
+
+                    videoTracks.forEach(function (track) {
+                        track.onmute = function () {
+                            cameraOffState[userId] = true;
+                            var pInfo = participantInfo[userId];
+                            if (pInfo) setSlotCameraOff(slotNum, pInfo.username, pInfo.avatarUrl);
+                            updateParticipantGrid(callParticipants);
+                        };
+                        track.onunmute = function () {
+                            delete cameraOffState[userId];
+                            setSlotLiveVideo(slotNum);
+                            updateParticipantGrid(callParticipants);
+                        };
+                    });
+                }
+
                 // DM mode: always route remote user to slot 1
                 if (isDm) {
-                    var slotEl = document.getElementById('call-slot-1');
-                    if (slotEl) {
-                        var video = slotEl.querySelector('.call-slot-video');
-                        var fallback = slotEl.querySelector('.call-slot-fallback');
-                        if (video) {
-                            video.srcObject = event.streams[0];
-                            fadeVideoIn(video);
-                            if (fallback) fallback.style.display = 'none';
-                            slotEl.classList.add('call-slot-active');
-                            slotEl.classList.remove('call-slot-empty');
-                        }
-                    }
+                    applyStreamToSlot(1, targetUserId);
                     return;
                 }
                 // Community mode: find the slot for this user
                 var participant = callParticipants.find(function (p) { return p.userId === targetUserId; });
                 if (participant && participant.slot > 0) {
-                    var slotEl = document.getElementById('call-slot-' + participant.slot);
-                    if (slotEl) {
-                        var video = slotEl.querySelector('.call-slot-video');
-                        var fallback = slotEl.querySelector('.call-slot-fallback');
-                        if (video) {
-                            video.srcObject = event.streams[0];
-                            fadeVideoIn(video);
-                            if (fallback) fallback.style.display = 'none';
-                            slotEl.classList.add('call-slot-active');
-                            slotEl.classList.remove('call-slot-empty');
-                        }
-                    }
+                    applyStreamToSlot(participant.slot, targetUserId);
                 } else {
-                    pendingStreams[targetUserId] = event.streams[0];
+                    pendingStreams[targetUserId] = stream;
+                    // If video track is disabled, mark camera-off state now
+                    // so the grid shows the right placeholder when call:participants arrives
+                    var disabledTracks = stream.getVideoTracks().filter(function (t) { return !t.enabled; });
+                    if (disabledTracks.length > 0) {
+                        cameraOffState[targetUserId] = true;
+                    }
                 }
             }
         };
@@ -2629,18 +2677,14 @@
             if (pc.iceConnectionState === 'disconnected' || pc.iceConnectionState === 'failed') {
                 var participant = callParticipants.find(function (p) { return p.userId === targetUserId; });
                 if (participant && participant.slot > 0) {
-                    var slotEl = document.getElementById('call-slot-' + participant.slot);
-                    if (slotEl) {
-                        var fallback = slotEl.querySelector('.call-slot-fallback');
-                        var video = slotEl.querySelector('.call-slot-video');
-                        if (fallback) fallback.style.display = 'flex';
-                        if (video) video.srcObject = null;
-                    }
+                    clearSlotEmpty(participant.slot);
                 }
                 // Clean up pending stream if disconnected
                 if (pendingStreams[targetUserId]) {
                     delete pendingStreams[targetUserId];
                 }
+                delete cameraOffState[targetUserId];
+                delete micMutedState[targetUserId];
             }
         };
 
@@ -2758,7 +2802,7 @@
         fetch(url, { headers: { 'Authorization': 'Bearer ' + token } })
             .then(function (r) { return r.json(); })
             .then(function (data) {
-                if (data.success && data.data && data.data.active) {
+                if (data.success && data.active) {
                     joinCallFromCard(msg);
                 } else {
                     showCallEndedPopup(msg);
@@ -2854,6 +2898,9 @@
         handStates = {};
         handRaised = false;
         mySlot = 0;
+        cameraOffState = {};
+        participantInfo = {};
+        micMutedState = {};
 
         // DM mode: use 2-person layout
         var isDm = !!currentCallConversationId;
@@ -2920,6 +2967,9 @@
         });
         peerConnections = {};
         pendingStreams = {};
+        cameraOffState = {};
+        participantInfo = {};
+        micMutedState = {};
 
         if (localCallStream) {
             localCallStream.getTracks().forEach(function (track) { track.stop(); });
@@ -2947,15 +2997,7 @@
         // Reset all slot videos
         var maxSlots = currentCallMaxSlots || 5;
         for (var i = 1; i <= maxSlots; i++) {
-            var slotEl = document.getElementById('call-slot-' + i);
-            if (slotEl) {
-                var video = slotEl.querySelector('.call-slot-video');
-                var fallback = slotEl.querySelector('.call-slot-fallback');
-                if (video) video.srcObject = null;
-                if (fallback) fallback.style.display = 'flex';
-                slotEl.classList.remove('call-slot-active');
-                slotEl.classList.add('call-slot-empty');
-            }
+            clearSlotEmpty(i);
         }
 
         var joinBtn = $('call-join-btn');
@@ -3206,6 +3248,85 @@
         if (camBtn) camBtn.style.display = on ? '' : 'none';
     }
 
+    // Reset a participant slot to its empty/default state
+    function clearSlotEmpty(slotNum) {
+        var slotEl = document.getElementById('call-slot-' + slotNum);
+        if (!slotEl) return;
+        var video = slotEl.querySelector('.call-slot-video');
+        var fallback = slotEl.querySelector('.call-slot-fallback');
+        var nameEl = slotEl.querySelector('.call-slot-name');
+        var tagEl = slotEl.querySelector('.call-side-tag-text');
+        var statusEl = slotEl.querySelector('.call-slot-status');
+        var avatarEl = slotEl.querySelector('.call-slot-avatar');
+        var camOffEl = slotEl.querySelector('.call-slot-camera-off');
+        var micEl = slotEl.querySelector('.call-slot-mic');
+
+        slotEl.classList.remove('call-slot-active', 'call-slot-camera-off');
+        slotEl.classList.add('call-slot-empty');
+        if (video) { video.srcObject = null; video.style.visibility = ''; }
+        if (fallback) fallback.style.display = '';
+        if (nameEl) nameEl.textContent = '';
+        if (tagEl) tagEl.textContent = '';
+        if (statusEl) statusEl.textContent = 'Waiting for participant…';
+        if (avatarEl) { avatarEl.src = ''; avatarEl.style.display = 'none'; }
+        if (camOffEl) camOffEl.style.display = 'none';
+        if (micEl) micEl.style.display = 'none';
+        var handEl = slotEl.querySelector('.call-slot-hand');
+        if (handEl) handEl.style.display = 'none';
+    }
+
+    // Set a participant slot to camera-off state with avatar/name
+    function setSlotCameraOff(slotNum, username, avatarUrl) {
+        var slotEl = document.getElementById('call-slot-' + slotNum);
+        if (!slotEl) return;
+        var video = slotEl.querySelector('.call-slot-video');
+        var fallback = slotEl.querySelector('.call-slot-fallback');
+        var camOffEl = slotEl.querySelector('.call-slot-camera-off');
+        var coAvatar = camOffEl ? camOffEl.querySelector('.call-slot-co-avatar') : null;
+        var coName = camOffEl ? camOffEl.querySelector('.call-slot-co-name') : null;
+
+        slotEl.classList.add('call-slot-camera-off');
+        if (video) video.style.visibility = 'hidden';
+        if (fallback) fallback.style.display = 'none';
+        if (camOffEl) camOffEl.style.display = 'flex';
+        if (coAvatar) coAvatar.src = avatarUrl || '';
+        if (coName) coName.textContent = username || '';
+    }
+
+    // Set a participant slot to live video state
+    function setSlotLiveVideo(slotNum) {
+        var slotEl = document.getElementById('call-slot-' + slotNum);
+        if (!slotEl) return;
+        var video = slotEl.querySelector('.call-slot-video');
+        var fallback = slotEl.querySelector('.call-slot-fallback');
+        var camOffEl = slotEl.querySelector('.call-slot-camera-off');
+
+        slotEl.classList.remove('call-slot-camera-off');
+        if (video) {
+            video.style.visibility = '';
+            // If the video lost its stream (e.g. from camera-off), try to restore it
+            if (!video.srcObject) {
+                // Find the participant for this slot and check pendingStreams
+                var participant = callParticipants.find(function (p) { return p.slot === slotNum; });
+                if (participant && pendingStreams[participant.userId]) {
+                    video.srcObject = pendingStreams[participant.userId];
+                    delete pendingStreams[participant.userId];
+                    fadeVideoIn(video);
+                }
+            }
+        }
+        if (fallback) fallback.style.display = 'none';
+        if (camOffEl) camOffEl.style.display = 'none';
+    }
+
+    // Show or hide the mic-mute icon on a participant slot
+    function updateMicIcon(slotNum, muted) {
+        var slotEl = document.getElementById('call-slot-' + slotNum);
+        if (!slotEl) return;
+        var micEl = slotEl.querySelector('.call-slot-mic');
+        if (micEl) micEl.style.display = muted ? 'flex' : 'none';
+    }
+
     function updateParticipantGrid(participants) {
         var oldParticipants = callParticipants.slice();
         callParticipants = participants || [];
@@ -3243,28 +3364,42 @@
                 var nameEl1 = slot1.querySelector('.call-slot-name');
                 var tagEl1 = slot1.querySelector('.call-side-tag-text');
                 var statusEl1 = slot1.querySelector('.call-slot-status');
+                var avatarEl1 = slot1.querySelector('.call-slot-avatar');
 
                 if (remoteUser) {
                     slot1.classList.add('call-slot-active');
                     slot1.classList.remove('call-slot-empty');
+
+                    // Store participant info for avatar lookup
+                    var memberData1 = state.members ? state.members.get(remoteUser.userId) : null;
+                    if (!memberData1 && state.homeMembers) memberData1 = state.homeMembers.get(remoteUser.userId);
+                    var avatarUrl1 = memberData1 ? getAvatarUrl(memberData1) : '';
+                    participantInfo[remoteUser.userId] = {
+                        username: remoteUser.username,
+                        avatarUrl: avatarUrl1,
+                    };
+                    if (avatarEl1) avatarEl1.src = avatarUrl1;
+
                     if (nameEl1) nameEl1.textContent = remoteUser.username;
                     if (tagEl1) tagEl1.textContent = remoteUser.username;
 
-                    // Check if video stream is already on the element
-                    if (video1 && video1.srcObject) {
-                        if (fallback1) fallback1.style.display = 'none';
+                    // Determine slot state — camera off takes priority
+                    if (cameraOffState[remoteUser.userId]) {
+                        setSlotCameraOff(1, remoteUser.username, avatarUrl1);
+                    } else if (video1 && video1.srcObject) {
+                        setSlotLiveVideo(1);
                     } else {
                         if (fallback1) fallback1.style.display = 'flex';
                         if (statusEl1) statusEl1.textContent = 'Connecting…';
+                        var camOffEl1 = slot1.querySelector('.call-slot-camera-off');
+                        if (camOffEl1) camOffEl1.style.display = 'none';
+                        if (video1) video1.style.visibility = '';
                     }
+
+                    // Update mic mute icon
+                    updateMicIcon(1, !!micMutedState[remoteUser.userId]);
                 } else {
-                    slot1.classList.remove('call-slot-active');
-                    slot1.classList.add('call-slot-empty');
-                    if (video1) video1.srcObject = null;
-                    if (fallback1) fallback1.style.display = 'flex';
-                    if (nameEl1) nameEl1.textContent = '';
-                    if (tagEl1) tagEl1.textContent = '';
-                    if (statusEl1) statusEl1.textContent = 'Connecting…';
+                    clearSlotEmpty(1);
                 }
             }
 
@@ -3284,14 +3419,13 @@
                     var s1 = document.getElementById('call-slot-1');
                     if (s1) {
                         var v1 = s1.querySelector('.call-slot-video');
-                        var f1 = s1.querySelector('.call-slot-fallback');
                         if (v1) {
                             v1.srcObject = pendingStreams[p.userId];
                             fadeVideoIn(v1);
-                            if (f1) f1.style.display = 'none';
-                            s1.classList.add('call-slot-active');
-                            s1.classList.remove('call-slot-empty');
                         }
+                        setSlotLiveVideo(1);
+                        s1.classList.add('call-slot-active');
+                        s1.classList.remove('call-slot-empty');
                     }
                     delete pendingStreams[p.userId];
                 }
@@ -3319,10 +3453,23 @@
             var nameEl = slotEl.querySelector('.call-slot-name');
             var tagEl = slotEl.querySelector('.call-side-tag-text');
             var statusEl = slotEl.querySelector('.call-slot-status');
+            var avatarEl = slotEl.querySelector('.call-slot-avatar');
 
             if (participant) {
                 slotEl.classList.add('call-slot-active');
                 slotEl.classList.remove('call-slot-empty');
+
+                // Store participant info for avatar lookup
+                var memberData = state.members ? state.members.get(participant.userId) : null;
+                if (!memberData && state.homeMembers) memberData = state.homeMembers.get(participant.userId);
+                var avatarUrl = memberData ? getAvatarUrl(memberData) : '';
+                participantInfo[participant.userId] = {
+                    username: participant.username,
+                    avatarUrl: avatarUrl,
+                };
+
+                // Populate avatar element
+                if (avatarEl) avatarEl.src = avatarUrl;
 
                 if (nameEl) {
                     nameEl.textContent = participant.userId === me ? 'You' : participant.username;
@@ -3337,21 +3484,26 @@
                     }
                 }
 
-                // Hide fallback if we have a video stream, show otherwise
-                if (video && video.srcObject) {
-                    if (fallback) fallback.style.display = 'none';
+                // Determine slot state: camera off takes priority over video check
+                // (video.srcObject may be null while stream is in pendingStreams)
+                if (cameraOffState[participant.userId]) {
+                    setSlotCameraOff(i, participant.username, avatarUrl);
+                } else if (video && video.srcObject) {
+                    setSlotLiveVideo(i);
                 } else {
                     if (fallback) fallback.style.display = 'flex';
                     if (statusEl) statusEl.textContent = participant.userId === me ? '' : 'Connecting…';
+                    // Hide camera-off overlay if present
+                    var camOffEl = slotEl.querySelector('.call-slot-camera-off');
+                    if (camOffEl) camOffEl.style.display = 'none';
+                    if (video) video.style.visibility = '';
                 }
+
+                // Update mic mute icon
+                updateMicIcon(i, !!micMutedState[participant.userId]);
             } else {
-                slotEl.classList.remove('call-slot-active');
-                slotEl.classList.add('call-slot-empty');
-                if (video) video.srcObject = null;
-                if (fallback) fallback.style.display = '';
-                if (nameEl) nameEl.textContent = '';
-                if (tagEl) tagEl.textContent = '';
-                if (statusEl) statusEl.textContent = currentCallConversationId ? 'Connecting…' : 'Waiting for participant…';
+                // Empty slot — reset everything
+                clearSlotEmpty(i);
             }
         }
 
@@ -3367,14 +3519,13 @@
                 var slotEl = document.getElementById('call-slot-' + p.slot);
                 if (slotEl) {
                     var video = slotEl.querySelector('.call-slot-video');
-                    var fallback = slotEl.querySelector('.call-slot-fallback');
                     if (video) {
                         video.srcObject = pendingStreams[p.userId];
                         fadeVideoIn(video);
-                        if (fallback) fallback.style.display = 'none';
-                        slotEl.classList.add('call-slot-active');
-                        slotEl.classList.remove('call-slot-empty');
                     }
+                    setSlotLiveVideo(p.slot);
+                    slotEl.classList.add('call-slot-active');
+                    slotEl.classList.remove('call-slot-empty');
                 }
                 delete pendingStreams[p.userId];
             }
@@ -6219,6 +6370,14 @@
                     handStates[p.userId] = !!p.handRaised;
                 });
 
+                // Rebuild mic/camera state maps from the payload
+                callParticipants.forEach(function (p) {
+                    if (p.micMuted) micMutedState[p.userId] = true;
+                    else delete micMutedState[p.userId];
+                    if (p.camOff) cameraOffState[p.userId] = true;
+                    else delete cameraOffState[p.userId];
+                });
+
                 // Update Join button + participant controls visibility
                 setParticipantControls(mySlot > 0);
 
@@ -6318,11 +6477,46 @@
                 peerConnections[data.userId].close();
                 delete peerConnections[data.userId];
             }
+            // Immediately clear the slot for this user
+            delete cameraOffState[data.userId];
+            delete participantInfo[data.userId];
+            delete micMutedState[data.userId];
+            var participant = callParticipants.find(function (p) { return p.userId === data.userId; });
+            if (participant && participant.slot > 0) {
+                clearSlotEmpty(participant.slot);
+            }
         });
 
         socket.on('call:stopped', function (data) {
             console.log('[WEBRTC] Call stopped by', data ? data.username : 'unknown');
             closeCallOverlay();
+        });
+
+        socket.on('call:mic-state', function (data) {
+            if (!data || !data.userId) return;
+            var muted = !!data.muted;
+            micMutedState[data.userId] = muted;
+            var participant = callParticipants.find(function (p) { return p.userId === data.userId; });
+            if (participant && participant.slot > 0) {
+                updateMicIcon(participant.slot, muted);
+            }
+        });
+
+        socket.on('call:cam-state', function (data) {
+            if (!data || !data.userId) return;
+            var off = !!data.off;
+            var participant = callParticipants.find(function (p) { return p.userId === data.userId; });
+            if (!participant || participant.slot <= 0) return;
+            var slotEl = document.getElementById('call-slot-' + participant.slot);
+            if (!slotEl) return;
+            if (off) {
+                cameraOffState[data.userId] = true;
+                var info = participantInfo[data.userId];
+                if (info) setSlotCameraOff(participant.slot, info.username, info.avatarUrl);
+            } else {
+                delete cameraOffState[data.userId];
+                setSlotLiveVideo(participant.slot);
+            }
         });
 
         // ── Socket events ──────────────────
@@ -6441,6 +6635,14 @@
                 if (audioTrack) {
                     audioTrack.enabled = !audioTrack.enabled;
                     syncMicButton(audioTrack.enabled);
+                    // Broadcast mic state to all participants
+                    if (state.socket && (currentCallCommunityId || currentCallConversationId)) {
+                        state.socket.emit('call:mic-state', {
+                            communityId: currentCallCommunityId || null,
+                            conversationId: currentCallConversationId || null,
+                            muted: !audioTrack.enabled,
+                        });
+                    }
                 }
             }
         });
@@ -6451,6 +6653,14 @@
                 if (videoTrack) {
                     videoTrack.enabled = !videoTrack.enabled;
                     syncCamButton(videoTrack.enabled);
+                    // Broadcast camera state to all participants
+                    if (state.socket && (currentCallCommunityId || currentCallConversationId)) {
+                        state.socket.emit('call:cam-state', {
+                            communityId: currentCallCommunityId || null,
+                            conversationId: currentCallConversationId || null,
+                            off: !videoTrack.enabled,
+                        });
+                    }
                 }
             }
         });

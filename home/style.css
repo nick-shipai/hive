@@ -11232,6 +11232,12 @@ input { font-family: inherit; border: none; outline: none; background: none; col
 .call-participant-slot.call-slot-empty .call-side-tag {
     display: none;
 }
+.call-participant-slot.call-slot-camera-off .call-slot-video {
+    visibility: hidden;
+}
+.call-participant-slot.call-slot-camera-off .call-video-shade {
+    display: none;
+}
 
 @keyframes slotEmptyGlow {
     0%, 100% { opacity: 0.45; transform: translateY(0); }
@@ -11239,6 +11245,67 @@ input { font-family: inherit; border: none; outline: none; background: none; col
 }
 .call-participant-slot.call-slot-active {
     border: 1px solid rgba(108,99,255,0.15);
+}
+/* ── Hidden avatar in slot (shown when camera is off) ── */
+.call-slot-avatar {
+    display: none;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(108,99,255,0.4);
+    box-shadow: 0 0 30px rgba(108,99,255,0.25);
+    z-index: 2;
+    pointer-events: none;
+}
+.call-participant-slot.call-slot-camera-off .call-slot-avatar {
+    display: block;
+}
+/* ── Camera-off overlay ── */
+.call-slot-camera-off {
+    display: none;
+    position: absolute;
+    inset: 0;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    z-index: 4;
+    background:
+        radial-gradient(300px 250px at 30% 20%, rgba(108,99,255,0.18), transparent 60%),
+        radial-gradient(250px 250px at 80% 80%, rgba(0,229,255,0.1), transparent 55%),
+        #050816;
+    pointer-events: none;
+}
+.call-participant-slot.call-slot-camera-off .call-slot-camera-off {
+    display: flex;
+}
+.call-slot-co-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(108,99,255,0.4);
+    box-shadow: 0 0 24px rgba(108,99,255,0.2);
+}
+.call-slot-co-name {
+    font-family: var(--font-display);
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text);
+    max-width: 90%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.call-slot-co-label {
+    font-size: 0.62rem;
+    color: rgba(167,176,192,0.6);
+    letter-spacing: 0.03em;
 }
 .call-slot-video {
     width: 100%;
@@ -11764,6 +11831,43 @@ input { font-family: inherit; border: none; outline: none; background: none; col
 }
 .call-participant-slot.call-slot-empty .call-slot-hand {
     display: none !important;
+}
+.call-participant-slot.call-slot-empty .call-slot-mic {
+    display: none !important;
+}
+.call-slot-mic {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    z-index: 6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: rgba(239, 68, 68, 0.85);
+    border: 1px solid rgba(239, 68, 68, 0.5);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.35);
+    animation: micMutePopIn 0.35s var(--ease) both;
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.call-slot-mic svg {
+    width: 14px;
+    height: 14px;
+    animation: micMutePulse 2s ease-in-out infinite;
+}
+@keyframes micMutePopIn {
+    0% { opacity: 0; transform: scale(0.5); }
+    100% { opacity: 1; transform: scale(1); }
+}
+@keyframes micMutePulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
 }
 @keyframes handPopIn {
     0% { opacity: 0; transform: translateY(-8px) scale(0.8); }

@@ -1,20 +1,96 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hive — Where Teen Communities Come Alive</title>
     <script>
         if (localStorage.getItem('hive_token')) {
             window.location.href = '/home/';
         }
     </script>
-    <meta name="description" content="Hive is the next-generation social platform where teens chat, create communities, make friends, and belong.">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hive — Where Teen Communities Come Alive | Free Teen Social Platform</title>
+
+    <!-- Primary SEO -->
+    <meta name="description" content="Hive is the free social platform where teens chat, create communities, make real friends, video call, share moments, and belong. Join 500K+ teens building something real together.">
+    <meta name="keywords" content="teen social app, teen chat, teen communities, teen hangout, make friends online, group chat, video call, safe social media for teens, hive chat, teen messaging, community platform, teen discord alternative, teen group messaging, free chat app, social network for teens, teen friends, online community, teen voice chat, teen video chat, safe teen app, moderated teen social, gen z social app, teen community builder">
+    <meta name="author" content="Hive Technologies">
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+    <link rel="canonical" href="https://hivechat.online/">
+
+    <!-- Geo / Language -->
+    <meta name="geo.region" content="US">
+    <meta name="geo.placename" content="United States">
+    <meta name="language" content="English">
+    <meta name="revisit-after" content="3 days">
+    <meta name="rating" content="general">
+    <meta name="distribution" content="global">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://hivechat.online/">
+    <meta property="og:title" content="Hive — Where Teen Communities Come Alive">
+    <meta property="og:description" content="Chat, build communities, make real friends, video call, and belong. The free social platform built for teens. Join 500K+ members.">
+    <meta property="og:image" content="https://hivechat.online/assets/hiveicon.png">
+    <meta property="og:image:alt" content="Hive — Free Teen Social Platform">
+    <meta property="og:image:width" content="512">
+    <meta property="og:image:height" content="512">
+    <meta property="og:site_name" content="Hive">
+    <meta property="og:locale" content="en_US">
+
+    <!-- Twitter / X Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:site" content="@hivechat">
+    <meta name="twitter:creator" content="@hivechat">
+    <meta name="twitter:title" content="Hive — Where Teen Communities Come Alive">
+    <meta name="twitter:description" content="Chat, build communities, make real friends, video call, and belong. The free social platform built for teens.">
+    <meta name="twitter:image" content="https://hivechat.online/assets/hiveicon.png">
+    <meta name="twitter:image:alt" content="Hive — Free Teen Social Platform">
+
+    <!-- Favicon / App Icons -->
+    <link rel="icon" type="image/png" href="/assets/hiveicon.png">
+    <link rel="apple-touch-icon" href="/assets/hiveicon.png">
+    <link rel="apple-touch-icon" sizes="512x512" href="/assets/hiveicon.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/hiveicon.png">
+
+    <!-- PWA / Mobile -->
+    <meta name="theme-color" content="#6C63FF">
+    <meta name="msapplication-TileColor" content="#6C63FF">
+    <meta name="msapplication-TileImage" content="/assets/hiveicon.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Hive">
+    <meta name="application-name" content="Hive">
+    <meta name="mobile-web-app-capable" content="yes">
+
+    <!-- Additional SEO Signals -->
+    <link rel="sitemap" type="application/xml" href="/sitemap.xml">
+    <link rel="alternate" hreflang="en" href="https://hivechat.online/">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+
+    <!-- Fonts & Styles -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐝</text></svg>">
+
+    <!-- JSON-LD Structured Data for Google -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Hive",
+        "url": "https://hivechat.online",
+        "description": "Hive is the free social platform where teens chat, create communities, make real friends, video call, and belong.",
+        "applicationCategory": "SocialNetworkingApplication",
+        "operatingSystem": "Web",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+        "creator": { "@type": "Organization", "name": "Hive", "url": "https://hivechat.online" },
+        "screenshot": "https://hivechat.online/assets/hiveicon.png",
+        "featureList": ["Group Chat", "Video Calls", "Communities", "Direct Messaging", "Voice Chat", "Profile Customization"],
+        "aggregateRating": { "@type": "AggregateRating", "ratingValue": "4.8", "ratingCount": "12400" }
+    }
+    </script>
 </head>
 <body>
     <canvas id="particles-canvas"></canvas>
@@ -65,7 +141,7 @@
                 <a href="#how-it-works">How It Works</a>
             </div>
             <div class="nav-actions">
-                <a href="#" class="btn-ghost">Log In</a>
+                <a href="login/" class="btn-ghost">Log In</a>
                 <a href="signup/" class="btn-primary magnetic-btn">Join Hive</a>
             </div>
             <button class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="Toggle menu">
@@ -77,6 +153,7 @@
             <a href="#communities">Communities</a>
             <a href="#safety">Safety</a>
             <a href="#how-it-works">How It Works</a>
+            <a href="login/" class="btn-ghost">Log In</a>
             <a href="signup/" class="btn-primary">Join Hive</a>
         </div>
     </nav>
@@ -839,8 +916,8 @@
                     </div>
                     <div class="footer-col">
                         <h4>Legal</h4>
-                        <a href="#">Privacy</a>
-                        <a href="#">Terms</a>
+                        <a href="privacy/">Privacy</a>
+                        <a href="terms/">Terms</a>
                         <a href="#">Cookies</a>
                         <a href="#">Guidelines</a>
                     </div>
