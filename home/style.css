@@ -3380,6 +3380,95 @@ input { font-family: inherit; border: none; outline: none; background: none; col
 .rank-badge.rank-badge-lg { width: 22px; height: 22px; }
 .rank-badge.rank-badge-xl { width: 28px; height: 28px; }
 
+/* ─── XP PROGRESS BAR ───────────────────────── */
+.xp-progress-wrap {
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.xp-level-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.xp-level-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    line-height: 1.3;
+}
+
+.xp-bar {
+    width: 100%;
+    height: 6px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 3px;
+    overflow: hidden;
+    position: relative;
+}
+
+.xp-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+}
+
+.xp-bar-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.25) 50%, transparent 100%);
+    animation: xpShimmer 2s ease-in-out infinite;
+}
+
+@keyframes xpShimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.xp-bar-text {
+    font-size: 10px;
+    color: var(--text-3);
+    font-weight: 500;
+    text-align: right;
+}
+
+/* XP in user popup */
+.up-xp-row {
+    margin-top: 4px;
+}
+
+.up-xp-row .xp-progress-wrap {
+    margin-top: 2px;
+}
+
+/* XP in right profile panel */
+.rp-xp-section {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+}
+
+.rp-xp-section .xp-bar {
+    height: 8px;
+}
+
+/* ─── END XP PROGRESS BAR ────────────────────── */
+
 /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    EMOJI PICKER
    â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */

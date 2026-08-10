@@ -1098,6 +1098,7 @@
                                 <div class="rp-field"><span class="rp-fl">Display Name</span><span class="rp-fv"
                                         id="rp-if-display-name"></span></div>
                             </div>
+                            <div id="rp-xp-section" class="rp-xp-section"></div>
                         </div>
                     </div>
 
@@ -1168,14 +1169,14 @@
                     <div class="rp-card rp-card-level rp-entrance" data-delay="2">
                         <div class="rp-card-b">
                             <div class="rp-level-row">
-                                <div class="rp-level-badge">12</div>
+                                <div class="rp-level-badge" id="rp-level-badge">1</div>
                                 <div class="rp-level-info">
                                     <div class="rp-level-top">
-                                        <span class="rp-level-n">Level 12</span>
-                                        <span class="rp-level-xp">8,420 / 10,000 XP</span>
+                                        <span class="rp-level-n" id="rp-level-name">Level 1</span>
+                                        <span class="rp-level-xp" id="rp-level-xp">0 / 50 XP</span>
                                     </div>
                                     <div class="rp-level-bar">
-                                        <div class="rp-level-fill" style="width:84%"></div>
+                                        <div class="rp-level-fill" id="rp-level-fill" style="width:0%"></div>
                                     </div>
                                 </div>
                             </div>
@@ -1650,8 +1651,9 @@
                                                 <span class="msg-timestamp" id="preview-time">Now</span>
                                             </div>
                                             <div class="msg-content" id="preview-content">Hey everyone! This is how your messages will look :)</div>
-                                        </div>
-                                    </div>
+                            </div>
+                            <div id="rp-xp-section" class="rp-xp-section"></div>
+                        </div>
                                 </div>
                             </div>
                         </div>
@@ -2549,6 +2551,7 @@
                         </div>
                         <div class="up-display-row" id="up-display-row"></div>
                         <div class="up-rank-row" id="up-rank-row"></div>
+                        <div class="up-xp-row" id="up-xp-row"></div>
                         <div class="up-meta-row">
                             <span class="up-meta-item" id="up-joined">
                                 <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor"

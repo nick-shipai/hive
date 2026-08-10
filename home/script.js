@@ -293,6 +293,59 @@
         '</span>';
     }
 
+    /* ── XP / Level Helpers ──────────────────── */
+    function xpForLevel(level) {
+        return Math.floor(level * level * 50);
+    }
+
+    function levelFromXp(xp) {
+        return Math.max(1, Math.floor(Math.sqrt(xp / 50)));
+    }
+
+    function getXpProgress(totalXp) {
+        var level = levelFromXp(totalXp);
+        var xpForCurrentLevel = xpForLevel(level);
+        var xpForNextLevel = xpForLevel(level + 1);
+        var xpProgress = totalXp - xpForCurrentLevel;
+        var xpNeeded = xpForNextLevel - xpForCurrentLevel;
+        var percent = Math.min(100, Math.floor((xpProgress / xpNeeded) * 100));
+        return {
+            level: level,
+            xp: totalXp,
+            xpForCurrentLevel: xpForCurrentLevel,
+            xpForNextLevel: xpForNextLevel,
+            xpProgress: xpProgress,
+            xpNeeded: xpNeeded,
+            percent: percent
+        };
+    }
+
+    function createXpProgressBarHtml(xp, sizeClass) {
+        var progress = getXpProgress(xp || 0);
+        var rankColor = getRankColorFromLevel(progress.level);
+        var cls = 'xp-progress-wrap' + (sizeClass ? ' ' + sizeClass : '');
+        return '<div class="' + cls + '" title="Level ' + progress.level + ' — ' + progress.xpProgress + '/' + progress.xpNeeded + ' XP to next level">' +
+            '<div class="xp-level-label"><span class="xp-level-badge" style="background:' + rankColor + '">Lv ' + progress.level + '</span></div>' +
+            '<div class="xp-bar">' +
+                '<div class="xp-bar-fill" style="width:' + progress.percent + '%;background:' + rankColor + '"></div>' +
+            '</div>' +
+            '<div class="xp-bar-text">' + progress.xpProgress + ' / ' + progress.xpNeeded + ' XP</div>' +
+        '</div>';
+    }
+
+    function getRankColorFromLevel(level) {
+        if (level >= 85) return '#F59E0B';
+        if (level >= 70) return '#EC4899';
+        if (level >= 60) return '#F59E0B';
+        if (level >= 50) return '#A855F7';
+        if (level >= 40) return '#7C3AED';
+        if (level >= 30) return '#06B6D4';
+        if (level >= 20) return '#8B5CF6';
+        if (level >= 10) return '#38BDF8';
+        if (level >= 5)  return '#3B82F6';
+        return '#7a8599';
+    }
+
     /* ── Mute System ─────────────────────────── */
     function checkMuteStatus() {
         if (!state.user) return;
@@ -6053,6 +6106,25 @@
             }
         });
 
+        // ── Level up event ────────────────────────────
+        socket.on('user:level-up', function (data) {
+            if (!data) return;
+            var newLevel = data.level;
+            var newRank = data.rank;
+            var newXp = data.xp;
+            if (state.user) {
+                state.user.level = newLevel;
+                state.user.rank = newRank;
+                state.user.xp = newXp;
+            }
+            var rankLabel = newRank ? newRank.charAt(0).toUpperCase() + newRank.slice(1) : 'Unknown';
+            showToast('Level up! You are now Level ' + newLevel + ' — ' + rankLabel, 'success');
+            // Refresh profile if open
+            if (profileOpen) populateProfile();
+            // Refresh user panel
+            renderUserPanel();
+        });
+
         // ── Presence events ────────────────────────────
         socket.on('presence:self', function (data) {
             if (!data || !data.userId) return;
@@ -7326,6 +7398,22 @@
 
         el = $('rp-if-bio');
         if (el) el.textContent = user.bio || 'No bio yet.';
+
+        el = $('rp-xp-section');
+        if (el) {
+            el.innerHTML = createXpProgressBarHtml(user.xp || 0);
+        }
+
+        // Level Card (existing rp-level-bar)
+        var levelData = getXpProgress(user.xp || 0);
+        el = $('rp-level-badge');
+        if (el) el.textContent = levelData.level;
+        el = $('rp-level-name');
+        if (el) el.textContent = 'Level ' + levelData.level;
+        el = $('rp-level-xp');
+        if (el) el.textContent = levelData.xpProgress.toLocaleString() + ' / ' + levelData.xpNeeded.toLocaleString() + ' XP';
+        el = $('rp-level-fill');
+        if (el) el.style.width = levelData.percent + '%';
 
         el = $('rpanel-member-since');
         if (el && user.created_at) {
@@ -9438,6 +9526,7 @@
         dom.upBadgesRow = $('up-badges-row');
         dom.upDisplayRow = $('up-display-row');
         dom.upRankRow = $('up-rank-row');
+        dom.upXpRow = $('up-xp-row');
         dom.upJoinedText = $('up-joined-text');
         dom.upLocaltimeText = $('up-localtime-text');
         dom.upBio = $('up-bio');
@@ -9805,6 +9894,11 @@
             } else {
                 dom.upRankRow.innerHTML = '<span class="up-rank-chip">Member</span>';
             }
+        }
+
+        // XP row
+        if (dom.upXpRow) {
+            dom.upXpRow.innerHTML = createXpProgressBarHtml(data.xp || 0, 'xp-popup');
         }
 
         // Meta row
