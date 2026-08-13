@@ -287,6 +287,22 @@
         return badgeEl.outerHTML;
     }
 
+    function createPremiumBadgeHtml(isPremium) {
+        if (!isPremium) return '';
+        return '<span class="premium-badge" title="Premium">' +
+            '<svg viewBox="0 0 24 24" width="14" height="14" xmlns="http://www.w3.org/2000/svg">' +
+                '<defs>' +
+                    '<linearGradient id="premGrad" x1="0%" y1="0%" x2="100%" y2="100%">' +
+                        '<stop offset="0%" stop-color="#FFD700"/>' +
+                        '<stop offset="50%" stop-color="#FFA500"/>' +
+                        '<stop offset="100%" stop-color="#FF6B00"/>' +
+                    '</linearGradient>' +
+                '</defs>' +
+                '<path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="url(#premGrad)" stroke="#FFD700" stroke-width="0.5"/>' +
+            '</svg>' +
+        '</span>';
+    }
+
     function createVerifiedBadgeHtml() {
         return '<span class="verified-badge" title="Verified">' +
             '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#6C63FF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>' +
@@ -4531,7 +4547,7 @@
             '<div class="msg-avatar-wrap' + (ringClass ? ' ' + ringClass : '') + '"><img class="msg-avatar' + (isBot ? ' msg-avatar-bot' : '') + '" src="' + escapeHtml(avatarUrl) + '" alt="' + escapeHtml(msg.username) + '" loading="lazy"></div>' +
             '<div class="msg-body">' +
                 '<div class="msg-header">' +
-                    '<span class="msg-username' + (msg.rank ? ' rank-' + msg.rank : '') + (isBot ? ' msg-username-bot' : '') + '"' + combinedUsernameStyle + '>' + escapeHtml(msg.username) + (isBot ? createBotBadgeHtml() : '') + createRankBadgeHtml(msg.rank) + '</span>' +
+                    '<span class="msg-username' + (msg.rank ? ' rank-' + msg.rank : '') + (isBot ? ' msg-username-bot' : '') + '"' + combinedUsernameStyle + '>' + escapeHtml(msg.username) + (isBot ? createBotBadgeHtml() : '') + createRankBadgeHtml(msg.rank) + createPremiumBadgeHtml(msg.is_premium) + '</span>' +
                     '<span class="msg-timestamp" title="' + escapeHtml(formatFullTime(msg.created_at)) + '">' + escapeHtml(formatTime(msg.created_at)) + '</span>' +
                     (msg.edited_at ? '<span class="msg-edited">(edited)</span>' : '') +
                 '</div>' +
