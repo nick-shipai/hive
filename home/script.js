@@ -83,7 +83,7 @@
         var toast = document.createElement('div');
         toast.className = 'toast-msg';
         toast.textContent = msg;
-        toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:10px 20px;border-radius:10px;font-size:0.82rem;font-weight:600;z-index:99999;color:#fff;animation:toastIn 0.3s ease;' + (type === 'error' ? 'background:#EF4444;' : 'background:#23A55A;');
+        toast.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);padding:10px 20px;border-radius:10px;font-size:0.82rem;font-weight:600;z-index:99999;color:#fff;animation:toastIn 0.3s ease;' + (type === 'error' ? 'background:#EF4444;' : 'background:#23A55A;');
         document.body.appendChild(toast);
         setTimeout(function() { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.3s'; }, 2500);
         setTimeout(function() { toast.remove(); }, 3000);
@@ -110,10 +110,10 @@
         return RANK_COLORS[rank] || '#7a8599';
     }
 
-    function renderMessageText(str) {
+    function renderMessageText(str, mentions) {
         if (!str) return '';
         if (!window.HiveEmoji) {
-            return renderHashtags(escapeHtml(str));
+            return renderMentions(renderHashtags(escapeHtml(str)), mentions);
         }
         var parts = str.split(/(:hive_[a-z_]+:)/g);
         var html = '';
@@ -134,13 +134,49 @@
                 html += renderHashtags(escapeHtml(part));
             }
         }
-        return html;
+        return renderMentions(html, mentions);
     }
 
     function renderHashtags(html) {
         return html.replace(/#([a-zA-Z0-9_]{1,100})/g, function (match, name) {
             return '<span class="msg-hashtag" data-tag="' + escapeHtml(name.toLowerCase()) + '" role="link" tabindex="0">#' + escapeHtml(name) + '</span>';
         });
+    }
+
+    function renderMentions(html, mentions) {
+        if (!mentions || mentions.length === 0) return html;
+        var mentioned = {};
+        for (var i = 0; i < mentions.length; i++) {
+            mentioned[mentions[i].username.toLowerCase()] = mentions[i].id;
+        }
+        var result = '';
+        var pos = 0;
+        var mentionRe = /@([a-zA-Z0-9_]{1,32})/g;
+        var match;
+        while ((match = mentionRe.exec(html)) !== null) {
+            var uname = match[1];
+            var uid = mentioned[uname.toLowerCase()];
+            result += html.substring(pos, match.index);
+            if (uid) {
+                result += '<span class="msg-mention" data-uid="' + escapeHtml(uid) + '" role="link" tabindex="0">@' + escapeHtml(uname) + '</span>';
+            } else {
+                result += match[0];
+            }
+            pos = match.index + match[0].length;
+        }
+        result += html.substring(pos);
+        return result;
+    }
+
+    var buzzAdScriptUrl = 'https://pl30832238.effectivecpmnetwork.com/eeea152c03606b389c73341e2eb97c59/invoke.js';
+    function loadBuzzAd(containerId) {
+        var container = document.getElementById(containerId);
+        if (!container) return;
+        var script = document.createElement('script');
+        script.async = true;
+        script.setAttribute('data-cfasync', 'false');
+        script.src = buzzAdScriptUrl;
+        document.head.appendChild(script);
     }
 
     function formatTime(isoStr) {
@@ -151,7 +187,7 @@
         var diffHr = Math.floor(diffMs / 3600000);
         if (diffMin < 1) return 'Just now';
         if (diffMin < 60) return diffMin + 'm ago';
-        if (diffHr < 24) return diffHr + 'h ago';
+        if (diffHr < 20) return diffHr + 'h ago';
         var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
         var isThisYear = d.getFullYear() === now.getFullYear();
         return months[d.getMonth()] + ' ' + d.getDate() + (isThisYear ? '' : ', ' + d.getFullYear());
@@ -193,7 +229,7 @@
     }
 
     var AVATAR_COLORS = [
-        '#5865F2','#EB459E','#57F287','#ED4245','#6C63FF',
+        '#5865F2','#EB459E','#57F287','#ED4205','#6C63FF',
         '#00B4D8','#FF6B6B','#A78BFA','#F59E0B','#EC4899',
         '#14B8A6','#F97316',
     ];
@@ -289,16 +325,46 @@
 
     function createPremiumBadgeHtml(isPremium) {
         if (!isPremium) return '';
+        var id = 'p_' + Math.random().toString(36).slice(2, 8);
         return '<span class="premium-badge" title="Premium">' +
-            '<svg viewBox="0 0 24 24" width="14" height="14" xmlns="http://www.w3.org/2000/svg">' +
+            '<svg class="premium-badge-svg" viewBox="0 0 100 100">' +
                 '<defs>' +
-                    '<linearGradient id="premGrad" x1="0%" y1="0%" x2="100%" y2="100%">' +
+                    '<linearGradient id="' + id + '_pg" x1="0%" y1="0%" x2="100%" y2="100%">' +
                         '<stop offset="0%" stop-color="#FFD700"/>' +
-                        '<stop offset="50%" stop-color="#FFA500"/>' +
-                        '<stop offset="100%" stop-color="#FF6B00"/>' +
+                        '<stop offset="100%" stop-color="#FF8C00"/>' +
+                    '</linearGradient>' +
+                    '<linearGradient id="' + id + '_cg" x1="0%" y1="0%" x2="100%" y2="100%">' +
+                        '<stop offset="0%" stop-color="#FFC107"/>' +
+                        '<stop offset="100%" stop-color="#FF6F00"/>' +
+                    '</linearGradient>' +
+                    '<clipPath id="' + id + '_cl">' +
+                        '<circle cx="50" cy="50" r="33"/>' +
+                    '</clipPath>' +
+                    '<linearGradient id="' + id + '_sg" x1="0%" y1="0%" x2="100%" y2="0%" gradientTransform="rotate(20 50 50)">' +
+                        '<stop offset="0%" stop-color="white" stop-opacity="0"/>' +
+                        '<stop offset="50%" stop-color="white" stop-opacity=".9"/>' +
+                        '<stop offset="100%" stop-color="white" stop-opacity="0"/>' +
                     '</linearGradient>' +
                 '</defs>' +
-                '<path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="url(#premGrad)" stroke="#FFD700" stroke-width="0.5"/>' +
+                '<g>' +
+                    '<circle class="prem-petal" cx="78" cy="50" r="16" fill="url(#' + id + '_pg)"/>' +
+                    '<circle class="prem-petal" cx="74.20" cy="64" r="16" fill="url(#' + id + '_pg)"/>' +
+                    '<circle class="prem-petal" cx="64" cy="74.20" r="16" fill="url(#' + id + '_pg)"/>' +
+                    '<circle class="prem-petal" cx="50" cy="78" r="16" fill="url(#' + id + '_pg)"/>' +
+                    '<circle class="prem-petal" cx="36" cy="74.20" r="16" fill="url(#' + id + '_pg)"/>' +
+                    '<circle class="prem-petal" cx="25.76" cy="64" r="16" fill="url(#' + id + '_pg)"/>' +
+                    '<circle class="prem-petal" cx="22" cy="50" r="16" fill="url(#' + id + '_pg)"/>' +
+                    '<circle class="prem-petal" cx="25.76" cy="36" r="16" fill="url(#' + id + '_pg)"/>' +
+                    '<circle class="prem-petal" cx="36" cy="25.76" r="16" fill="url(#' + id + '_pg)"/>' +
+                    '<circle class="prem-petal" cx="50" cy="22" r="16" fill="url(#' + id + '_pg)"/>' +
+                    '<circle class="prem-petal" cx="64" cy="25.76" r="16" fill="url(#' + id + '_pg)"/>' +
+                    '<circle class="prem-petal" cx="74.20" cy="36" r="16" fill="url(#' + id + '_pg)"/>' +
+                '</g>' +
+                '<circle class="prem-core" cx="50" cy="50" r="33" fill="url(#' + id + '_cg)"/>' +
+                '<g clip-path="url(#' + id + '_cl)">' +
+                    '<rect class="prem-shine" x="-40" y="0" width="180" height="100" fill="url(#' + id + '_sg)"/>' +
+                '</g>' +
+                '<path class="prem-check" pathLength="1" d="M33 51 L44 62 L69 37" fill="none" stroke="white" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/>' +
             '</svg>' +
         '</span>';
     }
@@ -673,11 +739,11 @@
         var diffSec = Math.floor(diffMs / 1000);
         var diffMin = Math.floor(diffSec / 60);
         var diffHr = Math.floor(diffMin / 60);
-        var diffDay = Math.floor(diffHr / 24);
+        var diffDay = Math.floor(diffHr / 20);
 
         if (diffSec < 60) return 'Just now';
         if (diffMin < 60) return diffMin + 'm ago';
-        if (diffHr < 24) return diffHr + 'h ago';
+        if (diffHr < 20) return diffHr + 'h ago';
         if (diffDay === 1) return 'Yesterday';
         if (diffDay < 7) return diffDay + ' days ago';
         var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -707,7 +773,7 @@
                 '<span class="cs-member-status ' + statusClass + '"></span>' +
             '</div>' +
             '<div class="cs-member-info">' +
-                '<span class="cs-member-name' + (member.rank ? ' rank-' + member.rank : '') + '">' + escapeHtml(displayName) + rankHtml + verifiedHtml + '</span>' +
+                '<span class="cs-member-name' + (member.rank ? ' rank-' + member.rank : '') + '">' + escapeHtml(displayName) + rankHtml + createPremiumBadgeHtml(member.is_premium) + verifiedHtml + '</span>' +
                 (isBot && member.status ? '<span class="cs-member-status-text">' + escapeHtml(member.status) + '</span>' : statusText) +
             '</div>' +
         '</div>';
@@ -1027,7 +1093,7 @@
                 '<span class="friend-status ' + statusClass + '"></span>' +
             '</div>' +
             '<div class="friend-info">' +
-                '<span class="friend-name">' + escapeHtml(displayName) + rankHtml + verifiedHtml + '</span>' +
+                '<span class="friend-name">' + escapeHtml(displayName) + rankHtml + createPremiumBadgeHtml(member.is_premium) + verifiedHtml + '</span>' +
                 (isBot && member.status ? '<span class="friend-activity">' + escapeHtml(member.status) + '</span>' : statusText) +
             '</div>' +
         '</div>';
@@ -1208,7 +1274,7 @@
         if (dom.userAvatar) dom.userAvatar.src = avatarUrl;
         var mobileAvatarImg = $('mobile-topbar-avatar-img');
         if (mobileAvatarImg) mobileAvatarImg.src = avatarUrl;
-        if (dom.userName) dom.userName.innerHTML = escapeHtml(user.username) + createRankBadgeHtml(user.rank, 'rank-badge-sm');
+        if (dom.userName) dom.userName.innerHTML = escapeHtml(user.username) + createRankBadgeHtml(user.rank, 'rank-badge-sm') + createPremiumBadgeHtml(user.is_premium);
         if (dom.userTag) dom.userTag.textContent = '#' + user.id.slice(0, 4).toUpperCase();
     }
 
@@ -1598,6 +1664,7 @@
         loadHomePresence();
         if (dom.restrictedBanner) dom.restrictedBanner.style.display = 'none';
         if (dom.chatComposer) dom.chatComposer.classList.remove('restricted');
+        updateOfficialCommunityUI(null);
     }
 
     function showChatView() {
@@ -2137,6 +2204,7 @@
         state.loadingOlder = false;
         state.pendingMessages = {};
         state.reconciledIds = {};
+        updateOfficialCommunityUI(null);
 
         // Find the conversation data
         var conv = null;
@@ -2214,7 +2282,7 @@
         if (communityBadge) {
             var avatarUrl = getAvatarUrl({ id: conv.other_user_id, profile_picture: conv.other_profile_picture, username: conv.other_username });
             var headerName = conv.other_display_name || conv.other_username;
-            communityBadge.innerHTML = '<img class="chat-community-icon" src="' + escapeHtml(avatarUrl) + '" style="width:24px;height:24px;border-radius:50%;" alt=""><span class="chat-community-name">' + escapeHtml(headerName) + '</span>';
+            communityBadge.innerHTML = '<img class="chat-community-icon" src="' + escapeHtml(avatarUrl) + '" style="width:20px;height:20px;border-radius:50%;" alt=""><span class="chat-community-name">' + escapeHtml(headerName) + '</span>';
         }
         if (channelName) channelName.textContent = 'direct-message';
         var topicName = conv.other_display_name || conv.other_username;
@@ -3868,6 +3936,12 @@
             badgeHtml = '<span class="notif-item-badge level">Level Up</span>';
         } else if (n.type === 'RANK_UP') {
             badgeHtml = '<span class="notif-item-badge rank">Rank Up</span>';
+        } else if (n.type === 'MENTION') {
+            badgeHtml = '<span class="notif-item-badge mention">@Mention</span>' +
+                (n.community_name ? '<span class="notif-item-badge community">' + escapeHtml(n.community_name) + '</span>' : '');
+        } else if (n.type === 'ANNOUNCEMENT') {
+            badgeHtml = '<span class="notif-item-badge announcement">Announcement</span>' +
+                (n.community_name ? '<span class="notif-item-badge community">' + escapeHtml(n.community_name) + '</span>' : '');
         } else if (n.type && n.type.indexOf('SYSTEM') !== -1) {
             badgeHtml = '<span class="notif-item-badge system">System</span>';
         }
@@ -3916,6 +3990,9 @@
             if (n.sender_user_id) {
                 openUserPopup(n.sender_user_id, null, { id: n.sender_user_id, username: n.sender_username, profile_picture: n.sender_avatar, rank: n.sender_rank });
             }
+        } else if (n.type === 'MENTION' && targetCommunityId) {
+            window.history.pushState({}, '', '/home/#/c/' + targetCommunityId);
+            openCommunity(targetCommunityId, targetMessageId);
         } else if (targetCommunityId) {
             window.history.pushState({}, '', '/home/#/c/' + targetCommunityId);
             openCommunity(targetCommunityId, targetMessageId);
@@ -3974,7 +4051,7 @@
         var diffH = (now - d) / (1000 * 60 * 60);
 
         if (diffH < 1) return 'Just Now';
-        if (diffH < 24) return 'Today';
+        if (diffH < 20) return 'Today';
         if (diffH < 48) return 'Yesterday';
         if (diffH < 168) return 'This Week';
         return 'Earlier';
@@ -3988,11 +4065,11 @@
         var diffS = Math.floor(diffMs / 1000);
         var diffM = Math.floor(diffS / 60);
         var diffH = Math.floor(diffM / 60);
-        var diffD = Math.floor(diffH / 24);
+        var diffD = Math.floor(diffH / 20);
 
         if (diffS < 60) return 'just now';
         if (diffM < 60) return diffM + 'm ago';
-        if (diffH < 24) return diffH + 'h ago';
+        if (diffH < 20) return diffH + 'h ago';
         if (diffD < 7) return diffD + 'd ago';
         return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     }
@@ -4108,6 +4185,23 @@
     }
 
 
+    /* ── Official Community UI Restrictions ──────────── */
+    function updateOfficialCommunityUI(community) {
+        var isOfficial = community && (community.name === 'News' || community.name === 'Updates');
+        var voiceBtn = qs('.chat-topbar-btn[aria-label="Voice call"]');
+        var videoBtn = qs('.chat-topbar-btn[aria-label="Video call"]');
+        var pinnedBtn = qs('.chat-topbar-btn[aria-label="Pinned messages"]');
+        var inviteBtn = qs('.chat-topbar-btn[aria-label="Invite members"]');
+        var friendsDesktop = qs('.rail-icon[data-nav="friends"]');
+        var friendsMobile = qs('.bottom-nav-item[data-nav="friends"]');
+        if (voiceBtn) voiceBtn.style.display = isOfficial ? 'none' : '';
+        if (videoBtn) videoBtn.style.display = isOfficial ? 'none' : '';
+        if (pinnedBtn) pinnedBtn.style.display = isOfficial ? 'none' : '';
+        if (inviteBtn) inviteBtn.style.display = isOfficial ? 'none' : '';
+        if (friendsDesktop) friendsDesktop.style.display = isOfficial ? 'none' : '';
+        if (friendsMobile) friendsMobile.style.display = isOfficial ? 'none' : '';
+    }
+
     /* ── Open Community ──────────────────────── */
     function openCommunity(communityId, scrollToMsgId) {
         var community = null;
@@ -4120,6 +4214,8 @@
         if (!community) { showHomeView(); return; }
 
         cancelReply();
+        closeMentionPanel();
+        closeHashtagPanel();
         emitTypingStop();
         if (state.typingTimeout) { clearTimeout(state.typingTimeout); state.typingTimeout = null; }
         state.typingUsers = [];
@@ -4191,6 +4287,9 @@
                 dom.composerInput.setAttribute('data-placeholder', 'Message #' + (community.name || 'general').toLowerCase().replace(/\s+/g, '-'));
             }
         }
+
+        // Hide/show UI elements for official announcement communities (News/Updates)
+        updateOfficialCommunityUI(community);
 
         // Check cache first
         var cached = state.messageCache.get(communityId);
@@ -4500,6 +4599,28 @@
             }
             return el;
         }
+
+        // Sponsored message from Buzz — render ad for free users only
+        if (msg.message_type === 'sponsored' && isBot) {
+            if (state.user && state.user.is_premium) return el;
+            var sponsoredId = 'buzz-ad-' + (msg.id || '').replace(/[^a-zA-Z0-9]/g, '').substring(0, 12);
+            el.className += ' msg-sponsored';
+            el.innerHTML =
+                '<div class="msg-avatar-wrap"><img class="msg-avatar msg-avatar-bot" src="' + escapeHtml(getAvatarUrl(msg)) + '" alt="' + escapeHtml(msg.username) + '" loading="lazy"></div>' +
+                '<div class="msg-body">' +
+                    '<div class="msg-header">' +
+                        '<span class="msg-username msg-username-bot">' + escapeHtml(msg.username) + createBotBadgeHtml() + createRankBadgeHtml(msg.rank) + createPremiumBadgeHtml(msg.is_premium) + '</span>' +
+                        '<span class="msg-sponsored-label">Sponsored</span>' +
+                        '<span class="msg-timestamp" title="' + escapeHtml(formatFullTime(msg.created_at)) + '">' + escapeHtml(formatTime(msg.created_at)) + '</span>' +
+                    '</div>' +
+                    '<div class="msg-sponsored-ad">' +
+                        '<div id="' + sponsoredId + '" class="buzz-ad-container"></div>' +
+                    '</div>' +
+                '</div>';
+            setTimeout(function () { loadBuzzAd(sponsoredId); }, 100);
+            return el;
+        }
+
         var avatarUrl = getAvatarUrl(msg);
 
         var replyHtml = '';
@@ -4525,7 +4646,7 @@
                     '<div class="msg-reply-body">' +
                         '<div class="msg-reply-header">' +
                             '<img class="msg-reply-avatar" src="' + escapeHtml(replyAvatar) + '" alt="" loading="lazy">' +
-                            '<span class="msg-reply-user" style="color:' + replyAccent + ';' + replyFontStyle + '">' + escapeHtml(msg.reply_to_username) + createRankBadgeHtml(replyRank, 'rank-badge-sm') + '</span>' +
+                            '<span class="msg-reply-user" style="color:' + replyAccent + ';' + replyFontStyle + '">' + escapeHtml(msg.reply_to_username) + createRankBadgeHtml(replyRank, 'rank-badge-sm') + createPremiumBadgeHtml(msg.reply_to_is_premium) + '</span>' +
                             '<span class="msg-reply-time">' + escapeHtml(replyTime) + '</span>' +
                             '<svg class="msg-reply-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="' + replyAccent + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>' +
                         '</div>' +
@@ -4553,7 +4674,7 @@
                 '</div>' +
                 replyHtml +
                 renderAttachmentHtml(msg) +
-                (msg.message ? '<div class="msg-content"' + combinedTextStyle + '>' + renderMessageText(msg.message) + '</div>' : '') +
+                (msg.message ? '<div class="msg-content"' + combinedTextStyle + '>' + renderMessageText(msg.message, msg.mentions) + '</div>' : '') +
                 renderReactionsHtml(msg, state.user ? state.user.id : null) +
             '</div>' +
             (isBot ? '' : '<div class="msg-actions">' +
@@ -4859,7 +4980,7 @@
         var labelEl = dom.replyComposer ? dom.replyComposer.querySelector('.reply-composer-label') : null;
         if (labelEl) labelEl.style.color = accent;
         if (dom.replyComposerAvatar) dom.replyComposerAvatar.src = getAvatarUrl(msg);
-        if (dom.replyComposerUsername) dom.replyComposerUsername.innerHTML = escapeHtml(msg.username) + createRankBadgeHtml(msg.reply_to_rank || msg.rank, 'rank-badge-sm');
+        if (dom.replyComposerUsername) dom.replyComposerUsername.innerHTML = escapeHtml(msg.username) + createRankBadgeHtml(msg.reply_to_rank || msg.rank, 'rank-badge-sm') + createPremiumBadgeHtml(msg.is_premium);
         if (dom.replyComposerText) {
             var preview = msg.message || '';
             var attLabel = getAttachmentLabel(msg);
@@ -5442,6 +5563,225 @@
         return false;
     }
 
+    /* ── @Mention Autocomplete ───────────────────── */
+    var mentionState = {
+        active: false,
+        query: '',
+        startIndex: -1,
+        selectedIndex: 0,
+        suggestions: [],
+        fetchTimer: null,
+        debounceMs: 150,
+        cache: {},
+        selectedMentions: [],
+    };
+
+    function cacheDomMentions() {
+        dom.mentionPanel = $('mention-panel');
+        dom.mentionPanelList = $('mention-panel-list');
+    }
+
+    function getMentionQuery() {
+        var input = dom.composerInput;
+        if (!input) return { query: '', index: -1 };
+        var sel = window.getSelection();
+        if (!sel || sel.rangeCount === 0) return { query: '', index: -1 };
+        var range = sel.getRangeAt(0);
+        var node = range.startContainer;
+        if (node.nodeType !== 3) return { query: '', index: -1 };
+        var text = node.textContent;
+        var cursorPos = range.startOffset;
+        var before = text.substring(0, cursorPos);
+        var atIdx = before.lastIndexOf('@');
+        if (atIdx === -1) return { query: '', index: -1 };
+        if (atIdx > 0 && before[atIdx - 1] !== ' ' && before[atIdx - 1] !== '\n') {
+            return { query: '', index: -1 };
+        }
+        var query = before.substring(atIdx + 1);
+        if (query.indexOf(' ') !== -1) return { query: '', index: -1 };
+        return { query: query, index: atIdx, node: node };
+    }
+
+    function openMentionPanel(suggestions) {
+        if (!dom.mentionPanel || !dom.mentionPanelList) return;
+        mentionState.active = true;
+        mentionState.selectedIndex = 0;
+        mentionState.suggestions = suggestions || [];
+        renderMentionList();
+        dom.mentionPanel.style.display = '';
+        dom.mentionPanel.classList.remove('mention-panel-exit');
+        dom.mentionPanel.classList.add('mention-panel-enter');
+        setTimeout(function () {
+            dom.mentionPanel.classList.remove('mention-panel-enter');
+        }, 200);
+    }
+
+    function closeMentionPanel() {
+        if (!dom.mentionPanel) return;
+        mentionState.active = false;
+        mentionState.query = '';
+        mentionState.suggestions = [];
+        mentionState.startIndex = -1;
+        if (mentionState.fetchTimer) { clearTimeout(mentionState.fetchTimer); mentionState.fetchTimer = null; }
+        dom.mentionPanel.classList.add('mention-panel-exit');
+        setTimeout(function () {
+            dom.mentionPanel.style.display = 'none';
+            dom.mentionPanel.classList.remove('mention-panel-exit');
+        }, 150);
+    }
+
+    function renderMentionList() {
+        if (!dom.mentionPanelList) return;
+        var items = mentionState.suggestions;
+        if (!items || items.length === 0) {
+            dom.mentionPanelList.innerHTML = '<div class="mention-panel-empty">No members found</div>';
+            return;
+        }
+        var html = '';
+        for (var i = 0; i < items.length; i++) {
+            var member = items[i];
+            var isSelected = i === mentionState.selectedIndex;
+            var name = member.display_name || member.username;
+            var rankBadge = createRankBadgeHtml(member.rank, 'rank-badge-sm');
+            var premBadge = createPremiumBadgeHtml(member.is_premium);
+            var avatarUrl = getAvatarUrl(member);
+            html += '<div class="mention-panel-item' + (isSelected ? ' selected' : '') + '" data-index="' + i + '" data-username="' + escapeHtml(member.username) + '">' +
+                '<img class="mention-panel-avatar" src="' + escapeHtml(avatarUrl) + '" alt="" loading="lazy" onerror="this.style.display=\'none\'">' +
+                '<span class="mention-panel-name">' + escapeHtml(name) + rankBadge + premBadge + '</span>' +
+                '<span class="mention-panel-username">@' + escapeHtml(member.username) + '</span>' +
+            '</div>';
+        }
+        dom.mentionPanelList.innerHTML = html;
+
+        var items_els = dom.mentionPanelList.querySelectorAll('.mention-panel-item');
+        for (var j = 0; j < items_els.length; j++) {
+            (function (idx) {
+                items_els[idx].addEventListener('mousedown', function (e) {
+                    e.preventDefault();
+                    mentionState.selectedIndex = idx;
+                    selectMention();
+                });
+                items_els[idx].addEventListener('mouseenter', function () {
+                    mentionState.selectedIndex = idx;
+                    highlightMentionItem(idx);
+                });
+            })(j);
+        }
+    }
+
+    function highlightMentionItem(idx) {
+        if (!dom.mentionPanelList) return;
+        var items = dom.mentionPanelList.querySelectorAll('.mention-panel-item');
+        for (var i = 0; i < items.length; i++) {
+            items[i].classList.toggle('selected', i === idx);
+        }
+    }
+
+    function fetchMentionSuggestions(query) {
+        if (mentionState.fetchTimer) { clearTimeout(mentionState.fetchTimer); mentionState.fetchTimer = null; }
+        var communityId = state.currentCommunity ? state.currentCommunity.id : null;
+        if (!communityId) return;
+        var cacheKey = communityId + '|' + (query || '__all__');
+        if (mentionState.cache[cacheKey]) {
+            openMentionPanel(mentionState.cache[cacheKey]);
+            return;
+        }
+        mentionState.fetchTimer = setTimeout(function () {
+            var url = API_BASE + '/api/presence/search?communityId=' + encodeURIComponent(communityId) + '&q=' + encodeURIComponent(query || '') + '&limit=8';
+            var token = HiveAuth.getToken();
+            fetch(url, { headers: { 'Authorization': 'Bearer ' + token, 'ngrok-skip-browser-warning': 'true' } })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (!data.success || !data.members) return;
+                    var members = data.members;
+                    mentionState.cache[cacheKey] = members;
+                    if (mentionState.active) {
+                        mentionState.suggestions = members;
+                        mentionState.selectedIndex = 0;
+                        renderMentionList();
+                    }
+                })
+                .catch(function () {});
+        }, mentionState.debounceMs);
+    }
+
+    function selectMention() {
+        if (!mentionState.active || mentionState.suggestions.length === 0) return;
+        var member = mentionState.suggestions[mentionState.selectedIndex];
+        if (!member) return;
+        var input = dom.composerInput;
+        if (!input) return;
+        var sel = window.getSelection();
+        if (!sel || sel.rangeCount === 0) return;
+        var range = sel.getRangeAt(0);
+        var node = range.startContainer;
+        if (node.nodeType !== 3) return;
+        var text = node.textContent;
+        var cursorPos = range.startOffset;
+        var before = text.substring(0, cursorPos);
+        var atIdx = before.lastIndexOf('@');
+        if (atIdx === -1) return;
+        var afterCursor = text.substring(cursorPos);
+        var newText = text.substring(0, atIdx) + '@' + member.username + ' ' + afterCursor;
+        node.textContent = newText;
+        var newCursorPos = atIdx + member.username.length + 2;
+        range.setStart(node, newCursorPos);
+        range.setEnd(node, newCursorPos);
+        sel.removeAllRanges();
+        sel.addRange(range);
+        mentionState.selectedMentions.push({ id: member.id, username: member.username });
+        closeMentionPanel();
+        updateSendButton();
+    }
+
+    function handleMentionInput() {
+        var info = getMentionQuery();
+        if (info.query !== '') {
+            mentionState.query = info.query;
+            mentionState.startIndex = info.index;
+            if (!mentionState.active) {
+                openMentionPanel([]);
+            }
+            fetchMentionSuggestions(info.query);
+        } else if (info.index !== -1 && info.query === '') {
+            mentionState.startIndex = info.index;
+            if (!mentionState.active) {
+                openMentionPanel([]);
+            }
+            fetchMentionSuggestions('');
+        } else if (mentionState.active) {
+            closeMentionPanel();
+        }
+    }
+
+    function handleMentionKeydown(e) {
+        if (!mentionState.active) return false;
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            mentionState.selectedIndex = Math.min(mentionState.selectedIndex + 1, mentionState.suggestions.length - 1);
+            highlightMentionItem(mentionState.selectedIndex);
+            return true;
+        }
+        if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            mentionState.selectedIndex = Math.max(mentionState.selectedIndex - 1, 0);
+            highlightMentionItem(mentionState.selectedIndex);
+            return true;
+        }
+        if (e.key === 'Enter' || e.key === 'Tab') {
+            if (mentionState.suggestions.length === 0) return false;
+            e.preventDefault();
+            selectMention();
+            return true;
+        }
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            closeMentionPanel();
+            return true;
+        }
+        return false;
+    }
+
     /* ── Attachment System ─────────────────────── */
     var attachState = {
         files: [],
@@ -5449,8 +5789,8 @@
 
     function formatFileSize(bytes) {
         if (!bytes) return '0 B';
-        if (bytes < 1024) return bytes + ' B';
-        if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+        if (bytes < 1020) return bytes + ' B';
+        if (bytes < 1048576) return (bytes / 1020).toFixed(1) + ' KB';
         return (bytes / 1048576).toFixed(1) + ' MB';
     }
 
@@ -5786,11 +6126,14 @@
 
         var replyTo = state.replyingTo;
         var pendingFiles = attachState.files.slice();
+        var sentMentions = mentionState.selectedMentions.slice();
+        mentionState.selectedMentions = [];
         cancelReply();
 
         input.textContent = '';
         updateSendButton();
         closeHashtagPanel();
+        closeMentionPanel();
         emitTypingStop();
         if (state.typingTimeout) { clearTimeout(state.typingTimeout); state.typingTimeout = null; }
 
@@ -5807,6 +6150,7 @@
             profile_picture: user.profile_picture || null,
             rank: user.rank || null,
             message: text,
+            mentions: sentMentions.length > 0 ? sentMentions : null,
             created_at: new Date().toISOString(),
             edited_at: null,
             _temp: true,
@@ -5878,6 +6222,7 @@
                     clientId: clientId,
                 };
                 if (replyTo && replyTo.id) body.replyToMessageId = replyTo.id;
+                if (sentMentions.length > 0) body.mentions = sentMentions;
                 if (attachmentsArr.length === 1) {
                     body.attachment = attachmentsArr[0];
                 } else if (attachmentsArr.length > 1) {
@@ -6092,7 +6437,7 @@
                     '<div class="msg-reply-body">' +
                         '<div class="msg-reply-header">' +
                             '<img class="msg-reply-avatar" src="' + escapeHtml(replyAvatar) + '" alt="" loading="lazy">' +
-                            '<span class="msg-reply-user" style="color:' + replyAccent + ';' + replyFontStyle + '">' + escapeHtml(msg.reply_to_username) + createRankBadgeHtml(replyRank, 'rank-badge-sm') + '</span>' +
+                            '<span class="msg-reply-user" style="color:' + replyAccent + ';' + replyFontStyle + '">' + escapeHtml(msg.reply_to_username) + createRankBadgeHtml(replyRank, 'rank-badge-sm') + createPremiumBadgeHtml(msg.reply_to_is_premium) + '</span>' +
                             '<span class="msg-reply-time">' + escapeHtml(replyTime) + '</span>' +
                             '<svg class="msg-reply-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="' + replyAccent + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>' +
                         '</div>' +
@@ -6155,12 +6500,12 @@
             '<div class="msg-avatar-wrap' + (optRingClass ? ' ' + optRingClass : '') + '"><img class="msg-avatar" src="' + escapeHtml(avatarUrl) + '" alt="' + escapeHtml(msg.username) + '" loading="lazy"></div>' +
             '<div class="msg-body">' +
                 '<div class="msg-header">' +
-                    '<span class="msg-username' + (msg.rank ? ' rank-' + msg.rank : '') + '"' + optCombinedStyle + '>' + escapeHtml(msg.username) + createRankBadgeHtml(msg.rank) + '</span>' +
+                    '<span class="msg-username' + (msg.rank ? ' rank-' + msg.rank : '') + '"' + optCombinedStyle + '>' + escapeHtml(msg.username) + createRankBadgeHtml(msg.rank) + createPremiumBadgeHtml(msg.is_premium) + '</span>' +
                     '<span class="msg-timestamp">Just now</span>' +
                 '</div>' +
                 replyHtml +
                 attachHtml +
-                (msg.message ? '<div class="msg-content"' + textColorStyle + '>' + renderMessageText(msg.message) + '</div>' : '') +
+                (msg.message ? '<div class="msg-content"' + textColorStyle + '>' + renderMessageText(msg.message, msg.mentions) + '</div>' : '') +
             '</div>';
         return el;
     }
@@ -7183,8 +7528,12 @@
                 updateSendButton();
                 handleTypingInput();
                 handleHashtagInput();
+                handleMentionInput();
             });
             dom.composerInput.addEventListener('keydown', function (e) {
+                if (mentionState.active) {
+                    if (handleMentionKeydown(e)) return;
+                }
                 if (hashtagState.active) {
                     if (handleHashtagKeydown(e)) return;
                 }
@@ -7193,7 +7542,10 @@
                     sendMessage();
                 }
                 if (e.key === 'Escape') {
-                    if (hashtagState.active) {
+                    if (mentionState.active) {
+                        e.preventDefault();
+                        closeMentionPanel();
+                    } else if (hashtagState.active) {
                         e.preventDefault();
                         closeHashtagPanel();
                     } else if (dom.emojiPicker && dom.emojiPicker.style.display !== 'none' && dom.emojiPicker.style.display !== '') {
@@ -7310,6 +7662,11 @@
                     closeHashtagPanel();
                 }
             }
+            if (mentionState.active && dom.mentionPanel) {
+                if (!dom.mentionPanel.contains(e.target) && e.target !== dom.composerInput) {
+                    closeMentionPanel();
+                }
+            }
         });
 
         // Hashtag click handler — open search or toast
@@ -7319,6 +7676,17 @@
                 var tag = hashtag.getAttribute('data-tag');
                 if (tag) {
                     showToast('#' + tag + ' — search coming soon!', 'info');
+                }
+            }
+        });
+
+        // Mention click handler — open user profile popup
+        document.addEventListener('click', function (e) {
+            var mention = e.target.closest('.msg-mention');
+            if (mention) {
+                var uid = mention.getAttribute('data-uid');
+                if (uid) {
+                    openUserPopup(uid, mention, { id: uid, username: mention.textContent.replace(/^@/, '') });
                 }
             }
         });
@@ -7732,11 +8100,14 @@
         if (el) {
             var badges = '';
             if (user.rank && user.rank !== 'bot' && window.HiveRankBadge) {
-                var badgeEl = window.HiveRankBadge.create(user.rank, 18);
+                var badgeEl = window.HiveRankBadge.create(user.rank, 14);
                 if (badgeEl) { badgeEl.className = 'rank-badge rank-' + user.rank; badges += badgeEl.outerHTML; }
             }
             if (user.is_verified) {
                 badges += '<span class="verified-badge" title="Verified"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#6C63FF" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></span>';
+            }
+            if (user.is_premium) {
+                badges += createPremiumBadgeHtml(true);
             }
             el.innerHTML = badges;
         }
@@ -8648,7 +9019,7 @@
 
     var ALL_RINGS = [
         { id: 'none', name: 'None', icon: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#6B7280" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><line x1="8" y1="12" x2="16" y2="12"/></svg>' },
-        { id: 'ring_honey', name: 'Honey Ring', icon: '<svg viewBox="0 0 24 24" width="22" height="22"><polygon points="12,2 21,7.5 21,16.5 12,22 3,16.5 3,7.5" fill="#FBBF24" opacity="0.9"/><polygon points="12,6 17,9 17,15 12,18 7,15 7,9" fill="#F59E0B"/><circle cx="12" cy="12" r="2.5" fill="#92400E"/></svg>' },
+        { id: 'ring_honey', name: 'Honey Ring', icon: '<svg viewBox="0 0 24 24" width="22" height="22"><polygon points="12,2 21,7.5 21,16.5 12,22 3,16.5 3,7.5" fill="#FBBF20" opacity="0.9"/><polygon points="12,6 17,9 17,15 12,18 7,15 7,9" fill="#F59E0B"/><circle cx="12" cy="12" r="2.5" fill="#92000E"/></svg>' },
         { id: 'ring_lightning', name: 'Lightning Ring', icon: '<svg viewBox="0 0 24 24" width="22" height="22"><polygon points="13,2 5,13 11,13 10,22 19,11 13,11" fill="#00E5FF" stroke="#0284C7" stroke-width="0.5"/></svg>' },
         { id: 'ring_inferno', name: 'Inferno Ring', icon: '<svg viewBox="0 0 24 24" width="22" height="22"><path d="M12 2C8 7 5 10 5 14a7 7 0 0 0 14 0c0-4-3-7-7-12z" fill="#FF4500"/><path d="M12 8c-2 3-3.5 5-3.5 7a3.5 3.5 0 0 0 7 0c0-2-1.5-4-3.5-7z" fill="#FFD700"/></svg>' },
         { id: 'ring_galaxy', name: 'Galaxy Ring', icon: '<svg viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy="12" r="3" fill="#C084FC"/><ellipse cx="12" cy="12" rx="10" ry="3.5" fill="none" stroke="#7C3AED" stroke-width="1.5" transform="rotate(-25 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="3.5" fill="none" stroke="#A78BFA" stroke-width="1.5" transform="rotate(25 12 12)"/></svg>' },
@@ -8681,12 +9052,12 @@
         { id: 'ring_phoenix', name: 'Phoenix Ring', icon: '<svg viewBox="0 0 24 24" width="22" height="22"><path d="M12 2C8 7 5 10 5 14a7 7 0 0 0 14 0c0-4-3-7-7-12z" fill="#FF4500"/><path d="M8 10l4-6 4 6" fill="none" stroke="#FFD700" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="14" r="2" fill="#FFD700" opacity="0.6"/></svg>' },
         { id: 'ring_dragon', name: 'Dragon Ring', icon: '<svg viewBox="0 0 24 24" width="22" height="22"><path d="M8 4l-2 6M16 4l2 6" stroke="#DC2626" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="14" r="7" fill="#DC2626"/><circle cx="9.5" cy="13" r="1.2" fill="#FCA5A5"/><circle cx="14.5" cy="13" r="1.2" fill="#FCA5A5"/><path d="M9.5 17c1 1 4 1 5 0" stroke="#FCA5A5" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg>' },
         { id: 'ring_wolf', name: 'Wolf Ring', icon: '<svg viewBox="0 0 24 24" width="22" height="22"><path d="M4 18l3-10 3 5 2-4 2 4 3-5 3 10" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="12" r="1" fill="#CBD5E1"/><circle cx="15" cy="12" r="1" fill="#CBD5E1"/></svg>' },
-        { id: 'ring_forest', name: 'Forest Ring', icon: '<svg viewBox="0 0 24 24" width="22" height="22"><path d="M12 3L7 11h3l-3 5h3l-3 5h10l-3-5h3l-3-5h3L12 3z" fill="#166534"/><rect x="11" y="19" width="2" height="3" fill="#92400E"/></svg>' },
+        { id: 'ring_forest', name: 'Forest Ring', icon: '<svg viewBox="0 0 24 24" width="22" height="22"><path d="M12 3L7 11h3l-3 5h3l-3 5h10l-3-5h3l-3-5h3L12 3z" fill="#166534"/><rect x="11" y="19" width="2" height="3" fill="#92000E"/></svg>' },
         { id: 'ring_arctic', name: 'Arctic Ring', icon: '<svg viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy="12" r="10" fill="#DBEAFE"/><circle cx="12" cy="12" r="6" fill="#BFDBFE"/><circle cx="12" cy="12" r="2.5" fill="#93C5FD"/><line x1="12" y1="2" x2="12" y2="22" stroke="#60A5FA" stroke-width="1" opacity="0.5"/><line x1="2" y1="12" x2="22" y2="12" stroke="#60A5FA" stroke-width="1" opacity="0.5"/></svg>' },
         { id: 'ring_desert', name: 'Desert Ring', icon: '<svg viewBox="0 0 24 24" width="22" height="22"><path d="M2 18c3-4 6-8 10-8s7 4 10 8" fill="#D4A574"/><path d="M2 18c3-3 6-6 10-6s7 3 10 6" fill="#C28B5E" opacity="0.6"/><circle cx="17" cy="6" r="3" fill="#FDE68A"/></svg>' },
-        { id: 'ring_tropical', name: 'Tropical Ring', icon: '<svg viewBox="0 0 24 24" width="22" height="22"><rect x="11" y="12" width="2" height="9" fill="#92400E" rx="1"/><path d="M12 12c-3 0-6-2-7-5 4 0 6 2 7 5z" fill="#22C55E"/><path d="M12 12c3 0 6-2 7-5-4 0-6 2-7 5z" fill="#16A34A"/><path d="M12 10c-2-1-4-3-4-6 3 0 4 2 4 6z" fill="#4ADE80"/></svg>' },
+        { id: 'ring_tropical', name: 'Tropical Ring', icon: '<svg viewBox="0 0 24 24" width="22" height="22"><rect x="11" y="12" width="2" height="9" fill="#92000E" rx="1"/><path d="M12 12c-3 0-6-2-7-5 4 0 6 2 7 5z" fill="#22C55E"/><path d="M12 12c3 0 6-2 7-5-4 0-6 2-7 5z" fill="#16A34A"/><path d="M12 10c-2-1-4-3-4-6 3 0 4 2 4 6z" fill="#4ADE80"/></svg>' },
         { id: 'ring_valentine', name: 'Valentine Ring', icon: '<svg viewBox="0 0 24 24" width="22" height="22"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" fill="#FF69B4"/><path d="M12 8v5M9.5 10.5h5" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>' },
-        { id: 'ring_harvest', name: 'Harvest Ring', icon: '<svg viewBox="0 0 24 24" width="22" height="22"><rect x="11" y="10" width="2" height="11" fill="#92400E" rx="1"/><ellipse cx="9" cy="8" rx="2" ry="3" fill="#F59E0B" transform="rotate(-15 9 8)"/><ellipse cx="15" cy="8" rx="2" ry="3" fill="#F59E0B" transform="rotate(15 15 8)"/><ellipse cx="12" cy="6" rx="1.8" ry="3" fill="#FBBF24"/><circle cx="12" cy="4" r="1" fill="#FDE68A"/></svg>' },
+        { id: 'ring_harvest', name: 'Harvest Ring', icon: '<svg viewBox="0 0 24 24" width="22" height="22"><rect x="11" y="10" width="2" height="11" fill="#92000E" rx="1"/><ellipse cx="9" cy="8" rx="2" ry="3" fill="#F59E0B" transform="rotate(-15 9 8)"/><ellipse cx="15" cy="8" rx="2" ry="3" fill="#F59E0B" transform="rotate(15 15 8)"/><ellipse cx="12" cy="6" rx="1.8" ry="3" fill="#FBBF20"/><circle cx="12" cy="4" r="1" fill="#FDE68A"/></svg>' },
         { id: 'ring_winter', name: 'Winter Ring', icon: '<svg viewBox="0 0 24 24" width="22" height="22"><line x1="12" y1="2" x2="12" y2="22" stroke="#BAE6FD" stroke-width="2" stroke-linecap="round"/><line x1="2" y1="12" x2="22" y2="12" stroke="#BAE6FD" stroke-width="2" stroke-linecap="round"/><line x1="5.5" y1="5.5" x2="18.5" y2="18.5" stroke="#E0F2FE" stroke-width="1.5" stroke-linecap="round"/><line x1="18.5" y1="5.5" x2="5.5" y2="18.5" stroke="#E0F2FE" stroke-width="1.5" stroke-linecap="round"/><circle cx="12" cy="12" r="2" fill="white"/></svg>' },
         { id: 'ring_spring', name: 'Spring Ring', icon: '<svg viewBox="0 0 24 24" width="22" height="22"><path d="M12 22V12" stroke="#16A34A" stroke-width="2" stroke-linecap="round"/><path d="M12 12c-3 0-5-2-5-5 3 0 5 2 5 5z" fill="#4ADE80"/><path d="M12 12c3 0 5-2 5-5-3 0-5 2-5 5z" fill="#22C55E"/><circle cx="12" cy="7" r="2" fill="#F472B6"/><circle cx="9" cy="18" r="1.5" fill="#A3E635" opacity="0.7"/><circle cx="15" cy="16" r="1.2" fill="#A3E635" opacity="0.6"/></svg>' },
         { id: 'ring_ancient', name: 'Ancient Ring', icon: '<svg viewBox="0 0 24 24" width="22" height="22"><rect x="4" y="8" width="16" height="13" rx="2" fill="#8B7355"/><path d="M8 8V6a4 4 0 0 1 8 0v2" fill="none" stroke="#A0896C" stroke-width="2"/><circle cx="12" cy="15" r="2.5" fill="#654321"/><circle cx="12" cy="15" r="1" fill="#B8A080"/></svg>' },
@@ -8700,15 +9071,15 @@
     ];
 
     var RING_GRADIENTS = {
-        ring_honey: { bg: 'linear-gradient(135deg,#FBBF24,#F59E0B,#D97706)', shadow: '0 0 20px rgba(251,191,36,0.3)' },
+        ring_honey: { bg: 'linear-gradient(135deg,#FBBF20,#F59E0B,#D97706)', shadow: '0 0 20px rgba(251,191,36,0.3)' },
         ring_lightning: { bg: 'linear-gradient(135deg,#00E5FF,#3B82F6,#6366F1)', shadow: '0 0 20px rgba(0,229,255,0.3)' },
         ring_inferno: { bg: 'linear-gradient(135deg,#FF4500,#FF6B35,#FF0000)', shadow: '0 0 20px rgba(255,69,0,0.3)' },
-        ring_galaxy: { bg: 'linear-gradient(135deg,#7C3AED,#3B82F6,#EC4899)', shadow: '0 0 20px rgba(124,58,237,0.3)' },
+        ring_galaxy: { bg: 'linear-gradient(135deg,#7C3AED,#3B82F6,#EC4899)', shadow: '0 0 20px rgba(120,58,237,0.3)' },
         ring_diamond: { bg: 'linear-gradient(135deg,#06B6D4,#22D3EE,#67E8F9)', shadow: '0 0 20px rgba(6,182,212,0.3)' },
-        ring_royal: { bg: 'linear-gradient(135deg,#7C3AED,#8B5CF6,#A78BFA)', shadow: '0 0 20px rgba(124,58,237,0.35)' },
+        ring_royal: { bg: 'linear-gradient(135deg,#7C3AED,#8B5CF6,#A78BFA)', shadow: '0 0 20px rgba(120,58,237,0.35)' },
         ring_rainbow: { bg: 'linear-gradient(135deg,#FF0000,#FF7F00,#FFFF00,#00FF00,#0000FF,#4B0082,#9400D3)', shadow: '0 0 20px rgba(255,0,0,0.2)' },
         ring_frost: { bg: 'linear-gradient(135deg,#93C5FD,#60A5FA,#3B82F6)', shadow: '0 0 20px rgba(147,197,253,0.3)' },
-        ring_sakura: { bg: 'linear-gradient(135deg,#F9A8D4,#F472B6,#EC4899)', shadow: '0 0 20px rgba(249,168,212,0.3)' },
+        ring_sakura: { bg: 'linear-gradient(135deg,#F9A8D4,#F472B6,#EC4899)', shadow: '0 0 20px rgba(209,168,212,0.3)' },
         ring_lunar: { bg: 'linear-gradient(135deg,#C4B5FD,#A78BFA,#8B5CF6)', shadow: '0 0 20px rgba(196,181,253,0.2)' },
         ring_neon_blue: { bg: 'linear-gradient(135deg,#00BFFF,#1E90FF,#00BFFF)', shadow: '0 0 20px rgba(0,191,255,0.4)' },
         ring_neon_pink: { bg: 'linear-gradient(135deg,#FF1493,#FF69B4,#FF1493)', shadow: '0 0 20px rgba(255,20,147,0.4)' },
@@ -8718,14 +9089,14 @@
         ring_aurora: { bg: 'linear-gradient(135deg,#00FF87,#60EFFF,#00FF87)', shadow: '0 0 20px rgba(0,255,135,0.3)' },
         ring_sunset: { bg: 'linear-gradient(135deg,#FF6B6B,#FFA94D,#FFD93D)', shadow: '0 0 20px rgba(255,107,107,0.3)' },
         ring_ocean: { bg: 'linear-gradient(135deg,#0077B6,#00B4D8,#90E0EF)', shadow: '0 0 20px rgba(0,119,182,0.3)' },
-        ring_crystal: { bg: 'linear-gradient(135deg,#E0E7FF,#A5B4FC,#818CF8)', shadow: '0 0 20px rgba(224,231,255,0.25)' },
+        ring_crystal: { bg: 'linear-gradient(135deg,#E0E7FF,#A5B4FC,#818CF8)', shadow: '0 0 20px rgba(220,231,255,0.25)' },
         ring_rose_gold: { bg: 'linear-gradient(135deg,#FFB7B2,#E5989B,#B56576)', shadow: '0 0 20px rgba(255,183,178,0.3)' },
         ring_shadow: { bg: 'linear-gradient(135deg,#4A4A4A,#2D2D2D,#1A1A1A)', shadow: '0 0 20px rgba(0,0,0,0.4)' },
         ring_flame: { bg: 'linear-gradient(135deg,#FF4500,#FF8C00,#FFD700)', shadow: '0 0 20px rgba(255,69,0,0.4)' },
         ring_thunder: { bg: 'linear-gradient(135deg,#FFD700,#FFA500,#FF8C00)', shadow: '0 0 20px rgba(255,215,0,0.3)' },
         ring_cosmic: { bg: 'linear-gradient(135deg,#6B21A8,#9333EA,#C084FC)', shadow: '0 0 20px rgba(107,33,168,0.3)' },
-        ring_starlight: { bg: 'linear-gradient(135deg,#FEF3C7,#FDE68A,#FCD34D)', shadow: '0 0 20px rgba(254,243,199,0.3)' },
-        ring_moonlight: { bg: 'linear-gradient(135deg,#E2E8F0,#CBD5E1,#94A3B8)', shadow: '0 0 20px rgba(226,232,240,0.2)' },
+        ring_starlight: { bg: 'linear-gradient(135deg,#FEF3C7,#FDE68A,#FCD34D)', shadow: '0 0 20px rgba(254,203,199,0.3)' },
+        ring_moonlight: { bg: 'linear-gradient(135deg,#E2E8F0,#CBD5E1,#94A3B8)', shadow: '0 0 20px rgba(226,232,200,0.2)' },
         ring_sunflare: { bg: 'linear-gradient(135deg,#FFD700,#FFA500,#FF8C00)', shadow: '0 0 20px rgba(255,215,0,0.4)' },
         ring_nebula: { bg: 'linear-gradient(135deg,#EC4899,#8B5CF6,#06B6D4)', shadow: '0 0 20px rgba(236,72,153,0.3)' },
         ring_quantum: { bg: 'linear-gradient(135deg,#00FF00,#00FFFF,#FF00FF)', shadow: '0 0 20px rgba(0,255,0,0.3)' },
@@ -8738,16 +9109,16 @@
         ring_desert: { bg: 'linear-gradient(135deg,#D4A574,#C28B5E,#B07D4B)', shadow: '0 0 20px rgba(212,165,116,0.3)' },
         ring_tropical: { bg: 'linear-gradient(135deg,#00C9FF,#92FE9D,#00C9FF)', shadow: '0 0 20px rgba(0,201,255,0.3)' },
         ring_valentine: { bg: 'linear-gradient(135deg,#FF69B4,#FF1493,#DB2777)', shadow: '0 0 20px rgba(255,105,180,0.3)' },
-        ring_harvest: { bg: 'linear-gradient(135deg,#D97706,#F59E0B,#FBBF24)', shadow: '0 0 20px rgba(217,119,6,0.3)' },
+        ring_harvest: { bg: 'linear-gradient(135deg,#D97706,#F59E0B,#FBBF20)', shadow: '0 0 20px rgba(217,119,6,0.3)' },
         ring_winter: { bg: 'linear-gradient(135deg,#93C5FD,#E0F2FE,#BAE6FD)', shadow: '0 0 20px rgba(147,197,253,0.2)' },
         ring_spring: { bg: 'linear-gradient(135deg,#86EFAC,#6EE7B7,#A7F3D0)', shadow: '0 0 20px rgba(134,239,172,0.3)' },
         ring_ancient: { bg: 'linear-gradient(135deg,#8B7355,#A0896C,#B8A080)', shadow: '0 0 20px rgba(139,115,85,0.3)' },
-        ring_future: { bg: 'linear-gradient(135deg,#38BDF8,#818CF8,#C084FC)', shadow: '0 0 20px rgba(56,189,248,0.3)' },
+        ring_future: { bg: 'linear-gradient(135deg,#38BDF8,#818CF8,#C084FC)', shadow: '0 0 20px rgba(56,189,208,0.3)' },
         ring_digital: { bg: 'linear-gradient(135deg,#00FF00,#00FFFF,#FF00FF)', shadow: '0 0 20px rgba(0,255,0,0.2)' },
         ring_steampunk: { bg: 'linear-gradient(135deg,#B87333,#8B4513,#654321)', shadow: '0 0 20px rgba(184,115,51,0.3)' },
         ring_cyber: { bg: 'linear-gradient(135deg,#FF00FF,#00FFFF,#FF00FF)', shadow: '0 0 20px rgba(255,0,255,0.3)' },
-        ring_ghost: { bg: 'linear-gradient(135deg,#E2E8F0,#CBD5E1,#94A3B8)', shadow: '0 0 20px rgba(226,232,240,0.15)' },
-        ring_angel: { bg: 'linear-gradient(135deg,#FEF08A,#FDE047,#FACC15)', shadow: '0 0 20px rgba(254,240,138,0.3)' },
+        ring_ghost: { bg: 'linear-gradient(135deg,#E2E8F0,#CBD5E1,#94A3B8)', shadow: '0 0 20px rgba(226,232,200,0.15)' },
+        ring_angel: { bg: 'linear-gradient(135deg,#FEF08A,#FDE047,#FACC15)', shadow: '0 0 20px rgba(254,200,138,0.3)' },
         ring_demon: { bg: 'linear-gradient(135deg,#7F1D1D,#991B1B,#B91C1C)', shadow: '0 0 20px rgba(127,29,29,0.4)' },
     };
 
@@ -8763,7 +9134,7 @@
         { id: 'effect_fire_aura', name: 'Fire Aura', icon: '<svg viewBox="0 0 24 24" width="22" height="22"><path d="M12 2C8 7 5 10 5 14a7 7 0 0 0 14 0c0-4-3-7-7-12z" fill="#FF4500" opacity="0.4"/><path d="M12 8c-2 3-3.5 5-3.5 7a3.5 3.5 0 0 0 7 0c0-2-1.5-4-3.5-7z" fill="#FF8C00" opacity="0.6"/><circle cx="12" cy="14" r="2" fill="#FFD700"/></svg>' },
         { id: 'effect_frost_aura', name: 'Frost Aura', icon: '<svg viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy="12" r="9" fill="#DBEAFE" opacity="0.3"/><line x1="12" y1="3" x2="12" y2="21" stroke="#93C5FD" stroke-width="1.5" stroke-linecap="round"/><line x1="3" y1="12" x2="21" y2="12" stroke="#93C5FD" stroke-width="1.5" stroke-linecap="round"/><circle cx="12" cy="12" r="3" fill="#BFDBFE"/></svg>' },
         { id: 'effect_shadow_mist', name: 'Shadow Mist', icon: '<svg viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy="12" r="9" fill="#1E1B4B" opacity="0.4"/><circle cx="12" cy="12" r="6" fill="#312E81" opacity="0.3"/><circle cx="12" cy="12" r="3" fill="#4338CA" opacity="0.5"/></svg>' },
-        { id: 'effect_honey_glow', name: 'Honey Glow', icon: '<svg viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy="12" r="9" fill="#FBBF24" opacity="0.2"/><polygon points="12,5 16,8 16,16 12,19 8,16 8,8" fill="#F59E0B" opacity="0.5" stroke="#D97706" stroke-width="1"/></svg>' },
+        { id: 'effect_honey_glow', name: 'Honey Glow', icon: '<svg viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy="12" r="9" fill="#FBBF20" opacity="0.2"/><polygon points="12,5 16,8 16,16 12,19 8,16 8,8" fill="#F59E0B" opacity="0.5" stroke="#D97706" stroke-width="1"/></svg>' },
         { id: 'effect_aurora', name: 'Aurora', icon: '<svg viewBox="0 0 24 24" width="22" height="22"><path d="M2 16c2-4 4-8 6-8s2 5 4 5 2-7 4-7 2 5 4 5" fill="none" stroke="#00FF87" stroke-width="2.5" stroke-linecap="round" opacity="0.7"/><path d="M2 13c2-3 4-6 6-6s2 4 4 4 2-5 4-5 2 4 4 4" fill="none" stroke="#60EFFF" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/></svg>' },
         { id: 'effect_galaxy_dust', name: 'Galaxy Dust', icon: '<svg viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy="12" r="3" fill="#C084FC"/><circle cx="12" cy="12" r="7" fill="none" stroke="#7C3AED" stroke-width="1" stroke-dasharray="2 3"/><circle cx="12" cy="12" r="10" fill="none" stroke="#A78BFA" stroke-width="0.8" stroke-dasharray="1.5 3"/><circle cx="6" cy="7" r="0.8" fill="#E9D5FF"/><circle cx="18" cy="9" r="0.6" fill="#E9D5FF"/><circle cx="16" cy="17" r="0.7" fill="#E9D5FF"/></svg>' },
         { id: 'effect_cosmic_orbit', name: 'Cosmic Orbit', icon: '<svg viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy="12" r="3" fill="#6366F1"/><ellipse cx="12" cy="12" rx="10" ry="3.5" fill="none" stroke="#818CF8" stroke-width="1.2" transform="rotate(-25 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="3.5" fill="none" stroke="#A5B4FC" stroke-width="1.2" transform="rotate(25 12 12)"/><circle cx="5" cy="8" r="1" fill="#C7D2FE"/><circle cx="19" cy="14" r="0.8" fill="#C7D2FE"/></svg>' },
@@ -8780,7 +9151,7 @@
         { id: 'effect_snowflakes', name: 'Snowflakes', icon: '<svg viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy="12" r="9" fill="#DBEAFE" opacity="0.2"/><line x1="12" y1="3" x2="12" y2="21" stroke="#BAE6FD" stroke-width="1.5" stroke-linecap="round"/><line x1="3" y1="12" x2="21" y2="12" stroke="#BAE6FD" stroke-width="1.5" stroke-linecap="round"/><circle cx="12" cy="12" r="2" fill="white"/></svg>' },
         { id: 'effect_rain_mist', name: 'Rain Mist', icon: '<svg viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy="12" r="9" fill="#94A3B8" opacity="0.2"/><line x1="8" y1="4" x2="8" y2="8" stroke="#60A5FA" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/><line x1="12" y1="3" x2="12" y2="7" stroke="#60A5FA" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/><line x1="16" y1="5" x2="16" y2="9" stroke="#60A5FA" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/><path d="M3 16c2-2 4-2 6 0s4 2 6 0 4-2 6 0" fill="none" stroke="#93C5FD" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/></svg>' },
         { id: 'effect_bubble_flow', name: 'Bubble Flow', icon: '<svg viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy="12" r="9" fill="#DBEAFE" opacity="0.2"/><circle cx="8" cy="8" r="2.5" fill="none" stroke="#60A5FA" stroke-width="1"/><circle cx="15" cy="10" r="2" fill="none" stroke="#93C5FD" stroke-width="1"/><circle cx="10" cy="15" r="1.8" fill="none" stroke="#BFDBFE" stroke-width="1"/><circle cx="16" cy="16" r="1.5" fill="none" stroke="#DBEAFE" stroke-width="1"/></svg>' },
-        { id: 'effect_stardust', name: 'Stardust', icon: '<svg viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy="12" r="6" fill="#FDE68A" opacity="0.2"/><polygon points="12,5 13.5,9.5 18,10 14.5,13 15.5,18 12,15 8.5,18 9.5,13 6,10 10.5,9.5" fill="#FBBF24" opacity="0.6"/><circle cx="6" cy="6" r="0.8" fill="#FDE68A" opacity="0.7"/><circle cx="18" cy="7" r="0.6" fill="#FDE68A" opacity="0.6"/><circle cx="19" cy="17" r="0.7" fill="#FDE68A" opacity="0.5"/><circle cx="5" cy="18" r="0.5" fill="#FDE68A" opacity="0.4"/></svg>' },
+        { id: 'effect_stardust', name: 'Stardust', icon: '<svg viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy="12" r="6" fill="#FDE68A" opacity="0.2"/><polygon points="12,5 13.5,9.5 18,10 14.5,13 15.5,18 12,15 8.5,18 9.5,13 6,10 10.5,9.5" fill="#FBBF20" opacity="0.6"/><circle cx="6" cy="6" r="0.8" fill="#FDE68A" opacity="0.7"/><circle cx="18" cy="7" r="0.6" fill="#FDE68A" opacity="0.6"/><circle cx="19" cy="17" r="0.7" fill="#FDE68A" opacity="0.5"/><circle cx="5" cy="18" r="0.5" fill="#FDE68A" opacity="0.4"/></svg>' },
         { id: 'effect_shooting_stars', name: 'Shooting Stars', icon: '<svg viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy="12" r="9" fill="#1E1B4B" opacity="0.3"/><line x1="5" y1="7" x2="10" y2="10" stroke="#FDE68A" stroke-width="2" stroke-linecap="round"/><line x1="15" y1="5" x2="18" y2="8" stroke="#FDE68A" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/><circle cx="5" cy="7" r="1" fill="#FDE68A"/><circle cx="15" cy="5" r="0.8" fill="#FDE68A" opacity="0.7"/></svg>' },
         { id: 'effect_meteor_trail', name: 'Meteor Trail', icon: '<svg viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy="12" r="9" fill="#1E1B4B" opacity="0.2"/><path d="M6 6l12 12" stroke="#FF6B35" stroke-width="2" stroke-linecap="round"/><circle cx="17" cy="17" r="2" fill="#FFD700"/><path d="M6 6l-1 1" stroke="#FF8C00" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/></svg>' },
         { id: 'effect_solar_flare', name: 'Solar Flare', icon: '<svg viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy="12" r="5" fill="#FFD700" opacity="0.4"/><circle cx="12" cy="12" r="8" fill="none" stroke="#FFA500" stroke-width="1.5"/><line x1="12" y1="2" x2="12" y2="5" stroke="#FFD700" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="19" x2="12" y2="22" stroke="#FFD700" stroke-width="2" stroke-linecap="round"/><line x1="2" y1="12" x2="5" y2="12" stroke="#FFD700" stroke-width="2" stroke-linecap="round"/><line x1="19" y1="12" x2="22" y2="12" stroke="#FFD700" stroke-width="2" stroke-linecap="round"/><line x1="5" y1="5" x2="7.5" y2="7.5" stroke="#FFA500" stroke-width="1.5" stroke-linecap="round"/><line x1="16.5" y1="16.5" x2="19" y2="19" stroke="#FFA500" stroke-width="1.5" stroke-linecap="round"/></svg>' },
@@ -8802,7 +9173,7 @@
         { id: 'effect_ocean_waves', name: 'Ocean Waves', icon: '<svg viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy="12" r="9" fill="#0EA5E9" opacity="0.15"/><path d="M3 10c2-2 4-2 6 0s4 2 6 0 4-2 6 0" fill="none" stroke="#0EA5E9" stroke-width="2" stroke-linecap="round" opacity="0.7"/><path d="M3 14c2-2 4-2 6 0s4 2 6 0 4-2 6 0" fill="none" stroke="#38BDF8" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/><path d="M3 18c2-2 4-2 6 0s4 2 6 0 4-2 6 0" fill="none" stroke="#7DD3FC" stroke-width="1" stroke-linecap="round" opacity="0.3"/></svg>' },
         { id: 'effect_forest_spirit', name: 'Forest Spirit', icon: '<svg viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy="12" r="9" fill="#166534" opacity="0.15"/><path d="M12 4L8 11h2.5l-2.5 5h2.5l-2.5 5h6l-2.5-5h2.5l-2.5-5H16L12 4z" fill="#22C55E" opacity="0.4"/><circle cx="12" cy="14" r="1.5" fill="#4ADE80" opacity="0.5"/></svg>' },
         { id: 'effect_ice_crystals', name: 'Ice Crystals', icon: '<svg viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy="12" r="9" fill="#DBEAFE" opacity="0.2"/><polygon points="12,3 10,10 12,21 14,10" fill="#93C5FD" opacity="0.3" stroke="#60A5FA" stroke-width="0.8"/><line x1="7" y1="7" x2="17" y2="17" stroke="#BFDBFE" stroke-width="1" stroke-linecap="round"/><line x1="17" y1="7" x2="7" y2="17" stroke="#BFDBFE" stroke-width="1" stroke-linecap="round"/></svg>' },
-        { id: 'effect_lava_flow', name: 'Lava Flow', icon: '<svg viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy="12" r="9" fill="#7C2D12" opacity="0.3"/><path d="M5 18c2-4 4-8 7-8s5 4 7 8" fill="#EA580C" opacity="0.4"/><path d="M8 16c1-3 2-5 4-5s3 2 4 5" fill="#F97316" opacity="0.5"/><circle cx="12" cy="14" r="2" fill="#FBBF24" opacity="0.6"/></svg>' },
+        { id: 'effect_lava_flow', name: 'Lava Flow', icon: '<svg viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy="12" r="9" fill="#7C2D12" opacity="0.3"/><path d="M5 18c2-4 4-8 7-8s5 4 7 8" fill="#EA580C" opacity="0.4"/><path d="M8 16c1-3 2-5 4-5s3 2 4 5" fill="#F97316" opacity="0.5"/><circle cx="12" cy="14" r="2" fill="#FBBF20" opacity="0.6"/></svg>' },
         { id: 'effect_inferno_burst', name: 'Inferno Burst', icon: '<svg viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy="12" r="9" fill="#FF4500" opacity="0.2"/><path d="M12 3c-3 4-5 6-5 9a5 5 0 0 0 10 0c0-3-2-5-5-9z" fill="#FF6B35" opacity="0.5"/><circle cx="12" cy="12" r="2.5" fill="#FFD700" opacity="0.6"/></svg>' },
         { id: 'effect_cyber_grid', name: 'Cyber Grid', icon: '<svg viewBox="0 0 24 24" width="22" height="22"><rect x="4" y="4" width="16" height="16" rx="2" fill="none" stroke="#00FF00" stroke-width="1"/><line x1="4" y1="12" x2="20" y2="12" stroke="#00FF00" stroke-width="0.5" opacity="0.4"/><line x1="12" y1="4" x2="12" y2="20" stroke="#00FF00" stroke-width="0.5" opacity="0.4"/><rect x="8" y="8" width="3" height="3" fill="#00FF00" opacity="0.3"/><rect x="13" y="13" width="3" height="3" fill="#00FFFF" opacity="0.3"/></svg>' },
         { id: 'effect_hex_energy', name: 'Hex Energy', icon: '<svg viewBox="0 0 24 24" width="22" height="22"><polygon points="12,2 20,7 20,17 12,22 4,17 4,7" fill="none" stroke="#00FF7F" stroke-width="1.5"/><polygon points="12,6 16,9 16,15 12,18 8,15 8,9" fill="#00FF7F" opacity="0.15"/><circle cx="12" cy="12" r="2" fill="#00FF7F" opacity="0.4"/></svg>' },
@@ -8812,7 +9183,7 @@
         { id: 'effect_crystal_orbit', name: 'Crystal Orbit', icon: '<svg viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy="12" r="9" fill="none" stroke="#818CF8" stroke-width="1" stroke-dasharray="3 2"/><polygon points="12,6 10,12 12,18 14,12" fill="#A5B4FC" opacity="0.4" stroke="#818CF8" stroke-width="0.8"/><circle cx="5" cy="8" r="1.2" fill="#C7D2FE"/><circle cx="19" cy="14" r="1" fill="#C7D2FE"/></svg>' },
         { id: 'effect_violet_mist', name: 'Violet Mist', icon: '<svg viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy="12" r="9" fill="#4C1D95" opacity="0.2"/><circle cx="10" cy="10" r="4" fill="#7C3AED" opacity="0.2"/><circle cx="14" cy="14" r="3.5" fill="#8B5CF6" opacity="0.2"/><circle cx="12" cy="12" r="2" fill="#A78BFA" opacity="0.3"/></svg>' },
         { id: 'effect_emerald_pulse', name: 'Emerald Pulse', icon: '<svg viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy="12" r="9" fill="#059669" opacity="0.15"/><circle cx="12" cy="12" r="3" fill="#10B981" opacity="0.4"/><circle cx="12" cy="12" r="6" fill="none" stroke="#10B981" stroke-width="1.5" opacity="0.4"/><circle cx="12" cy="12" r="9" fill="none" stroke="#34D399" stroke-width="1" opacity="0.2"/></svg>' },
-        { id: 'effect_hive_energy', name: 'Hive Energy', icon: '<svg viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy="12" r="9" fill="#FBBF24" opacity="0.15"/><polygon points="12,4 16,7 16,17 12,20 8,17 8,7" fill="none" stroke="#FBBF24" stroke-width="1.5"/><circle cx="12" cy="12" r="3" fill="#F59E0B" opacity="0.4"/><path d="M12 2v3M12 19v3M4 12h3M17 12h3" stroke="#FFD700" stroke-width="1" stroke-linecap="round" opacity="0.4"/></svg>' }
+        { id: 'effect_hive_energy', name: 'Hive Energy', icon: '<svg viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy="12" r="9" fill="#FBBF20" opacity="0.15"/><polygon points="12,4 16,7 16,17 12,20 8,17 8,7" fill="none" stroke="#FBBF20" stroke-width="1.5"/><circle cx="12" cy="12" r="3" fill="#F59E0B" opacity="0.4"/><path d="M12 2v3M12 19v3M4 12h3M17 12h3" stroke="#FFD700" stroke-width="1" stroke-linecap="round" opacity="0.4"/></svg>' }
     ];
 
     var fontsLoaded = false;
@@ -8830,7 +9201,7 @@
     }
 
     var APPEARANCE_COLORS = [
-        { name: 'Hive Yellow', hex: '#FBBF24' },
+        { name: 'Hive Yellow', hex: '#FBBF20' },
         { name: 'Honey Gold', hex: '#F59E0B' },
         { name: 'Amber', hex: '#D97706' },
         { name: 'Orange', hex: '#F97316' },
@@ -10042,9 +10413,10 @@
         if (dom.upBadgesRow) {
             var badgesHtml = '';
             if (msgData.rank && window.HiveRankBadge) {
-                var b = window.HiveRankBadge.create(msgData.rank, 16);
+                var b = window.HiveRankBadge.create(msgData.rank, 14);
                 if (b) badgesHtml += b.outerHTML;
             }
+            if (msgData.is_premium) badgesHtml += createPremiumBadgeHtml(true);
             dom.upBadgesRow.innerHTML = badgesHtml;
         }
         if (dom.upJoinedText) dom.upJoinedText.textContent = 'Loading...';
@@ -10225,7 +10597,7 @@
         if (dom.upBadgesRow) {
             var badgesHtml = '';
             if (data.rank && window.HiveRankBadge) {
-                var rankBadge = window.HiveRankBadge.create(data.rank, 16);
+                var rankBadge = window.HiveRankBadge.create(data.rank, 14);
                 if (rankBadge) badgesHtml += rankBadge.outerHTML;
             }
             if (data.isVerified) {
@@ -10234,6 +10606,7 @@
             if (data.isBot) {
                 badgesHtml += '<span class="rank-badge rank-badge-sm rank-bot bot-badge" data-rank="bot" data-rank-tip="Bot"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#00E5FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" y1="16" x2="8" y2="16"/><line x1="16" y1="16" x2="16" y2="16"/></svg></span>';
             }
+            if (data.isPremium || data.is_premium) badgesHtml += createPremiumBadgeHtml(true);
             dom.upBadgesRow.innerHTML = badgesHtml;
         }
 
@@ -10424,7 +10797,7 @@
                 messenger: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
                 chatterbox: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>',
                 vocal: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>',
-                explorer_badge: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>',
+                explorer_badge: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="16.20 7.76 14.12 14.12 7.76 16.20 9.88 9.88 16.20 7.76"/></svg>',
                 loyal: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>',
                 veteran_badge: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15l-2 5l9-13h-5l2-5-9 13h5z"/></svg>',
             };
@@ -10542,7 +10915,7 @@
         if (dom.upContent) {
             dom.upContent.style.display = '';
             dom.upContent.innerHTML = '<div class="up-error">' +
-                '<div class="up-error-icon"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>' +
+                '<div class="up-error-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>' +
                 '<div class="up-error-text">Failed to load profile.<br>Please try again.</div>' +
                 '<button class="up-error-retry" onclick="retryPopupLoad(\'' + escapeHtml(userId) + '\')">Retry</button>' +
             '</div>';
@@ -10672,6 +11045,7 @@
     function init() {
         cacheDom();
         cacheDomHashtags();
+        cacheDomMentions();
         initParticles();
         initTooltips();
         initProfileEvents();

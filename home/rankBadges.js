@@ -26,7 +26,7 @@ var HiveRankBadge = (function () {
 
   function createBadge(rank, size) {
     if (!rank || !RANK_INFO[rank]) return null;
-    size = size || 16;
+    size = size || 14;
     var info = RANK_INFO[rank];
     var ns = 'http://www.w3.org/2000/svg';
     var wrapper = document.createElement('span');
@@ -97,6 +97,12 @@ var HiveRankBadge = (function () {
       svg.appendChild(content);
     }
 
+    // Allow rank content to override viewBox (e.g. rookie uses 100x100)
+    if (content && content.getAttribute && content.getAttribute('data-viewbox')) {
+      svg.setAttribute('viewBox', content.getAttribute('data-viewbox'));
+      content.removeAttribute('data-viewbox');
+    }
+
     wrapper.appendChild(svg);
     return wrapper;
   }
@@ -118,45 +124,206 @@ var HiveRankBadge = (function () {
   function buildBadgeContent(rank, ns, gradId, filterId, info) {
     switch (rank) {
 
-      /* ── ROOKIE: Simple hexagon, minimal glow ────────── */
+      /* ── ROOKIE: Circle badge ────────── */
       case 'rookie': {
-        var g = el('g', { filter: 'url(#' + filterId + ')' }, ns);
-        g.appendChild(el('polygon', {
-          points: '12,2 21.5,7 21.5,17 12,22 2.5,17 2.5,7',
-          fill: 'url(#' + gradId + ')',
-          opacity: '0.85',
-          'stroke': info.color,
-          'stroke-width': '0.5'
+        var g = el('g', { class: 'rank-rookie-badge', 'data-viewbox': '0 0 100 100' }, ns);
+
+        var innerDefs = el('defs', {}, ns);
+
+        var circleGrad = document.createElementNS(ns, 'linearGradient');
+        circleGrad.setAttribute('id', gradId + '-circle');
+        circleGrad.setAttribute('x1', '0%');
+        circleGrad.setAttribute('y1', '0%');
+        circleGrad.setAttribute('x2', '100%');
+        circleGrad.setAttribute('y2', '100%');
+        var cs1 = document.createElementNS(ns, 'stop');
+        cs1.setAttribute('offset', '0%');
+        cs1.setAttribute('stop-color', '#8B84FF');
+        var cs2 = document.createElementNS(ns, 'stop');
+        cs2.setAttribute('offset', '100%');
+        cs2.setAttribute('stop-color', '#4F46E5');
+        circleGrad.appendChild(cs1);
+        circleGrad.appendChild(cs2);
+
+        var rGrad = document.createElementNS(ns, 'linearGradient');
+        rGrad.setAttribute('id', gradId + '-r');
+        rGrad.setAttribute('x1', '0%');
+        rGrad.setAttribute('y1', '0%');
+        rGrad.setAttribute('x2', '100%');
+        rGrad.setAttribute('y2', '100%');
+        var rS1 = document.createElementNS(ns, 'stop');
+        rS1.setAttribute('offset', '0%');
+        rS1.setAttribute('stop-color', '#FFFFFF');
+        var rS2 = document.createElementNS(ns, 'stop');
+        rS2.setAttribute('offset', '100%');
+        rS2.setAttribute('stop-color', '#E7E5FF');
+        rGrad.appendChild(rS1);
+        rGrad.appendChild(rS2);
+
+        innerDefs.appendChild(circleGrad);
+        innerDefs.appendChild(rGrad);
+        g.appendChild(innerDefs);
+
+        g.appendChild(el('circle', {
+          cx: '50', cy: '50', r: '46',
+          fill: 'url(#' + gradId + '-circle)',
+          stroke: '#C9C5FF',
+          'stroke-width': '1.2'
         }, ns));
+
+        g.appendChild(el('circle', {
+          cx: '50', cy: '50', r: '39',
+          fill: 'none',
+          stroke: 'rgba(255,255,255,0.35)',
+          'stroke-width': '1'
+        }, ns));
+
         var t = el('text', {
-          x: '12', y: '13.5',
+          x: '50', y: '68',
           'text-anchor': 'middle',
-          'font-size': '7',
-          'font-weight': '700',
-          fill: '#fff',
-          'font-family': 'Inter,sans-serif'
+          'font-family': 'Arial,Helvetica,sans-serif',
+          'font-size': '52',
+          'font-weight': '800',
+          fill: 'url(#' + gradId + '-r)'
         }, ns);
         t.textContent = 'R';
         g.appendChild(t);
+
         return g;
       }
 
-      /* ── EXPLORER: Compass badge ─────────────────────── */
+      /* ── EXPLORER: Mountain medallion ─────────────────────── */
       case 'explorer': {
-        var g = el('g', { filter: 'url(#' + filterId + ')' }, ns);
-        g.appendChild(el('circle', { cx: '12', cy: '12', r: '10', fill: 'url(#' + gradId + ')', opacity: '0.2' }, ns));
-        g.appendChild(el('circle', { cx: '12', cy: '12', r: '10', fill: 'none', stroke: info.color, 'stroke-width': '1', opacity: '0.6' }, ns));
-        // Compass points
-        g.appendChild(el('polygon', { points: '12,3 13.5,10 12,8 10.5,10', fill: info.color, opacity: '0.9' }, ns));
-        g.appendChild(el('polygon', { points: '12,21 13.5,14 12,16 10.5,14', fill: '#fff', opacity: '0.4' }, ns));
-        g.appendChild(el('polygon', { points: '3,12 10,10.5 8,12 10,13.5', fill: info.color, opacity: '0.7' }, ns));
-        g.appendChild(el('polygon', { points: '21,12 14,10.5 16,12 14,13.5', fill: '#fff', opacity: '0.4' }, ns));
-        var anim = el('animateTransform', {
-          attributeName: 'transform', type: 'rotate',
-          from: '0 12 12', to: '360 12 12',
-          dur: '20s', repeatCount: 'indefinite'
+        var g = el('g', { class: 'rank-explorer-badge', 'data-viewbox': '0 0 100 100' }, ns);
+
+        var innerDefs = el('defs', {}, ns);
+
+        // Rim gradient
+        var rimGrad = document.createElementNS(ns, 'linearGradient');
+        rimGrad.setAttribute('id', gradId + '-rim');
+        rimGrad.setAttribute('x1', '0%'); rimGrad.setAttribute('y1', '0%');
+        rimGrad.setAttribute('x2', '100%'); rimGrad.setAttribute('y2', '100%');
+        var rrs1 = document.createElementNS(ns, 'stop'); rrs1.setAttribute('offset', '0%'); rrs1.setAttribute('stop-color', '#60A5FA');
+        var rrs2 = document.createElementNS(ns, 'stop'); rrs2.setAttribute('offset', '100%'); rrs2.setAttribute('stop-color', '#2563EB');
+        rimGrad.appendChild(rrs1); rimGrad.appendChild(rrs2);
+
+        // Face gradient
+        var faceGrad = document.createElementNS(ns, 'linearGradient');
+        faceGrad.setAttribute('id', gradId + '-face');
+        faceGrad.setAttribute('x1', '0%'); faceGrad.setAttribute('y1', '0%');
+        faceGrad.setAttribute('x2', '100%'); faceGrad.setAttribute('y2', '100%');
+        var fs1 = document.createElementNS(ns, 'stop'); fs1.setAttribute('offset', '0%'); fs1.setAttribute('stop-color', '#1E3A8A');
+        var fs2 = document.createElementNS(ns, 'stop'); fs2.setAttribute('offset', '100%'); fs2.setAttribute('stop-color', '#1D4ED8');
+        faceGrad.appendChild(fs1); faceGrad.appendChild(fs2);
+
+        // Ring gradient
+        var ringG = document.createElementNS(ns, 'linearGradient');
+        ringG.setAttribute('id', gradId + '-ring');
+        ringG.setAttribute('x1', '0%'); ringG.setAttribute('y1', '0%');
+        ringG.setAttribute('x2', '100%'); ringG.setAttribute('y2', '100%');
+        var rgs1 = document.createElementNS(ns, 'stop'); rgs1.setAttribute('offset', '0%'); rgs1.setAttribute('stop-color', '#93C5FD'); rgs1.setAttribute('stop-opacity', '0.9');
+        var rgs2 = document.createElementNS(ns, 'stop'); rgs2.setAttribute('offset', '100%'); rgs2.setAttribute('stop-color', '#2563EB'); rgs2.setAttribute('stop-opacity', '0.2');
+        ringG.appendChild(rgs1); ringG.appendChild(rgs2);
+
+        // Clip path
+        var clip = document.createElementNS(ns, 'clipPath');
+        clip.setAttribute('id', gradId + '-clip');
+        clip.appendChild(el('circle', { cx: '50', cy: '50', r: '41' }, ns));
+
+        innerDefs.appendChild(rimGrad);
+        innerDefs.appendChild(faceGrad);
+        innerDefs.appendChild(ringG);
+        innerDefs.appendChild(clip);
+        g.appendChild(innerDefs);
+
+        // Rotating dashed orbit ring
+        g.appendChild(el('circle', {
+          class: 'rank-explorer-ring',
+          cx: '50', cy: '50', r: '47',
+          fill: 'none',
+          stroke: 'url(#' + gradId + '-ring)',
+          'stroke-width': '0.6',
+          'stroke-dasharray': '4 3'
+        }, ns));
+
+        // Outer rim + inner face
+        g.appendChild(el('circle', { cx: '50', cy: '50', r: '45', fill: 'url(#' + gradId + '-rim)' }, ns));
+        g.appendChild(el('circle', { cx: '50', cy: '50', r: '41', fill: 'url(#' + gradId + '-face)' }, ns));
+
+        // Scene clipped to face
+        var scene = el('g', { 'clip-path': 'url(#' + gradId + '-clip)' }, ns);
+
+        // Stars
+        scene.appendChild(el('circle', { cx: '24', cy: '26', r: '0.8', fill: '#fff', opacity: '0.7' }, ns));
+        scene.appendChild(el('circle', { cx: '72', cy: '22', r: '0.6', fill: '#fff', opacity: '0.7' }, ns));
+        scene.appendChild(el('circle', { cx: '80', cy: '34', r: '0.9', fill: '#fff', opacity: '0.7' }, ns));
+        scene.appendChild(el('circle', { cx: '18', cy: '40', r: '0.6', fill: '#fff', opacity: '0.7' }, ns));
+
+        // Back mountain range
+        scene.appendChild(el('polygon', {
+          points: '10,78 26,52 38,66 52,40 66,64 78,50 92,78',
+          fill: '#2f5fd6', opacity: '0.55'
+        }, ns));
+
+        // Front mountain
+        scene.appendChild(el('polygon', {
+          points: '20,80 44,38 52,50 60,36 88,80',
+          fill: '#e8f1ff'
+        }, ns));
+        // Front mountain shadow
+        scene.appendChild(el('polygon', {
+          points: '52,50 60,36 74,80 60,80',
+          fill: '#bcd3ff'
+        }, ns));
+
+        // Winding trail
+        scene.appendChild(el('path', {
+          class: 'rank-explorer-trail',
+          d: 'M28 78 C 34 70, 30 64, 37 58 C 44 52, 40 46, 46 40',
+          fill: 'none',
+          stroke: '#FFD54A',
+          'stroke-width': '1.1',
+          'stroke-linecap': 'round',
+          'stroke-dasharray': '2.4 2.4',
+          'stroke-dashoffset': '34'
+        }, ns));
+
+        // Flag pole
+        scene.appendChild(el('line', {
+          x1: '44', y1: '38', x2: '44', y2: '27',
+          stroke: '#1e293b', 'stroke-width': '1'
+        }, ns));
+        // Flag
+        scene.appendChild(el('polygon', {
+          points: '44,27 54,31 44,35',
+          fill: '#FFD54A'
+        }, ns));
+
+        g.appendChild(scene);
+
+        // Inner ring detail
+        g.appendChild(el('circle', {
+          cx: '50', cy: '50', r: '41',
+          fill: 'none',
+          stroke: 'rgba(255,255,255,0.25)',
+          'stroke-width': '0.8'
+        }, ns));
+
+        // Label
+        var t = el('text', {
+          class: 'rank-explorer-label',
+          x: '50', y: '94',
+          'text-anchor': 'middle',
+          'font-family': 'Arial,Helvetica,sans-serif',
+          'font-size': '6',
+          'font-weight': '700',
+          fill: '#fff',
+          'letter-spacing': '1.5',
+          opacity: '0.9'
         }, ns);
-        g.appendChild(anim);
+        t.textContent = 'EXPLORER';
+        g.appendChild(t);
+
         return g;
       }
 
@@ -527,24 +694,35 @@ var HiveRankBadge = (function () {
       /* ── OWNER: Gold crown ───────────────────────────── */
       case 'owner': {
         var g = el('g', { filter: 'url(#' + filterId + ')' }, ns);
-        // Crown body
-        g.appendChild(el('polygon', {
-          points: '3,16 4.5,7 8.5,12 12,4 15.5,12 19.5,7 21,16',
+        // Crown
+        g.appendChild(el('path', {
+          d: 'M3.6 17 L4.8 7.8 L8.2 11.2 L12 4 L15.8 11.2 L19.2 7.8 L20.4 17 Z',
           fill: 'url(#' + gradId + ')',
-          opacity: '0.9',
-          stroke: info.color,
-          'stroke-width': '0.4'
+          stroke: '#FFF6CC',
+          'stroke-width': '.28',
+          'stroke-linejoin': 'round',
+          'stroke-linecap': 'round'
         }, ns));
-        // Crown base
-        g.appendChild(el('rect', { x: '3', y: '16', width: '18', height: '4', rx: '1', fill: info.color, opacity: '0.85' }, ns));
-        // Jewels
-        g.appendChild(el('circle', { cx: '8', cy: '18', r: '1.2', fill: '#fff', opacity: '0.6' }, ns));
-        g.appendChild(el('circle', { cx: '12', cy: '18', r: '1.2', fill: '#fff', opacity: '0.8' }, ns));
-        g.appendChild(el('circle', { cx: '16', cy: '18', r: '1.2', fill: '#fff', opacity: '0.6' }, ns));
-        // Crown tip gems
-        g.appendChild(el('circle', { cx: '4.5', cy: '7', r: '1', fill: '#fff', opacity: '0.5' }, ns));
-        g.appendChild(el('circle', { cx: '12', cy: '4', r: '1.3', fill: '#fff', opacity: '0.7' }, ns));
-        g.appendChild(el('circle', { cx: '19.5', cy: '7', r: '1', fill: '#fff', opacity: '0.5' }, ns));
+        // Base
+        g.appendChild(el('rect', {
+          x: '3.6', y: '17', width: '16.8', height: '3', rx: '.9',
+          fill: info.color,
+          stroke: '#FFF3B0',
+          'stroke-width': '.25'
+        }, ns));
+        // Center Gem
+        g.appendChild(el('polygon', {
+          points: '12,13.1 13.4,14.5 12,15.9 10.6,14.5',
+          fill: '#62EFFF',
+          filter: 'url(#' + filterId + ')'
+        }, ns));
+        // Side Gems
+        g.appendChild(el('circle', { cx: '7.4', cy: '18.5', r: '.6', fill: '#FFF9D6' }, ns));
+        g.appendChild(el('circle', { cx: '16.6', cy: '18.5', r: '.6', fill: '#FFF9D6' }, ns));
+        // Top Jewels
+        g.appendChild(el('circle', { cx: '4.8', cy: '7.8', r: '.7', fill: '#FFF4C8' }, ns));
+        g.appendChild(el('circle', { cx: '12', cy: '4', r: '.95', fill: '#7CEEFF', filter: 'url(#' + filterId + ')' }, ns));
+        g.appendChild(el('circle', { cx: '19.2', cy: '7.8', r: '.7', fill: '#FFF4C8' }, ns));
         return g;
       }
 
