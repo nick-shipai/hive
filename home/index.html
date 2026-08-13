@@ -506,6 +506,15 @@
                             aria-label="Your profile" title="Profile">
                             <img id="mobile-topbar-avatar-img" alt="Your avatar" loading="lazy">
                         </button>
+                        <button class="topbar-btn mobile-topbar-achv" id="mobile-topbar-achv"
+                            aria-label="Achievements" title="Achievements">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="8" r="6" />
+                                <path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11" />
+                            </svg>
+                            <span class="topbar-badge" id="mobile-topbar-achv-badge" style="display:none;">0</span>
+                        </button>
                         <button class="topbar-btn" id="mobile-topbar-settings" aria-label="Settings"
                             title="Settings">
                             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
@@ -2862,6 +2871,34 @@
             </div>
 
             <div class="achv-body">
+                <div class="achv-mobile-hero">
+                    <div class="achv-mobile-hero-top">
+                        <div class="achv-mobile-hero-copy">
+                            <div class="achv-mobile-kicker">Your progress</div>
+                            <div class="achv-mobile-level" id="achv-mobile-level-label">Level 12</div>
+                            <div class="achv-mobile-xp" id="achv-mobile-xp-text">8,450 / 12,000 XP</div>
+                        </div>
+                        <div class="achv-mobile-score" id="achv-mobile-ring-pct">58%</div>
+                    </div>
+                    <div class="achv-mobile-progress">
+                        <div class="achv-mobile-progress-fill" id="achv-mobile-progress-fill" style="width:70%"></div>
+                    </div>
+                    <div class="achv-mobile-chips">
+                        <div class="achv-mobile-chip">
+                            <strong id="achv-mobile-unlocked-count">14</strong>
+                            <span>Unlocked</span>
+                        </div>
+                        <div class="achv-mobile-chip">
+                            <strong id="achv-mobile-streak">6</strong>
+                            <span>Day streak</span>
+                        </div>
+                        <div class="achv-mobile-chip">
+                            <strong id="achv-mobile-total-xp">8,450</strong>
+                            <span>Total XP</span>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="achv-main">
                     <div class="achv-tabs" id="achv-tabs">
                         <button class="achv-tab active" data-filter="all">

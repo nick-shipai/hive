@@ -168,15 +168,31 @@
         return result;
     }
 
-    var buzzAdScriptUrl = 'https://pl30832238.effectivecpmnetwork.com/eeea152c03606b389c73341e2eb97c59/invoke.js';
+    var buzzAdScriptBase = 'https://www.highperformanceformat.com/';
+    var buzzAdUnits = [
+        { key: '0733b07bd3bc62f1d64439ffee883d1f', w: 468, h: 60 },
+        { key: 'bf8523fdf4ea7c84285453326f1988cb', w: 160, h: 300 },
+        { key: '8f8df62db5095ba534d0f076c4db685d', w: 320, h: 50 },
+        { key: '29420e4e79b5bcae152648a9f27c430a', w: 300, h: 250 },
+        { key: '0ca0bffacb761ba5ec55679cd36f7104', w: 160, h: 600 },
+        { key: '29c86cdb033f3406c66f7c21d4a11866', w: 728, h: 90 },
+    ];
+    function pickAdUnit() {
+        var vw = window.innerWidth || document.documentElement.clientWidth;
+        if (vw <= 480) return buzzAdUnits[2];
+        if (vw <= 768) return buzzAdUnits[0];
+        if (vw <= 1024) return buzzAdUnits[4];
+        return buzzAdUnits[5];
+    }
     function loadBuzzAd(containerId) {
         var container = document.getElementById(containerId);
         if (!container) return;
+        var ad = pickAdUnit();
+        window.atOptions = { key: ad.key, format: 'iframe', height: ad.h, width: ad.w, params: {} };
         var script = document.createElement('script');
         script.async = true;
-        script.setAttribute('data-cfasync', 'false');
-        script.src = buzzAdScriptUrl;
-        document.head.appendChild(script);
+        script.src = buzzAdScriptBase + ad.key + '/invoke.js';
+        container.appendChild(script);
     }
 
     function formatTime(isoStr) {
@@ -206,6 +222,15 @@
         var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
         return months[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear() + ' ' + time;
     }
+
+    function refreshTimestamps() {
+        var stamps = document.querySelectorAll('.msg-timestamp[data-created-at]');
+        for (var i = 0; i < stamps.length; i++) {
+            var iso = stamps[i].getAttribute('data-created-at');
+            if (iso) stamps[i].textContent = formatTime(iso);
+        }
+    }
+    setInterval(refreshTimestamps, 30000);
 
     function formatDateDivider(isoStr) {
         var d = new Date(isoStr);
@@ -4359,7 +4384,8 @@
                             var lastDate = lastMsg ? new Date(lastMsg.created_at).toDateString() : null;
                             var msgDate = new Date(newMsgs[k].created_at).toDateString();
                             if (lastDate !== msgDate) container.appendChild(createDateDivider(newMsgs[k].created_at));
-                            container.appendChild(createMessageElement(newMsgs[k], false));
+                            var newMsgEl = createMessageElement(newMsgs[k], false);
+                            if (newMsgEl) container.appendChild(newMsgEl);
                         }
                         if (wasAtBottom) scrollToBottom(true);
                     }
@@ -4481,7 +4507,8 @@
                 container.appendChild(createDateDivider(messages[i].created_at));
                 prevDate = msgDate;
             }
-            container.appendChild(createMessageElement(messages[i], false));
+            var msgEl = createMessageElement(messages[i], false);
+            if (msgEl) container.appendChild(msgEl);
         }
     }
 
@@ -4498,7 +4525,8 @@
                 frag.appendChild(createDateDivider(messages[i].created_at));
                 prevDate = msgDate;
             }
-            frag.appendChild(createMessageElement(messages[i], false));
+            var preMsgEl = createMessageElement(messages[i], false);
+            if (preMsgEl) frag.appendChild(preMsgEl);
         }
         // Insert after the loading-older element (firstChild) so it stays at top
         var anchor = dom.loadingOlder || null;
@@ -4532,6 +4560,7 @@
         var msgDate = new Date(msg.created_at).toDateString();
         if (lastDate !== msgDate) container.appendChild(createDateDivider(msg.created_at));
         var el = createMessageElement(msg, true);
+        if (!el) return;
         container.appendChild(el);
         var scrollArea = dom.chatMessages;
         if (scrollArea) {
@@ -4602,7 +4631,7 @@
 
         // Sponsored message from Buzz — render ad for free users only
         if (msg.message_type === 'sponsored' && isBot) {
-            if (state.user && state.user.is_premium) return el;
+            if (state.user && state.user.is_premium) return null;
             var sponsoredId = 'buzz-ad-' + (msg.id || '').replace(/[^a-zA-Z0-9]/g, '').substring(0, 12);
             el.className += ' msg-sponsored';
             el.innerHTML =
@@ -4611,7 +4640,7 @@
                     '<div class="msg-header">' +
                         '<span class="msg-username msg-username-bot">' + escapeHtml(msg.username) + createBotBadgeHtml() + createRankBadgeHtml(msg.rank) + createPremiumBadgeHtml(msg.is_premium) + '</span>' +
                         '<span class="msg-sponsored-label">Sponsored</span>' +
-                        '<span class="msg-timestamp" title="' + escapeHtml(formatFullTime(msg.created_at)) + '">' + escapeHtml(formatTime(msg.created_at)) + '</span>' +
+                        '<span class="msg-timestamp" data-created-at="' + escapeHtml(msg.created_at) + '" title="' + escapeHtml(formatFullTime(msg.created_at)) + '">' + escapeHtml(formatTime(msg.created_at)) + '</span>' +
                     '</div>' +
                     '<div class="msg-sponsored-ad">' +
                         '<div id="' + sponsoredId + '" class="buzz-ad-container"></div>' +
@@ -4669,15 +4698,15 @@
             '<div class="msg-body">' +
                 '<div class="msg-header">' +
                     '<span class="msg-username' + (msg.rank ? ' rank-' + msg.rank : '') + (isBot ? ' msg-username-bot' : '') + '"' + combinedUsernameStyle + '>' + escapeHtml(msg.username) + (isBot ? createBotBadgeHtml() : '') + createRankBadgeHtml(msg.rank) + createPremiumBadgeHtml(msg.is_premium) + '</span>' +
-                    '<span class="msg-timestamp" title="' + escapeHtml(formatFullTime(msg.created_at)) + '">' + escapeHtml(formatTime(msg.created_at)) + '</span>' +
-                    (msg.edited_at ? '<span class="msg-edited">(edited)</span>' : '') +
+'<span class="msg-timestamp" data-created-at="' + escapeHtml(msg.created_at) + '" title="' + escapeHtml(formatFullTime(msg.created_at)) + '">' + escapeHtml(formatTime(msg.created_at)) + '</span>' +
+                        (msg.edited_at ? '<span class="msg-edited">(edited)</span>' : '') +
+                    '</div>' +
+                    replyHtml +
+                    renderAttachmentHtml(msg) +
+                    (msg.message ? '<div class="msg-content"' + combinedTextStyle + '>' + renderMessageText(msg.message, msg.mentions) + '</div>' : '') +
+                    renderReactionsHtml(msg, state.user ? state.user.id : null) +
                 '</div>' +
-                replyHtml +
-                renderAttachmentHtml(msg) +
-                (msg.message ? '<div class="msg-content"' + combinedTextStyle + '>' + renderMessageText(msg.message, msg.mentions) + '</div>' : '') +
-                renderReactionsHtml(msg, state.user ? state.user.id : null) +
-            '</div>' +
-            (isBot ? '' : '<div class="msg-actions">' +
+                (isBot ? '' : '<div class="msg-actions">' +
                 '<button class="msg-action-btn" aria-label="React" data-tip="React" data-color="#FFD93D">' +
                     '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>' +
                 '</button>' +
@@ -6501,7 +6530,7 @@
             '<div class="msg-body">' +
                 '<div class="msg-header">' +
                     '<span class="msg-username' + (msg.rank ? ' rank-' + msg.rank : '') + '"' + optCombinedStyle + '>' + escapeHtml(msg.username) + createRankBadgeHtml(msg.rank) + createPremiumBadgeHtml(msg.is_premium) + '</span>' +
-                    '<span class="msg-timestamp">Just now</span>' +
+                    '<span class="msg-timestamp" data-created-at="' + escapeHtml(msg.created_at) + '">Just now</span>' +
                 '</div>' +
                 replyHtml +
                 attachHtml +
@@ -6526,7 +6555,11 @@
             }
         }
         var newEl = createMessageElement(serverMsg, false);
-        el.parentNode.replaceChild(newEl, el);
+        if (newEl) {
+            el.parentNode.replaceChild(newEl, el);
+        } else {
+            el.parentNode.removeChild(el);
+        }
         delete state.pendingMessages[clientId];
     }
 
@@ -6946,11 +6979,21 @@
 
         // ── DM socket events ────────────────────────────
         socket.on('dm:message', function (msg) {
-            // If we're viewing this conversation, append the message
+            // If we're viewing this conversation, append the message and mark as read
             if (state.currentDmConversation && msg.conversation_id == state.currentDmConversation) {
                 msg.sender_id = msg.sender_id || msg.user_id;
                 appendMessage(msg);
                 scrollToBottom(true);
+                if (msg.sender_id !== (state.user && state.user.id)) {
+                    apiPost('/api/dm/' + state.currentDmConversation + '/read', {}).catch(function () {});
+                    for (var j = 0; j < state.dmConversations.length; j++) {
+                        if (state.dmConversations[j].conversation_id == state.currentDmConversation) {
+                            state.dmConversations[j].unread_count = 0;
+                            break;
+                        }
+                    }
+                    updateChatsBadge();
+                }
             }
             playMsgSound();
             // Always refresh the DM sidebar list and badge
@@ -6965,6 +7008,16 @@
                 msg.sender_id = msg.sender_id || msg.user_id;
                 appendMessage(msg);
                 scrollToBottom(true);
+                if (msg.sender_id !== (state.user && state.user.id)) {
+                    apiPost('/api/dm/' + state.currentDmConversation + '/read', {}).catch(function () {});
+                    for (var j = 0; j < state.dmConversations.length; j++) {
+                        if (state.dmConversations[j].conversation_id == state.currentDmConversation) {
+                            state.dmConversations[j].unread_count = 0;
+                            break;
+                        }
+                    }
+                    updateChatsBadge();
+                }
             }
             playMsgSound();
             loadDmConversations();
@@ -8247,6 +8300,15 @@
                     window.history.pushState({ view: 'online' }, '', '/home/');
                     state.onlinePush = true;
                     openOnlineUsers();
+                }
+            });
+        }
+        var mobileAchvBtn = $('mobile-topbar-achv');
+        if (mobileAchvBtn) {
+            mobileAchvBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                if (typeof window.openAchievements === 'function') {
+                    window.openAchievements();
                 }
             });
         }

@@ -191,14 +191,19 @@
                 ? '<div class="achv-card-date">' + formatDate(a.unlocked_at) + '</div>'
                 : '';
 
-            card.innerHTML = statusHtml +
+            card.innerHTML =
                 '<div class="achv-card-icon" style="background:' + colors.bg + ';color:' + colors.color + '">' + icon + '</div>' +
-                '<div class="achv-card-name">' + escapeHtml(a.name) + '</div>' +
-                '<div class="achv-card-desc">' + escapeHtml(a.description) + '</div>' +
-                progressHtml +
-                rewardHtml +
-                '<div class="achv-card-xp">' + achvIcons.xp + ' +' + a.xp_reward + ' XP</div>' +
-                dateHtml;
+                '<div class="achv-card-body">' +
+                    statusHtml +
+                    '<div class="achv-card-name">' + escapeHtml(a.name) + '</div>' +
+                    '<div class="achv-card-desc">' + escapeHtml(a.description) + '</div>' +
+                    progressHtml +
+                    rewardHtml +
+                    '<div class="achv-card-footer">' +
+                        '<div class="achv-card-xp">' + achvIcons.xp + ' +' + a.xp_reward + ' XP</div>' +
+                        dateHtml +
+                    '</div>' +
+                '</div>';
             grid.appendChild(card);
         });
     }
@@ -225,6 +230,27 @@
 
         var countEl = document.querySelector('.achv-progress-count');
         if (countEl) countEl.textContent = (stats.unlocked || 0) + ' / ' + (stats.total || 0);
+
+        var mobileRingPct = document.getElementById('achv-mobile-ring-pct');
+        if (mobileRingPct) mobileRingPct.textContent = pct + '%';
+
+        var mobileXpFill = document.getElementById('achv-mobile-progress-fill');
+        if (mobileXpFill) mobileXpFill.style.width = pct + '%';
+
+        var mobileLevel = document.getElementById('achv-mobile-level-label');
+        if (mobileLevel) mobileLevel.textContent = 'Level ' + (user.level || 1);
+
+        var mobileXpText = document.getElementById('achv-mobile-xp-text');
+        if (mobileXpText) mobileXpText.textContent = (user.xp || 0).toLocaleString() + ' XP';
+
+        var mobileUnlocked = document.getElementById('achv-mobile-unlocked-count');
+        if (mobileUnlocked) mobileUnlocked.textContent = stats.unlocked || 0;
+
+        var mobileStreak = document.getElementById('achv-mobile-streak');
+        if (mobileStreak) mobileStreak.textContent = user.activity_days || 0;
+
+        var mobileTotalXp = document.getElementById('achv-mobile-total-xp');
+        if (mobileTotalXp) mobileTotalXp.textContent = (user.xp || 0).toLocaleString();
 
         // XP summary
         var xpVal = document.getElementById('achv-total-xp');
