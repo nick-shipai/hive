@@ -77,7 +77,7 @@
 
     function esc(str) { return escapeHtml(str || ''); }
 
-    function showToast(msg, type) {
+    window.showToast = function(msg, type) {
         var existing = document.querySelector('.toast-msg');
         if (existing) existing.remove();
         var toast = document.createElement('div');
@@ -293,22 +293,89 @@
         '</span>';
     }
 
-    /* ── XP / Level Helpers ──────────────────── */
+    function updateUserRankBadgesInChat(newRank) {
+        if (!state.user || !dom.chatMessagesInner) return;
+        var userId = state.user.id;
+        var msgs = dom.chatMessagesInner.querySelectorAll('[data-sender-id="' + userId + '"]');
+        for (var i = 0; i < msgs.length; i++) {
+            var msgEl = msgs[i];
+            // Update username rank class
+            var usernameEl = msgEl.querySelector('.msg-username');
+            if (usernameEl) {
+                // Remove old rank-* classes
+                var classes = usernameEl.className.split(' ');
+                var newClasses = [];
+                for (var j = 0; j < classes.length; j++) {
+                    if (classes[j].indexOf('rank-') !== 0) newClasses.push(classes[j]);
+                }
+                newClasses.push('rank-' + newRank);
+                usernameEl.className = newClasses.join(' ');
+                // Replace rank badge
+                var oldBadge = usernameEl.querySelector('.rank-badge');
+                var newBadgeHtml = createRankBadgeHtml(newRank);
+                if (oldBadge && newBadgeHtml) {
+                    var temp = document.createElement('div');
+                    temp.innerHTML = newBadgeHtml;
+                    var newBadge = temp.firstChild;
+                    oldBadge.parentNode.replaceChild(newBadge, oldBadge);
+                } else if (!oldBadge && newBadgeHtml) {
+                    usernameEl.insertAdjacentHTML('beforeend', newBadgeHtml);
+                }
+            }
+        }
+        // Update state.messages rank for future re-renders
+        for (var k = 0; k < state.messages.length; k++) {
+            if (state.messages[k].sender_id === userId) {
+                state.messages[k].rank = newRank;
+            }
+        }
+    }
+
+    /* ── XP / Level Helpers (mirrors backend levelSystem.js) ── */
+    var XP_ANCHORS = [
+        [1, 0], [2, 100], [3, 250], [4, 450], [5, 700],
+        [10, 2500], [15, 5000], [20, 8000], [25, 12000], [30, 17000],
+        [40, 27500], [50, 40000], [75, 75000], [100, 125000],
+        [150, 250000], [200, 500000], [250, 750000], [300, 1000000],
+        [400, 1750000], [500, 2750000]
+    ];
+    var MAX_LEVEL_FE = 500;
+    var LEVEL_XP_FE = new Array(MAX_LEVEL_FE + 1).fill(0);
+    (function buildThresholds() {
+        for (var i = 1; i < XP_ANCHORS.length; i++) {
+            var l1 = XP_ANCHORS[i - 1][0], xp1 = XP_ANCHORS[i - 1][1];
+            var l2 = XP_ANCHORS[i][0], xp2 = XP_ANCHORS[i][1];
+            var steps = l2 - l1;
+            for (var lv = l1; lv < l2; lv++) {
+                LEVEL_XP_FE[lv + 1] = Math.round(xp1 + ((xp2 - xp1) * (lv + 1 - l1) / steps));
+            }
+        }
+        LEVEL_XP_FE[1] = 0;
+    })();
+
     function xpForLevel(level) {
-        return Math.floor(level * level * 50);
+        var lv = Math.max(1, Math.min(MAX_LEVEL_FE, Math.floor(level)));
+        return LEVEL_XP_FE[lv];
     }
 
     function levelFromXp(xp) {
-        return Math.max(1, Math.floor(Math.sqrt(xp / 50)));
+        var totalXp = Math.max(0, Math.floor(xp));
+        if (totalXp >= LEVEL_XP_FE[MAX_LEVEL_FE]) return MAX_LEVEL_FE;
+        var lo = 1, hi = MAX_LEVEL_FE;
+        while (lo < hi) {
+            var mid = Math.ceil((lo + hi) / 2);
+            if (LEVEL_XP_FE[mid] <= totalXp) { lo = mid; } else { hi = mid - 1; }
+        }
+        return lo;
     }
 
     function getXpProgress(totalXp) {
         var level = levelFromXp(totalXp);
         var xpForCurrentLevel = xpForLevel(level);
-        var xpForNextLevel = xpForLevel(level + 1);
+        var xpForNextLevel = xpForLevel(Math.min(MAX_LEVEL_FE, level + 1));
         var xpProgress = totalXp - xpForCurrentLevel;
         var xpNeeded = xpForNextLevel - xpForCurrentLevel;
-        var percent = Math.min(100, Math.floor((xpProgress / xpNeeded) * 100));
+        var percent = xpNeeded > 0 ? Math.min(100, Math.floor((xpProgress / xpNeeded) * 100)) : 100;
         return {
             level: level,
             xp: totalXp,
@@ -3779,7 +3846,13 @@
         } else if (n.community_name) {
             badgeHtml = '<span class="notif-item-badge community">' + escapeHtml(n.community_name) + '</span>';
         }
-        if (n.type && n.type.indexOf('SYSTEM') !== -1) {
+        if (n.type === 'ACHIEVEMENT_UNLOCKED') {
+            badgeHtml = '<span class="notif-item-badge achievement">Achievement</span>';
+        } else if (n.type === 'LEVEL_UP') {
+            badgeHtml = '<span class="notif-item-badge level">Level Up</span>';
+        } else if (n.type === 'RANK_UP') {
+            badgeHtml = '<span class="notif-item-badge rank">Rank Up</span>';
+        } else if (n.type && n.type.indexOf('SYSTEM') !== -1) {
             badgeHtml = '<span class="notif-item-badge system">System</span>';
         }
 
@@ -4465,6 +4538,7 @@
                 replyHtml +
                 renderAttachmentHtml(msg) +
                 (msg.message ? '<div class="msg-content"' + combinedTextStyle + '>' + renderMessageText(msg.message) + '</div>' : '') +
+                renderReactionsHtml(msg, state.user ? state.user.id : null) +
             '</div>' +
             (isBot ? '' : '<div class="msg-actions">' +
                 '<button class="msg-action-btn" aria-label="React" data-tip="React" data-color="#FFD93D">' +
@@ -4504,7 +4578,216 @@
             });
         });
 
+        // Reaction popup: open on react button click
+        var reactBtn = el.querySelector('.msg-action-btn[aria-label="React"]');
+        if (reactBtn) {
+            reactBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                toggleReactionPopup(el, reactBtn, msg);
+            });
+        }
+
+        // Attach click handlers to any pre-rendered reaction pills
+        var existingPills = el.querySelectorAll('.msg-reactions .reaction');
+        for (var pi = 0; pi < existingPills.length; pi++) {
+            (function (pill) {
+                var ek = pill.getAttribute('data-emoji');
+                pill.addEventListener('click', function () {
+                    applyReactionOptimistic(el, msg, ek);
+                });
+            })(existingPills[pi]);
+        }
+
         return el;
+    }
+
+    /* ── Reaction Popup ───────────────────────── */
+    var REACTION_EMOJIS = [
+        { key: 'happy',     label: 'Like' },
+        { key: 'love',      label: 'Love' },
+        { key: 'laughing',  label: 'Laugh' },
+        { key: 'shocked',   label: 'Wow' },
+        { key: 'crying',    label: 'Sad' }
+    ];
+
+    function toggleReactionPopup(msgEl, btn, msg) {
+        var existing = document.querySelector('.reaction-popup');
+        if (existing) {
+            existing.remove();
+            return;
+        }
+        showReactionPopup(msgEl, btn, msg);
+    }
+
+    function showReactionPopup(msgEl, btn, msg) {
+        var popup = document.createElement('div');
+        popup.className = 'reaction-popup';
+
+        REACTION_EMOJIS.forEach(function (item) {
+            var b = document.createElement('button');
+            b.className = 'reaction-popup-btn';
+            b.setAttribute('data-tip', item.label);
+            b.setAttribute('data-emoji', item.key);
+            var emojiEl = HiveEmoji.create(item.key, 26);
+            if (emojiEl) b.appendChild(emojiEl);
+            b.addEventListener('click', function (e) {
+                e.stopPropagation();
+                popup.remove();
+                applyReactionOptimistic(msgEl, msg, item.key);
+            });
+            popup.appendChild(b);
+        });
+
+        document.body.appendChild(popup);
+
+        var rect = btn.getBoundingClientRect();
+        var popW = popup.offsetWidth;
+        var popH = popup.offsetHeight;
+        var left = rect.left + rect.width / 2 - popW / 2;
+        var top = rect.top - popH - 8;
+        if (left < 8) left = 8;
+        if (left + popW > window.innerWidth - 8) left = window.innerWidth - popW - 8;
+        if (top < 8) top = rect.bottom + 8;
+        popup.style.left = left + 'px';
+        popup.style.top = top + 'px';
+
+        function closePopup(ev) {
+            if (!popup.contains(ev.target)) {
+                popup.remove();
+                document.removeEventListener('click', closePopup);
+            }
+        }
+        setTimeout(function () {
+            document.addEventListener('click', closePopup);
+        }, 100);
+    }
+
+    function applyReactionOptimistic(msgEl, msg, emojiKey) {
+        var body = msgEl.querySelector('.msg-body');
+        if (!body) return;
+
+        var container = body.querySelector('.msg-reactions');
+        if (!container) {
+            container = document.createElement('div');
+            container.className = 'msg-reactions';
+            body.appendChild(container);
+        }
+
+        var currentUserId = state.user ? state.user.id : null;
+        var existingPill = container.querySelector('[data-emoji="' + emojiKey + '"]');
+
+        if (existingPill) {
+            var countEl = existingPill.querySelector('.reaction-count');
+            var count = parseInt(countEl.textContent) || 0;
+            if (existingPill.classList.contains('active')) {
+                count = Math.max(0, count - 1);
+                existingPill.classList.remove('active');
+                if (count === 0) {
+                    existingPill.remove();
+                    if (container.children.length === 0) container.remove();
+                } else {
+                    countEl.textContent = count;
+                }
+            } else {
+                count += 1;
+                existingPill.classList.add('active');
+                countEl.textContent = count;
+            }
+        } else {
+            var pill = document.createElement('button');
+            pill.className = 'reaction active';
+            pill.setAttribute('data-emoji', emojiKey);
+            var emojiEl = HiveEmoji.create(emojiKey, 18);
+            if (emojiEl) pill.appendChild(emojiEl);
+            var countSpan = document.createElement('span');
+            countSpan.className = 'reaction-count';
+            countSpan.textContent = '1';
+            pill.appendChild(countSpan);
+            pill.addEventListener('click', function () {
+                applyReactionOptimistic(msgEl, msg, emojiKey);
+            });
+            container.appendChild(pill);
+        }
+
+        fireReactionApi(msg.id, emojiKey);
+    }
+
+    function fireReactionApi(msgId, emojiKey) {
+        if (!msgId) return;
+        var token = window.HiveAuth ? window.HiveAuth.getToken() : null;
+        if (!token) return;
+        fetch(API_BASE + '/api/reactions/' + encodeURIComponent(msgId), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+            body: JSON.stringify({ emoji: emojiKey })
+        }).then(function (r) {
+            if (!r.ok) {
+                r.json().then(function (d) { console.error('[REACTION] API error:', r.status, d && d.message); }).catch(function () {});
+                return;
+            }
+            return r.json();
+        }).then(function (data) {
+            if (data && !data.success) console.error('[REACTION] Failed:', data.message);
+        }).catch(function (e) { console.error('[REACTION] Network error:', e); });
+    }
+
+    function applyReactionFromSocket(data) {
+        var msgEl = dom.chatMessagesInner ? dom.chatMessagesInner.querySelector('[data-msg-id="' + data.messageId + '"]') : null;
+        if (!msgEl) return;
+        var body = msgEl.querySelector('.msg-body');
+        if (!body) return;
+
+        var container = body.querySelector('.msg-reactions');
+        if (!container) {
+            container = document.createElement('div');
+            container.className = 'msg-reactions';
+            body.appendChild(container);
+        }
+
+        var currentUserId = state.user ? state.user.id : null;
+        var counts = data.counts || [];
+
+        container.innerHTML = '';
+        for (var i = 0; i < counts.length; i++) {
+            var r = counts[i];
+            if (r.count <= 0) continue;
+            var isActive = r.userIds && currentUserId && r.userIds.indexOf(currentUserId) !== -1;
+            var pill = document.createElement('button');
+            pill.className = 'reaction' + (isActive ? ' active' : '');
+            pill.setAttribute('data-emoji', r.emoji);
+            var emojiEl = HiveEmoji.create(r.emoji, 18);
+            if (emojiEl) pill.appendChild(emojiEl);
+            var countSpan = document.createElement('span');
+            countSpan.className = 'reaction-count';
+            countSpan.textContent = r.count;
+            pill.appendChild(countSpan);
+            (function (ek) {
+                pill.addEventListener('click', function () {
+                    applyReactionOptimistic(msgEl, { id: data.messageId }, ek);
+                });
+            })(r.emoji);
+            container.appendChild(pill);
+        }
+        if (container.children.length === 0) container.remove();
+    }
+
+    function renderReactionsHtml(msg, currentUserId) {
+        var reactions = msg.reactions;
+        if (!reactions || reactions.length === 0) return '';
+        var html = '<div class="msg-reactions">';
+        for (var i = 0; i < reactions.length; i++) {
+            var r = reactions[i];
+            if (r.count <= 0) continue;
+            var isActive = r.userIds && currentUserId && r.userIds.indexOf(currentUserId) !== -1;
+            var emojiEl = HiveEmoji.create(r.emoji, 18);
+            var emojiSvg = emojiEl ? emojiEl.innerHTML : '';
+            html += '<button class="reaction' + (isActive ? ' active' : '') + '" data-emoji="' + r.emoji + '">' +
+                '<span class="reaction-hive-emoji">' + emojiSvg + '</span>' +
+                '<span class="reaction-count">' + r.count + '</span>' +
+                '</button>';
+        }
+        html += '</div>';
+        return html;
     }
 
     function scrollToBottom(smooth) {
@@ -5948,6 +6231,20 @@
         }, 4000);
     }
 
+    /* ── Message Sound ────────────────────────── */
+    var _msgSound = null;
+    function playMsgSound() {
+        if (!state.user) return;
+        try {
+            if (!_msgSound) {
+                _msgSound = new Audio('msg-notify.mp3');
+                _msgSound.volume = 0.4;
+            }
+            _msgSound.currentTime = 0;
+            _msgSound.play().catch(function () {});
+        } catch (e) {}
+    }
+
     /* ── Socket.IO ───────────────────────────── */
     function connectSocket() {
         var token = window.HiveAuth.getToken();
@@ -6010,7 +6307,13 @@
             }
 
             // 4. New message from another user — append it
+            playMsgSound();
             appendMessage(msg);
+        });
+
+        socket.on('message:reaction', function (data) {
+            if (!state.currentCommunity) return;
+            applyReactionFromSocket(data);
         });
 
         // ── Appearance update (real-time color + font change) ─
@@ -6123,6 +6426,39 @@
             if (profileOpen) populateProfile();
             // Refresh user panel
             renderUserPanel();
+            // Update rank badges in chat messages
+            updateUserRankBadgesInChat(newRank);
+        });
+
+        // ── Rank change event (without level change) ────
+        socket.on('user:rank-change', function (data) {
+            if (!data || !data.rank) return;
+            var newRank = data.rank;
+            if (state.user) {
+                state.user.rank = newRank;
+                if (data.level) state.user.level = data.level;
+                if (data.xp) state.user.xp = data.xp;
+            }
+            var rankLabel = newRank.charAt(0).toUpperCase() + newRank.slice(1);
+            showToast('Rank updated! You are now ' + rankLabel, 'success');
+            // Refresh profile if open
+            if (profileOpen) populateProfile();
+            // Refresh user panel
+            renderUserPanel();
+            // Update rank badges in chat messages
+            updateUserRankBadgesInChat(newRank);
+        });
+
+        // ── Premium milestone granted event ────────────
+        socket.on('user:premium_granted', function (data) {
+            if (!data || !data.milestones || !data.milestones.length) return;
+            var biggest = data.milestones[0];
+            var days = biggest.days || 0;
+            var label = days >= 30 ? '30 days' : (days >= 14 ? '14 days' : (days >= 7 ? '7 days' : (days >= 5 ? '5 days' : '3 days')));
+            showToast('✨ Premium Milestone reached! +' + label + ' of Hive Premium unlocked', 'success');
+            if (state.user) {
+                state.user.is_premium = true;
+            }
         });
 
         // ── Presence events ────────────────────────────
@@ -6255,6 +6591,7 @@
                 appendMessage(msg);
                 scrollToBottom(true);
             }
+            playMsgSound();
             // Always refresh the DM sidebar list and badge
             loadDmConversations();
             updateChatsBadge();
@@ -6268,6 +6605,7 @@
                 appendMessage(msg);
                 scrollToBottom(true);
             }
+            playMsgSound();
             loadDmConversations();
             updateChatsBadge();
         });
@@ -6638,6 +6976,7 @@
         });
 
         state.socket = socket;
+        window._socket = socket;
     }
 
     function joinRoom(communityId) {
@@ -7009,7 +7348,6 @@
                 var nav = this.getAttribute('data-nav');
                 if (nav === 'search') { showToast('Search coming soon'); return; }
                 if (nav === 'settings') { showToast('Settings coming soon'); return; }
-
                 if (nav === 'home') {
                     window.history.pushState({}, '', '/home/');
                 } else if (nav === 'communities') {
