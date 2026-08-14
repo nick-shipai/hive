@@ -1859,6 +1859,89 @@
             </div>
             <!-- ═══ END APPEARANCE VIEW ═══ -->
 
+            <!-- ═══ MOMENTS VIEW ═══ -->
+            <div class="rpanel-view" id="rpanel-moments" style="display:none;">
+                <div class="rpanel-toolbar">
+                    <button class="rpanel-back" id="rpanel-moments-back" aria-label="Close moments">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="15 18 9 12 15 6" />
+                        </svg>
+                    </button>
+                    <span class="rpanel-title">Moments</span>
+                </div>
+
+                <div class="rpanel-scroll">
+                    <!-- My Moment Card -->
+                    <div class="moments-my-card rp-entrance" data-delay="0">
+                        <div class="moments-my-left">
+                            <div class="moments-my-avatar-wrap">
+                                <img class="moments-my-avatar" id="moments-my-avatar" src="" alt="Your avatar">
+                                <div class="moments-my-add" id="moments-add-btn" aria-label="Add moment">
+                                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor"
+                                        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <line x1="12" y1="5" x2="12" y2="19" />
+                                        <line x1="5" y1="12" x2="19" y2="12" />
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="moments-my-info">
+                                <span class="moments-my-label">My Moment</span>
+                                <span class="moments-my-hint">Tap to add a moment</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Moments List Header -->
+                    <div class="moments-section-header rp-entrance" data-delay="1">
+                        <span>Recent Moments</span>
+                    </div>
+
+                    <!-- Moments List -->
+                    <div class="moments-list" id="moments-list">
+                        <!-- Populated by renderMoments() -->
+                    </div>
+
+                    <!-- Empty State -->
+                    <div class="moments-empty" id="moments-empty" style="display:none;">
+                        <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor"
+                            stroke-width="1" opacity="0.3">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                            <circle cx="8.5" cy="8.5" r="1.5" />
+                            <polyline points="21 15 16 10 5 21" />
+                        </svg>
+                        <span class="moments-empty-title">No Moments Yet</span>
+                        <span class="moments-empty-desc">Be the first to share a moment!</span>
+                    </div>
+
+                    <!-- Skeleton Loading -->
+                    <div class="moments-skeleton" id="moments-skeleton">
+                        <div class="moments-skel-item">
+                            <div class="moments-skel-avatar"></div>
+                            <div class="moments-skel-text">
+                                <div class="moments-skel-line"></div>
+                                <div class="moments-skel-line short"></div>
+                            </div>
+                        </div>
+                        <div class="moments-skel-item">
+                            <div class="moments-skel-avatar"></div>
+                            <div class="moments-skel-text">
+                                <div class="moments-skel-line"></div>
+                                <div class="moments-skel-line short"></div>
+                            </div>
+                        </div>
+                        <div class="moments-skel-item">
+                            <div class="moments-skel-avatar"></div>
+                            <div class="moments-skel-text">
+                                <div class="moments-skel-line"></div>
+                                <div class="moments-skel-line short"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- ═══ END MOMENTS VIEW ═══ -->
+
         </aside>
 
         <!-- ═══════════ NOTIFICATION POPUP ═══════════ -->
@@ -2398,6 +2481,204 @@
             </div>
         </div>
     </div>
+
+    <!-- ═══════════ CREATE MOMENT POPUP ═══════════ -->
+    <div class="moment-create-overlay" id="moment-create-overlay" style="display:none;">
+        <div class="moment-create-popup">
+            <div class="moment-create-header">
+                <h2 class="moment-create-title">Create Moment</h2>
+                <button class="moment-create-close" id="moment-create-close" aria-label="Close">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                </button>
+            </div>
+            <div class="moment-create-body">
+                <p class="moment-create-subtitle">What would you like to share?</p>
+                <div class="moment-create-options">
+                    <button class="moment-create-option" data-type="image">
+                        <div class="moment-create-option-icon" style="--oc: var(--accent);">
+                            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor"
+                                stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                                <circle cx="8.5" cy="8.5" r="1.5" />
+                                <polyline points="21 15 16 10 5 21" />
+                            </svg>
+                        </div>
+                        <div class="moment-create-option-text">
+                            <span class="moment-create-option-title">Image</span>
+                            <span class="moment-create-option-desc">Share a photo from your gallery or camera</span>
+                        </div>
+                        <svg class="moment-create-option-arrow" viewBox="0 0 24 24" width="16" height="16" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="9 18 15 12 9 6" />
+                        </svg>
+                    </button>
+                    <button class="moment-create-option" data-type="video">
+                        <div class="moment-create-option-icon" style="--oc: var(--primary);">
+                            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor"
+                                stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <polygon points="5 3 19 12 5 21 5 3" />
+                            </svg>
+                        </div>
+                        <div class="moment-create-option-text">
+                            <span class="moment-create-option-title">Video</span>
+                            <span class="moment-create-option-desc">Record or upload a video clip</span>
+                        </div>
+                        <svg class="moment-create-option-arrow" viewBox="0 0 24 24" width="16" height="16" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="9 18 15 12 9 6" />
+                        </svg>
+                    </button>
+                    <button class="moment-create-option" data-type="text">
+                        <div class="moment-create-option-icon" style="--oc: var(--secondary);">
+                            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor"
+                                stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                <polyline points="14 2 14 8 20 8" />
+                                <line x1="16" y1="13" x2="8" y2="13" />
+                                <line x1="16" y1="17" x2="8" y2="17" />
+                            </svg>
+                        </div>
+                        <div class="moment-create-option-text">
+                            <span class="moment-create-option-title">Text</span>
+                            <span class="moment-create-option-desc">Write a text update to share</span>
+                        </div>
+                        <svg class="moment-create-option-arrow" viewBox="0 0 24 24" width="16" height="16" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="9 18 15 12 9 6" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- ═══════════ END CREATE MOMENT POPUP ═══════════ -->
+
+    <!-- ═══════════ IMAGE MOMENT POPUP ═══════════ -->
+    <div class="moment-img-overlay" id="moment-img-overlay" style="display:none;">
+        <div class="moment-img-popup">
+            <div class="moment-img-header">
+                <h2 class="moment-img-title">Create Image Moment</h2>
+                <button class="moment-img-close" id="moment-img-close" aria-label="Close">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                </button>
+            </div>
+            <div class="moment-img-body">
+                <div class="moment-img-preview-wrap" id="moment-img-preview-wrap">
+                    <img class="moment-img-preview" id="moment-img-preview" src="" alt="Preview">
+                    <button class="moment-img-change" id="moment-img-change" aria-label="Change image">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="23 4 23 10 17 10" />
+                            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+                        </svg>
+                        Change Image
+                    </button>
+                </div>
+                <div class="moment-img-desc-wrap">
+                    <textarea class="moment-img-desc" id="moment-img-desc"
+                        placeholder="Add a description... (optional)" maxlength="500" rows="3"></textarea>
+                    <div class="moment-img-desc-count">
+                        <span id="moment-img-desc-count">0</span>/500
+                    </div>
+                </div>
+                <div class="moment-img-actions">
+                    <button class="moment-img-btn-cancel" id="moment-img-btn-cancel">Cancel</button>
+                    <button class="moment-img-btn-post" id="moment-img-btn-post">
+                        <span class="moment-img-btn-text">Post Moment</span>
+                        <span class="moment-img-btn-loading" style="display:none;">
+                            <span class="moment-img-spinner"></span>
+                            Uploading...
+                        </span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <input type="file" id="moment-img-file-input" accept="image/jpeg,image/png,image/gif,image/webp" style="display:none;">
+    <!-- ═══════════ END IMAGE MOMENT POPUP ═══════════ -->
+
+    <!-- ═══════════ MOMENT VIEWER ═══════════ -->
+    <div class="mv-overlay" id="mv-overlay" style="display:none;">
+        <!-- Progress Bar -->
+        <div class="mv-progress" id="mv-progress"></div>
+
+        <!-- Header -->
+        <div class="mv-header">
+            <div class="mv-header-left">
+                <img class="mv-avatar" id="mv-avatar" src="" alt="">
+                <div class="mv-header-info">
+                    <span class="mv-username" id="mv-username"></span>
+                    <span class="mv-time" id="mv-time"></span>
+                </div>
+            </div>
+            <button class="mv-close" id="mv-close" aria-label="Close viewer">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor"
+                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+            </button>
+        </div>
+
+        <!-- Nav Zones -->
+        <button class="mv-nav mv-nav-left" id="mv-nav-left" aria-label="Previous moment">
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="15 18 9 12 15 6" />
+            </svg>
+        </button>
+        <button class="mv-nav mv-nav-right" id="mv-nav-right" aria-label="Next moment">
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="9 18 15 12 9 6" />
+            </svg>
+        </button>
+
+        <!-- Image Display -->
+        <div class="mv-image-wrap" id="mv-image-wrap">
+            <img class="mv-image" id="mv-image" src="" alt="Moment">
+            <div class="mv-image-loading" id="mv-image-loading">
+                <div class="mv-image-spinner"></div>
+            </div>
+        </div>
+
+        <!-- Description (if any) -->
+        <div class="mv-desc-bar" id="mv-desc-bar" style="display:none;">
+            <span class="mv-desc-text" id="mv-desc-text"></span>
+        </div>
+
+        <!-- Bottom Actions -->
+        <div class="mv-bottom">
+            <div class="mv-actions">
+                <button class="mv-action-btn" id="mv-like-btn" aria-label="Like this moment">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                    </svg>
+                </button>
+                <div class="mv-reply-wrap">
+                    <input class="mv-reply-input" id="mv-reply-input" type="text"
+                        placeholder="Reply to this Moment..." maxlength="500" autocomplete="off">
+                    <button class="mv-reply-send" id="mv-reply-send" aria-label="Send reply">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="22" y1="2" x2="11" y2="13" />
+                            <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- ═══════════ END MOMENT VIEWER ═══════════ -->
 
     <!-- ═══════════ USER PROFILE POPUP ═══════════ -->
     <div class="up-overlay" id="up-overlay" style="display:none;">

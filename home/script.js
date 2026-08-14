@@ -61,6 +61,8 @@
         gifPickerOpen: false,
     };
 
+    var activeMessageMenu = null;
+
     /* ── DOM Cache ───────────────────────────── */
     var dom = {};
 
@@ -1315,6 +1317,12 @@
         });
     }
 
+    function apiDelete(endpoint) {
+        return window.HiveAuth.apiFetch(endpoint, {
+            method: 'DELETE',
+        });
+    }
+
     /* ── Skeleton Loading ────────────────────── */
     function showMessageSkeletons() {
         if (!dom.chatMessagesInner) return;
@@ -1576,6 +1584,13 @@
             var rightSidebar = qs('.right-sidebar');
             if (rightSidebar) show(rightSidebar);
         }
+        if (route !== 'dm' && momentsOpen) {
+            momentsOpen = false;
+            var rpanelMoments = $('rpanel');
+            if (rpanelMoments) hide(rpanelMoments);
+            var rightSidebarMoments = qs('.right-sidebar');
+            if (rightSidebarMoments) show(rightSidebarMoments);
+        }
 
         // Render the correct base screen for the current URL.
         if (route === 'notifications') {
@@ -1734,6 +1749,7 @@
         showDmSidebar();
         if (dom.restrictedBanner) dom.restrictedBanner.style.display = 'none';
         if (dom.chatComposer) dom.chatComposer.classList.remove('restricted');
+        openMoments();
     }
 
     /* ── Friends Panel ─────────────────────────────── */
@@ -2272,6 +2288,13 @@
         hideSidebarPanels();
         show(dom.sidebarDmPanel);
         setActiveRailIcon('chats');
+        if (momentsOpen) {
+            var rpanel = $('rpanel');
+            var rightSidebar = qs('.right-sidebar');
+            if (rpanel) hide(rpanel);
+            if (rightSidebar) show(rightSidebar);
+            momentsOpen = false;
+        }
 
         // Load DM messages via API
         clearMessages();
@@ -4713,6 +4736,9 @@
                 '<button class="msg-action-btn msg-reply-btn" aria-label="Reply" data-tip="Reply" data-color="#6C63FF">' +
                     '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>' +
                 '</button>' +
+                '<button class="msg-action-btn msg-more-btn" aria-label="More" aria-haspopup="menu" aria-expanded="false" data-tip="More" data-color="currentColor">' +
+                    '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>' +
+                '</button>' +
             '</div>');
 
         var replyBtn = el.querySelector('.msg-reply-btn');
@@ -4720,6 +4746,14 @@
             replyBtn.addEventListener('click', function (e) {
                 e.stopPropagation();
                 startReply(msg);
+            });
+        }
+
+        var moreBtn = el.querySelector('.msg-more-btn');
+        if (moreBtn) {
+            moreBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                toggleMessageMenu(el, moreBtn, msg);
             });
         }
 
@@ -4935,6 +4969,236 @@
             container.appendChild(pill);
         }
         if (container.children.length === 0) container.remove();
+    }
+
+    function closeMessageMenu() {
+        if (!activeMessageMenu) return;
+        var popup = activeMessageMenu;
+        if (popup._anchorBtn) popup._anchorBtn.setAttribute('aria-expanded', 'false');
+        activeMessageMenu = null;
+        popup.classList.add('msg-menu-exit');
+        document.removeEventListener('click', handleMessageMenuOutsideClick);
+        document.removeEventListener('keydown', handleMessageMenuKeydown);
+        setTimeout(function () {
+            if (popup && popup.parentNode) popup.parentNode.removeChild(popup);
+        }, 160);
+    }
+
+    var RANK_TIER = { rookie: 0, explorer: 1, member: 2, contributor: 3, insider: 4, pioneer: 5, elite: 6, legend: 7, titan: 8, nova: 9, moderator: 100, administrator: 101, owner: 102 };
+
+    function canDeleteMessage(msg) {
+        if (!msg || !state.user || msg._temp) return false;
+        var userId = state.user.id;
+        var senderId = msg.sender_id || msg.user_id;
+        if (!senderId) return false;
+
+        // DMs: only the author can delete
+        if (msg.conversation_id || state.currentDmConversation) {
+            return senderId === userId;
+        }
+
+        // Community chats
+        if (msg.community_id || state.currentCommunity) {
+            if (senderId === userId) return true;
+            var myTier = RANK_TIER[state.user.rank] || 0;
+            var theirTier = RANK_TIER[msg.rank] || 0;
+            return myTier >= 100 && myTier > theirTier;
+        }
+
+        return false;
+    }
+
+    function removeMessageFromState(messageId) {
+        for (var i = 0; i < state.messages.length; i++) {
+            if (state.messages[i].id === messageId) {
+                state.messages.splice(i, 1);
+                break;
+            }
+        }
+    }
+
+    function removeMessageFromDom(messageId) {
+        if (!dom.chatMessagesInner) return;
+        var msgEl = dom.chatMessagesInner.querySelector('[data-msg-id="' + messageId + '"]');
+        if (!msgEl) return;
+        msgEl.classList.add('msg-deleted');
+        msgEl.style.opacity = '0';
+        msgEl.style.transform = 'translateX(-20px)';
+        msgEl.style.transition = 'all 0.3s var(--ease)';
+        setTimeout(function () { if (msgEl && msgEl.parentNode) msgEl.remove(); }, 300);
+    }
+
+    function pruneCommunityCache(communityId, messageId) {
+        if (!communityId) return;
+        var cached = state.messageCache.get(communityId);
+        if (!cached || !cached.messages) return;
+        for (var i = 0; i < cached.messages.length; i++) {
+            if (cached.messages[i].id === messageId) {
+                cached.messages.splice(i, 1);
+                break;
+            }
+        }
+    }
+
+    function handleDeletedMessage(data) {
+        if (!data || !data.messageId) return;
+
+        if (data.communityId) {
+            pruneCommunityCache(data.communityId, data.messageId);
+            if (!state.currentCommunity || state.currentCommunity.id !== data.communityId) return;
+        } else if (data.conversationId) {
+            if (!state.currentDmConversation || state.currentDmConversation !== data.conversationId) return;
+        }
+
+        removeMessageFromDom(data.messageId);
+        removeMessageFromState(data.messageId);
+    }
+
+    function handleMessageMenuAction(detail) {
+        if (!detail || !detail.action) return;
+
+        var msg = detail.message || {};
+        var messageId = detail.messageId || msg.id;
+
+        if (detail.action === 'copy') {
+            var text = msg.message || '';
+            if (!text) {
+                showToast('Nothing to copy', 'error');
+                return;
+            }
+            navigator.clipboard.writeText(text).then(function () {
+                showToast('Message copied!', 'success');
+            }).catch(function () {
+                showToast('Failed to copy message', 'error');
+            });
+            return;
+        }
+
+        if (detail.action === 'report') {
+            showToast('Report coming soon', 'info');
+            return;
+        }
+
+        if (detail.action === 'delete') {
+            if (!canDeleteMessage(msg)) {
+                showToast('You cannot delete this message', 'error');
+                return;
+            }
+
+            var endpoint = detail.conversationId || msg.conversation_id
+                ? '/api/dm/' + (detail.conversationId || msg.conversation_id) + '/messages/' + messageId
+                : '/api/messages/' + messageId;
+
+            // Remove it from the UI immediately, then let the server catch up.
+            handleDeletedMessage({
+                messageId: messageId,
+                communityId: detail.communityId || msg.community_id || null,
+                conversationId: detail.conversationId || msg.conversation_id || null,
+            });
+
+            apiDelete(endpoint)
+                .then(function () {
+                    showToast('Message deleted', 'success');
+                })
+                .catch(function (err) {
+                    console.error('[HIVE] Failed to delete message:', err);
+                    showToast((err && err.message) || 'Failed to delete message', 'error');
+                });
+        }
+    }
+
+    function handleMessageMenuOutsideClick(e) {
+        if (!activeMessageMenu) return;
+        if (!activeMessageMenu.contains(e.target)) {
+            closeMessageMenu();
+        }
+    }
+
+    function handleMessageMenuKeydown(e) {
+        if (e.key === 'Escape') closeMessageMenu();
+    }
+
+    function toggleMessageMenu(msgEl, btn, msg) {
+        if (activeMessageMenu) {
+            if (activeMessageMenu._anchorBtn === btn) {
+                closeMessageMenu();
+                return;
+            }
+            closeMessageMenu();
+        }
+        showMessageMenu(msgEl, btn, msg);
+    }
+
+    function showMessageMenu(msgEl, btn, msg) {
+        if (!msgEl || !btn) return;
+        var popup = document.createElement('div');
+        popup.className = 'message-menu-popup';
+        popup.setAttribute('role', 'menu');
+        popup.setAttribute('aria-label', 'Message options');
+        popup._anchorBtn = btn;
+        popup._message = msg;
+
+        var copyIcon = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+        var reportIcon = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V5a1 1 0 0 1 1-1h12l-2 4 2 4H5a1 1 0 0 0-1 1"/><line x1="4" y1="20" x2="4" y2="20"/></svg>';
+        var deleteIcon = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>';
+        var deleteButton = canDeleteMessage(msg)
+            ? '<button type="button" class="message-menu-item danger" data-action="delete" role="menuitem">' +
+                '<span class="message-menu-icon">' + deleteIcon + '</span><span class="message-menu-label">Delete Message</span>' +
+            '</button>'
+            : '';
+
+        popup.innerHTML =
+            '<button type="button" class="message-menu-item" data-action="copy" role="menuitem">' +
+                '<span class="message-menu-icon">' + copyIcon + '</span><span class="message-menu-label">Copy Message</span>' +
+            '</button>' +
+            '<button type="button" class="message-menu-item" data-action="report" role="menuitem">' +
+                '<span class="message-menu-icon">' + reportIcon + '</span><span class="message-menu-label">Report Message</span>' +
+            '</button>' +
+            deleteButton;
+
+        popup.addEventListener('click', function (e) {
+            var item = e.target.closest('.message-menu-item');
+            if (!item) return;
+            e.stopPropagation();
+            var action = item.getAttribute('data-action');
+            window.dispatchEvent(new CustomEvent('hive:message-menu-action', {
+                detail: {
+                    action: action,
+                    message: msg,
+                    messageId: msg && msg.id,
+                    conversationId: msg && msg.conversation_id,
+                    communityId: msg && msg.community_id
+                }
+            }));
+            closeMessageMenu();
+        });
+
+        document.body.appendChild(popup);
+        activeMessageMenu = popup;
+        btn.setAttribute('aria-expanded', 'true');
+
+        var rect = btn.getBoundingClientRect();
+        var popupRect = popup.getBoundingClientRect();
+        var gap = 10;
+        var left = rect.right + gap;
+        var top = rect.top - 6;
+
+        if (left + popupRect.width > window.innerWidth - 10) {
+            left = rect.left - popupRect.width - gap;
+        }
+        if (left < 10) left = 10;
+        if (top + popupRect.height > window.innerHeight - 10) {
+            top = window.innerHeight - popupRect.height - 10;
+        }
+        if (top < 10) top = 10;
+
+        popup.style.left = left + 'px';
+        popup.style.top = top + 'px';
+
+        setTimeout(function () {
+            document.addEventListener('click', handleMessageMenuOutsideClick);
+            document.addEventListener('keydown', handleMessageMenuKeydown);
+        }, 0);
     }
 
     function renderReactionsHtml(msg, currentUserId) {
@@ -6945,24 +7209,11 @@
         });
 
         socket.on('message:deleted', function (data) {
-            if (!data || !data.messageId) return;
-            if (state.currentCommunity && data.communityId === state.currentCommunity.id) {
-                var msgEl = dom.chatMessagesInner ? dom.chatMessagesInner.querySelector('[data-msg-id="' + data.messageId + '"]') : null;
-                if (msgEl) {
-                    msgEl.classList.add('msg-deleted');
-                    msgEl.style.opacity = '0';
-                    msgEl.style.transform = 'translateX(-20px)';
-                    msgEl.style.transition = 'all 0.3s var(--ease)';
-                    setTimeout(function () { msgEl.remove(); }, 300);
-                }
-                // Remove from state
-                for (var i = 0; i < state.messages.length; i++) {
-                    if (state.messages[i].id === data.messageId) {
-                        state.messages.splice(i, 1);
-                        break;
-                    }
-                }
-            }
+            handleDeletedMessage(data);
+        });
+
+        socket.on('dm:deleted', function (data) {
+            handleDeletedMessage(data);
         });
 
         socket.on('mute:applied', function (data) {
@@ -7411,6 +7662,10 @@
 
     /* ── Event Bindings ──────────────────────── */
     function bindEvents() {
+        window.addEventListener('hive:message-menu-action', function (e) {
+            handleMessageMenuAction(e.detail || {});
+        });
+
         if (dom.chatBackBtn) {
             dom.chatBackBtn.addEventListener('click', function () {
                 window.history.pushState({}, '', '/home/');
@@ -8081,11 +8336,15 @@
     function openProfile() {
         if (profileOpen) return;
         profileOpen = true;
+        if (momentsOpen) {
+            momentsOpen = false;
+        }
 
         var rpanel = $('rpanel');
         var profileView = $('rpanel-profile');
         var editView = $('rpanel-edit');
         var appearanceView = $('rpanel-appearance');
+        var momentsView = dom.momentsView;
         var rightSidebar = qs('.right-sidebar');
         if (!rpanel || !profileView) return;
 
@@ -8094,6 +8353,7 @@
 
         hide(editView);
         if (appearanceView) hide(appearanceView);
+        if (momentsView) hide(momentsView);
         show(profileView);
         show(rpanel);
         if (rightSidebar) hide(rightSidebar);
@@ -8131,6 +8391,591 @@
             cards[i].offsetHeight;
             cards[i].style.animation = '';
         }
+    }
+
+    /* ── Moments (rpanel) ─────────────────────── */
+    var momentsOpen = false;
+
+    var MOCK_MOMENTS = [
+        { id: 'm1', username: 'Alex', profile_picture: 'https://i.pravatar.cc/150?img=1', time: '2h ago', type: 'image', ring: 'ring_sakura', viewed: false },
+        { id: 'm2', username: 'Sarah', profile_picture: 'https://i.pravatar.cc/150?img=5', time: '4h ago', type: 'video', ring: 'ring_lightning', viewed: false },
+        { id: 'm3', username: 'Mike', profile_picture: 'https://i.pravatar.cc/150?img=3', time: '6h ago', type: 'text', ring: 'ring_aurora', viewed: true },
+        { id: 'm4', username: 'Emma', profile_picture: 'https://i.pravatar.cc/150?img=9', time: '8h ago', type: 'image', ring: 'ring_galaxy', viewed: false },
+        { id: 'm5', username: 'Jake', profile_picture: 'https://i.pravatar.cc/150?img=12', time: '12h ago', type: 'video', ring: 'ring_diamond', viewed: true },
+        { id: 'm6', username: 'Luna', profile_picture: 'https://i.pravatar.cc/150?img=16', time: '1d ago', type: 'text', ring: 'ring_sunset', viewed: true },
+    ];
+
+    var MOMENT_TYPE_ICONS = {
+        image: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>',
+        video: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>',
+        text: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>'
+    };
+
+    function openMoments() {
+        if (momentsOpen) return;
+        momentsOpen = true;
+
+        var rpanel = $('rpanel');
+        var momentsView = dom.momentsView;
+        var profileView = $('rpanel-profile');
+        var editView = $('rpanel-edit');
+        var appearanceView = $('rpanel-appearance');
+        var rightSidebar = qs('.right-sidebar');
+        if (!rpanel || !momentsView) return;
+
+        document.body.classList.remove('side-open');
+
+        hide(profileView);
+        hide(editView);
+        if (appearanceView) hide(appearanceView);
+        show(momentsView);
+        show(rpanel);
+        if (rightSidebar) hide(rightSidebar);
+
+        // Set user avatar in My Moment card
+        if (dom.momentsMyAvatar && state.user) {
+            dom.momentsMyAvatar.src = getAvatarUrl(state.user);
+        }
+
+        restoreRpanelExpand();
+        renderMoments();
+
+        var cards = momentsView.querySelectorAll('.rp-entrance');
+        for (var i = 0; i < cards.length; i++) {
+            cards[i].style.animation = 'none';
+            cards[i].offsetHeight;
+            cards[i].style.animation = '';
+        }
+    }
+
+    function closeMoments() {
+        if (!momentsOpen) return;
+
+        var rpanel = $('rpanel');
+        var rightSidebar = qs('.right-sidebar');
+        if (rpanel) hide(rpanel);
+        if (rightSidebar) show(rightSidebar);
+        momentsOpen = false;
+        setActiveRailIcon(state.activeView);
+        syncSidebarVisibility(state.activeView);
+
+        window.history.back();
+    }
+
+    function renderMoments() {
+        var list = dom.momentsList;
+        if (!list) return;
+        list.innerHTML = '';
+        if (dom.momentsSkeleton) show(dom.momentsSkeleton);
+
+        apiGet('/api/moments?limit=20').then(function (data) {
+            if (dom.momentsSkeleton) hide(dom.momentsSkeleton);
+
+            var moments = (data && data.moments) || [];
+
+            if (moments.length === 0) {
+                show(dom.momentsEmpty);
+                return;
+            }
+            hide(dom.momentsEmpty);
+
+            for (var i = 0; i < moments.length; i++) {
+                var m = moments[i];
+                var item = document.createElement('div');
+                item.className = 'moment-item rp-entrance';
+                item.setAttribute('data-delay', String(i));
+                item.setAttribute('data-moment-id', m.id);
+                item._momentData = m;
+
+                var typeIcon = MOMENT_TYPE_ICONS[m.type] || '';
+                var typeLabel = m.type.charAt(0).toUpperCase() + m.type.slice(1);
+                var avatar = getAvatarUrl(m);
+                var name = m.display_name || m.username || 'User';
+                var timeAgo = formatTimeAgo(m.created_at);
+
+                item.innerHTML =
+                    '<div class="moment-avatar-wrap">' +
+                        '<div class="moment-avatar-ring"></div>' +
+                        '<img class="moment-avatar" src="' + escapeHtml(avatar) + '" alt="" loading="lazy">' +
+                        '<div class="moment-type-badge" style="color:' + getTypeColor(m.type) + '">' + typeIcon + '</div>' +
+                    '</div>' +
+                    '<div class="moment-info">' +
+                        '<span class="moment-username">' + escapeHtml(name) + '</span>' +
+                        '<div class="moment-meta">' +
+                            '<span class="moment-type-label">' + typeIcon + ' ' + typeLabel + '</span>' +
+                            '<span>' + escapeHtml(timeAgo) + '</span>' +
+                        '</div>' +
+                    '</div>';
+
+                item.addEventListener('click', (function (moment, idx) {
+                    return function () {
+                        openMomentViewer(moments, idx);
+                    };
+                })(m, i));
+
+                list.appendChild(item);
+            }
+        }).catch(function () {
+            if (dom.momentsSkeleton) hide(dom.momentsSkeleton);
+            show(dom.momentsEmpty);
+        });
+    }
+
+    function getTypeColor(type) {
+        switch (type) {
+            case 'image': return 'var(--accent)';
+            case 'video': return 'var(--primary)';
+            case 'text': return 'var(--secondary)';
+            default: return 'var(--text-2)';
+        }
+    }
+
+    /* ── Create Moment Popup ───────────────────── */
+    function openMomentCreatePopup() {
+        var overlay = dom.momentCreateOverlay;
+        if (!overlay) return;
+        overlay.style.display = '';
+        overlay.offsetHeight;
+        overlay.classList.add('visible');
+    }
+
+    function closeMomentCreatePopup() {
+        var overlay = dom.momentCreateOverlay;
+        if (!overlay) return;
+        var popup = overlay.querySelector('.moment-create-popup');
+        if (popup) popup.classList.add('moment-popup-exit');
+        overlay.classList.remove('visible');
+        setTimeout(function () {
+            overlay.style.display = 'none';
+            if (popup) popup.classList.remove('moment-popup-exit');
+        }, 200);
+    }
+
+    /* ── Image Moment Popup ─────────────────────── */
+    var momentImgState = { file: null, uploading: false };
+
+    function openMomentImagePopup() {
+        var overlay = dom.momentImgOverlay;
+        if (!overlay) return;
+        // Reset state
+        momentImgState.file = null;
+        momentImgState.uploading = false;
+        if (dom.momentImgDesc) dom.momentImgDesc.value = '';
+        if (dom.momentImgDescCount) dom.momentImgDescCount.textContent = '0';
+        resetMomentImgPostBtn();
+        // Reset preview
+        if (dom.momentImgPreview) dom.momentImgPreview.src = '';
+        if (dom.momentImgPreviewWrap) dom.momentImgPreviewWrap.style.display = 'none';
+        // Open file picker immediately
+        if (dom.momentImgFileInput) dom.momentImgFileInput.click();
+    }
+
+    function showMomentImagePopup(imageUrl) {
+        var overlay = dom.momentImgOverlay;
+        if (!overlay) return;
+        if (dom.momentImgPreview) dom.momentImgPreview.src = imageUrl;
+        if (dom.momentImgPreviewWrap) dom.momentImgPreviewWrap.style.display = '';
+        overlay.style.display = '';
+        overlay.offsetHeight;
+        overlay.classList.add('visible');
+    }
+
+    function closeMomentImagePopup() {
+        var overlay = dom.momentImgOverlay;
+        if (!overlay) return;
+        var popup = overlay.querySelector('.moment-img-popup');
+        if (popup) popup.classList.add('moment-popup-exit');
+        overlay.classList.remove('visible');
+        setTimeout(function () {
+            overlay.style.display = 'none';
+            if (popup) popup.classList.remove('moment-popup-exit');
+        }, 200);
+        momentImgState.file = null;
+        momentImgState.uploading = false;
+    }
+
+    function resetMomentImgPostBtn() {
+        if (!dom.momentImgBtnPost) return;
+        dom.momentImgBtnPost.disabled = false;
+        var txt = dom.momentImgBtnPost.querySelector('.moment-img-btn-text');
+        var load = dom.momentImgBtnPost.querySelector('.moment-img-btn-loading');
+        if (txt) txt.style.display = '';
+        if (load) load.style.display = 'none';
+    }
+
+    function setMomentImgPosting(isPosting) {
+        momentImgState.uploading = isPosting;
+        if (!dom.momentImgBtnPost) return;
+        dom.momentImgBtnPost.disabled = isPosting;
+        var txt = dom.momentImgBtnPost.querySelector('.moment-img-btn-text');
+        var load = dom.momentImgBtnPost.querySelector('.moment-img-btn-loading');
+        if (txt) txt.style.display = isPosting ? 'none' : '';
+        if (load) load.style.display = isPosting ? '' : 'none';
+    }
+
+    function handleMomentImgFileSelect(file) {
+        if (!file) return;
+        var allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        if (!allowed.includes(file.type)) {
+            showToast('Please select a JPG, PNG, GIF, or WebP image', 'error');
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            showToast('Image must be under 5MB', 'error');
+            return;
+        }
+        momentImgState.file = file;
+        var reader = new FileReader();
+        reader.onload = function (e) {
+            showMomentImagePopup(e.target.result);
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function postImageMoment() {
+        if (momentImgState.uploading) return;
+        if (!momentImgState.file) {
+            showToast('Please select an image', 'error');
+            return;
+        }
+
+        setMomentImgPosting(true);
+
+        // Step 1: Upload image to R2
+        var formData = new FormData();
+        formData.append('file', momentImgState.file);
+        var token = HiveAuth.getToken();
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', API_BASE + '/api/upload/attachment', true);
+        xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+        xhr.setRequestHeader('ngrok-skip-browser-warning', 'true');
+
+        xhr.addEventListener('load', function () {
+            try {
+                var data = JSON.parse(xhr.responseText);
+                if (!data.success || !data.attachment_url) {
+                    setMomentImgPosting(false);
+                    showToast('Image upload failed', 'error');
+                    return;
+                }
+                // Step 2: Create the moment
+                var desc = dom.momentImgDesc ? dom.momentImgDesc.value.trim() : '';
+                apiPost('/api/moments', {
+                    type: 'image',
+                    image_url: data.attachment_url,
+                    description: desc,
+                }).then(function (res) {
+                    if (res && res.success && res.moment) {
+                        closeMomentImagePopup();
+                        showToast('Moment posted!', 'success');
+                        // Add to moments list instantly
+                        addMomentToList(res.moment);
+                    } else {
+                        showToast((res && res.message) || 'Failed to post moment', 'error');
+                    }
+                }).catch(function () {
+                    showToast('Network error. Please try again.', 'error');
+                }).finally(function () {
+                    setMomentImgPosting(false);
+                });
+            } catch (err) {
+                setMomentImgPosting(false);
+                showToast('Upload failed', 'error');
+            }
+        });
+
+        xhr.addEventListener('error', function () {
+            setMomentImgPosting(false);
+            showToast('Network error during upload', 'error');
+        });
+
+        xhr.send(formData);
+    }
+
+    function addMomentToList(moment) {
+        var list = dom.momentsList;
+        if (!list) return;
+        // Hide empty state
+        if (dom.momentsEmpty) hide(dom.momentsEmpty);
+
+        var item = document.createElement('div');
+        item.className = 'moment-item rp-entrance entering';
+        item.setAttribute('data-moment-id', moment.id);
+        item._momentData = moment;
+
+        var typeIcon = MOMENT_TYPE_ICONS[moment.type] || '';
+        var typeLabel = moment.type.charAt(0).toUpperCase() + moment.type.slice(1);
+        var avatar = getAvatarUrl(moment);
+        var name = moment.display_name || moment.username || 'User';
+        var timeAgo = formatTimeAgo(moment.created_at);
+
+        item.innerHTML =
+            '<div class="moment-avatar-wrap">' +
+                '<div class="moment-avatar-ring"></div>' +
+                '<img class="moment-avatar" src="' + escapeHtml(avatar) + '" alt="" loading="lazy">' +
+                '<div class="moment-type-badge" style="color:' + getTypeColor(moment.type) + '">' + typeIcon + '</div>' +
+            '</div>' +
+            '<div class="moment-info">' +
+                '<span class="moment-username">' + escapeHtml(name) + '</span>' +
+                '<div class="moment-meta">' +
+                    '<span class="moment-type-label">' + typeIcon + ' ' + typeLabel + '</span>' +
+                    '<span>' + escapeHtml(timeAgo) + '</span>' +
+                '</div>' +
+            '</div>';
+
+        item.addEventListener('click', function () {
+            // Collect all moments from the list for the viewer
+            var allItems = list.querySelectorAll('.moment-item');
+            var momentsData = [];
+            var clickedIndex = 0;
+            for (var i = 0; i < allItems.length; i++) {
+                var mData = allItems[i]._momentData;
+                if (mData) {
+                    if (allItems[i] === item) clickedIndex = momentsData.length;
+                    momentsData.push(mData);
+                }
+            }
+            if (momentsData.length > 0) {
+                openMomentViewer(momentsData, clickedIndex);
+            } else {
+                openMomentViewer([moment], 0);
+            }
+        });
+
+        list.insertBefore(item, list.firstChild);
+    }
+
+    function formatTimeAgo(dateStr) {
+        if (!dateStr) return '';
+        var now = new Date();
+        var date = new Date(dateStr);
+        var diff = Math.floor((now - date) / 1000);
+        if (diff < 60) return 'just now';
+        if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+        if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+        if (diff < 604800) return Math.floor(diff / 86400) + 'd ago';
+        return date.toLocaleDateString();
+    }
+
+    /* ── Moment Viewer (Stories) ─────────────────── */
+    var mvState = {
+        open: false,
+        moments: [],
+        currentIndex: 0,
+        progressTimer: null,
+        liked: false,
+    };
+    var MV_DURATION = 5000;
+
+    function openMomentViewer(moments, startIndex) {
+        if (!moments || moments.length === 0) return;
+        mvState.open = true;
+        mvState.moments = moments;
+        mvState.currentIndex = startIndex || 0;
+        mvState.liked = false;
+
+        var overlay = dom.mvOverlay;
+        if (!overlay) return;
+
+        // Build progress segments
+        buildMvProgress();
+
+        // Show first moment
+        renderMvMoment();
+
+        // Open overlay
+        overlay.style.display = '';
+        overlay.offsetHeight;
+        overlay.classList.remove('mv-exit');
+        overlay.classList.add('visible');
+        document.body.style.overflow = 'hidden';
+
+        // Start progress
+        startMvProgress();
+    }
+
+    function closeMomentViewer() {
+        var overlay = dom.mvOverlay;
+        if (!overlay) return;
+
+        clearMvProgress();
+        mvState.open = false;
+
+        overlay.classList.remove('visible');
+        overlay.classList.add('mv-exit');
+        setTimeout(function () {
+            overlay.style.display = 'none';
+            overlay.classList.remove('mv-exit');
+            if (dom.mvImage) dom.mvImage.src = '';
+            if (dom.mvReplyInput) dom.mvReplyInput.value = '';
+            document.body.style.overflow = '';
+        }, 250);
+    }
+
+    function buildMvProgress() {
+        var container = dom.mvProgress;
+        if (!container) return;
+        container.innerHTML = '';
+        for (var i = 0; i < mvState.moments.length; i++) {
+            var seg = document.createElement('div');
+            seg.className = 'mv-progress-seg';
+            seg.innerHTML = '<div class="mv-progress-fill"></div>';
+            container.appendChild(seg);
+        }
+    }
+
+    function startMvProgress() {
+        clearMvProgress();
+        var segs = dom.mvProgress ? dom.mvProgress.querySelectorAll('.mv-progress-seg') : [];
+        // Mark previous as done
+        for (var i = 0; i < mvState.currentIndex; i++) {
+            segs[i].classList.add('mv-seg-done');
+        }
+        // Mark current as active
+        if (segs[mvState.currentIndex]) {
+            segs[mvState.currentIndex].classList.remove('mv-seg-done');
+            segs[mvState.currentIndex].classList.add('mv-seg-active');
+        }
+        // Auto-advance
+        mvState.progressTimer = setTimeout(function () {
+            goNextMoment();
+        }, MV_DURATION);
+    }
+
+    function clearMvProgress() {
+        if (mvState.progressTimer) {
+            clearTimeout(mvState.progressTimer);
+            mvState.progressTimer = null;
+        }
+    }
+
+    function renderMvMoment() {
+        var m = mvState.moments[mvState.currentIndex];
+        if (!m) return;
+
+        var avatar = getAvatarUrl(m);
+        var name = m.display_name || m.username || 'User';
+        var timeAgo = formatTimeAgo(m.created_at);
+
+        if (dom.mvAvatar) dom.mvAvatar.src = avatar;
+        if (dom.mvUsername) dom.mvUsername.textContent = name;
+        if (dom.mvTime) dom.mvTime.textContent = timeAgo;
+
+        // Description
+        if (m.description && m.description.trim()) {
+            if (dom.mvDescBar) dom.mvDescBar.style.display = '';
+            if (dom.mvDescText) dom.mvDescText.textContent = m.description;
+        } else {
+            if (dom.mvDescBar) dom.mvDescBar.style.display = 'none';
+        }
+
+        // Image
+        if (dom.mvImage) {
+            dom.mvImage.classList.remove('mv-img-transition');
+            dom.mvImage.src = m.image_url || '';
+            // Loading state
+            if (dom.mvImageLoading) dom.mvImageLoading.style.display = '';
+            dom.mvImage.onload = function () {
+                if (dom.mvImageLoading) dom.mvImageLoading.style.display = 'none';
+            };
+            dom.mvImage.onerror = function () {
+                if (dom.mvImageLoading) dom.mvImageLoading.style.display = 'none';
+            };
+        }
+
+        // Reset like state
+        mvState.liked = false;
+        if (dom.mvLikeBtn) dom.mvLikeBtn.classList.remove('mv-liked');
+
+        // Reset reply
+        if (dom.mvReplyInput) dom.mvReplyInput.value = '';
+        if (dom.mvReplySend) dom.mvReplySend.classList.remove('mv-send-active');
+
+        // Update nav states
+        updateMvNavState();
+    }
+
+    function goNextMoment() {
+        clearMvProgress();
+        if (mvState.currentIndex < mvState.moments.length - 1) {
+            // Mark current as done
+            var segs = dom.mvProgress ? dom.mvProgress.querySelectorAll('.mv-progress-seg') : [];
+            if (segs[mvState.currentIndex]) {
+                segs[mvState.currentIndex].classList.add('mv-seg-done');
+                segs[mvState.currentIndex].classList.remove('mv-seg-active');
+            }
+            mvState.currentIndex++;
+            // Transition image
+            if (dom.mvImage) {
+                dom.mvImage.classList.add('mv-img-transition');
+            }
+            renderMvMoment();
+            startMvProgress();
+        } else {
+            // Last moment — close viewer
+            var lastSegs = dom.mvProgress ? dom.mvProgress.querySelectorAll('.mv-progress-seg') : [];
+            if (lastSegs[mvState.currentIndex]) {
+                lastSegs[mvState.currentIndex].classList.add('mv-seg-done');
+                lastSegs[mvState.currentIndex].classList.remove('mv-seg-active');
+            }
+            setTimeout(function () {
+                closeMomentViewer();
+            }, 200);
+        }
+    }
+
+    function goPrevMoment() {
+        clearMvProgress();
+        if (mvState.currentIndex > 0) {
+            // Remove done from current
+            var segs = dom.mvProgress ? dom.mvProgress.querySelectorAll('.mv-progress-seg') : [];
+            if (segs[mvState.currentIndex]) {
+                segs[mvState.currentIndex].classList.remove('mv-seg-done');
+                segs[mvState.currentIndex].classList.remove('mv-seg-active');
+            }
+            mvState.currentIndex--;
+            if (dom.mvImage) {
+                dom.mvImage.classList.add('mv-img-transition');
+            }
+            renderMvMoment();
+            startMvProgress();
+        }
+    }
+
+    function updateMvNavState() {
+        if (dom.mvNavLeft) {
+            if (mvState.currentIndex <= 0) {
+                dom.mvNavLeft.classList.add('mv-nav-disabled');
+            } else {
+                dom.mvNavLeft.classList.remove('mv-nav-disabled');
+            }
+        }
+        if (dom.mvNavRight) {
+            if (mvState.currentIndex >= mvState.moments.length - 1) {
+                dom.mvNavRight.classList.add('mv-nav-disabled');
+            } else {
+                dom.mvNavRight.classList.remove('mv-nav-disabled');
+            }
+        }
+    }
+
+    function mvToggleLike() {
+        mvState.liked = !mvState.liked;
+        if (dom.mvLikeBtn) {
+            dom.mvLikeBtn.classList.toggle('mv-liked', mvState.liked);
+        }
+        if (mvState.liked) {
+            showToast('Liked!', 'success');
+        }
+    }
+
+    function mvSendReply() {
+        if (!dom.mvReplyInput) return;
+        var text = dom.mvReplyInput.value.trim();
+        if (!text) return;
+        showToast('Reply sent!', 'success');
+        dom.mvReplyInput.value = '';
+        if (dom.mvReplySend) dom.mvReplySend.classList.remove('mv-send-active');
     }
 
     function populateProfile() {
@@ -8255,6 +9100,123 @@
         var backBtn = $('rpanel-back');
         if (backBtn) backBtn.addEventListener('click', closeProfile);
 
+        var momentsBackBtn = dom.momentsBack;
+        if (momentsBackBtn) momentsBackBtn.addEventListener('click', closeMoments);
+
+        if (dom.momentsAddBtn) {
+            dom.momentsAddBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                openMomentCreatePopup();
+            });
+        }
+
+        var momentsMyCard = qs('.moments-my-card');
+        if (momentsMyCard) {
+            momentsMyCard.addEventListener('click', function () {
+                openMomentCreatePopup();
+            });
+        }
+
+        if (dom.momentCreateClose) {
+            dom.momentCreateClose.addEventListener('click', closeMomentCreatePopup);
+        }
+
+        if (dom.momentCreateOverlay) {
+            dom.momentCreateOverlay.addEventListener('click', function (e) {
+                if (e.target === dom.momentCreateOverlay) closeMomentCreatePopup();
+            });
+        }
+
+        for (var mi = 0; mi < dom.momentCreateOptions.length; mi++) {
+            dom.momentCreateOptions[mi].addEventListener('click', function () {
+                var type = this.getAttribute('data-type');
+                closeMomentCreatePopup();
+                if (type === 'image') {
+                    openMomentImagePopup();
+                } else {
+                    showToast('Create ' + type + ' moment — coming soon', 'info');
+                }
+            });
+        }
+
+        // Image moment popup events
+        if (dom.momentImgClose) {
+            dom.momentImgClose.addEventListener('click', closeMomentImagePopup);
+        }
+        if (dom.momentImgOverlay) {
+            dom.momentImgOverlay.addEventListener('click', function (e) {
+                if (e.target === dom.momentImgOverlay) closeMomentImagePopup();
+            });
+        }
+        if (dom.momentImgChange) {
+            dom.momentImgChange.addEventListener('click', function () {
+                if (dom.momentImgFileInput) dom.momentImgFileInput.click();
+            });
+        }
+        if (dom.momentImgFileInput) {
+            dom.momentImgFileInput.addEventListener('change', function () {
+                var file = this.files && this.files[0];
+                if (file) handleMomentImgFileSelect(file);
+                this.value = '';
+            });
+        }
+        if (dom.momentImgDesc) {
+            dom.momentImgDesc.addEventListener('input', function () {
+                var len = this.value.length;
+                if (dom.momentImgDescCount) dom.momentImgDescCount.textContent = len;
+            });
+        }
+        if (dom.momentImgBtnCancel) {
+            dom.momentImgBtnCancel.addEventListener('click', closeMomentImagePopup);
+        }
+        if (dom.momentImgBtnPost) {
+            dom.momentImgBtnPost.addEventListener('click', postImageMoment);
+        }
+
+        // Moment viewer events
+        if (dom.mvClose) {
+            dom.mvClose.addEventListener('click', closeMomentViewer);
+        }
+        if (dom.mvNavLeft) {
+            dom.mvNavLeft.addEventListener('click', function (e) {
+                e.stopPropagation();
+                goPrevMoment();
+            });
+        }
+        if (dom.mvNavRight) {
+            dom.mvNavRight.addEventListener('click', function (e) {
+                e.stopPropagation();
+                goNextMoment();
+            });
+        }
+        if (dom.mvLikeBtn) {
+            dom.mvLikeBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                mvToggleLike();
+            });
+        }
+        if (dom.mvReplyInput) {
+            dom.mvReplyInput.addEventListener('input', function () {
+                var hasText = this.value.trim().length > 0;
+                if (dom.mvReplySend) {
+                    dom.mvReplySend.classList.toggle('mv-send-active', hasText);
+                }
+            });
+            dom.mvReplyInput.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    mvSendReply();
+                }
+                e.stopPropagation();
+            });
+        }
+        if (dom.mvReplySend) {
+            dom.mvReplySend.addEventListener('click', function (e) {
+                e.stopPropagation();
+                mvSendReply();
+            });
+        }
+
         var expandHandle = $('rpanel-collapse-handle');
         if (expandHandle) expandHandle.addEventListener('click', toggleRpanelExpand);
 
@@ -8263,6 +9225,14 @@
                 closeProfile();
             } else if (e.key === 'Escape' && appearanceOpen) {
                 closeAppearance();
+            } else if (e.key === 'Escape' && momentsOpen) {
+                closeMoments();
+            } else if (e.key === 'Escape' && dom.momentCreateOverlay && dom.momentCreateOverlay.classList.contains('visible')) {
+                closeMomentCreatePopup();
+            } else if (e.key === 'Escape' && dom.momentImgOverlay && dom.momentImgOverlay.classList.contains('visible')) {
+                closeMomentImagePopup();
+            } else if (e.key === 'Escape' && mvState.open) {
+                closeMomentViewer();
             }
         });
 
@@ -8572,7 +9542,7 @@
     var editDirty = false;
     var editFormState = {};
 
-    var RANK_TIER = { rookie:0, explorer:1, member:2, contributor:3, insider:4, pioneer:5, elite:6, legend:7, titan:8, nova:9 };
+    var RANK_TIER = { rookie:0, explorer:1, member:2, contributor:3, insider:4, pioneer:5, elite:6, legend:7, titan:8, nova:9, moderator:100, administrator:101, owner:102 };
     var STAFF_RANKS = ['moderator','administrator','owner','verified','bot'];
 
     function openEditProfile() {
@@ -10350,6 +11320,46 @@
         dom.notifEmpty = $('notif-empty');
         dom.notifLoadMore = $('notif-load-more');
         dom.topbarNotifBtn = $('topbar-notif-btn');
+        // Moments panel
+        dom.momentsView = $('rpanel-moments');
+        dom.momentsBack = $('rpanel-moments-back');
+        dom.momentsMyAvatar = $('moments-my-avatar');
+        dom.momentsAddBtn = $('moments-add-btn');
+        dom.momentsList = $('moments-list');
+        dom.momentsEmpty = $('moments-empty');
+        dom.momentsSkeleton = $('moments-skeleton');
+        // Moment creation popup
+        dom.momentCreateOverlay = $('moment-create-overlay');
+        dom.momentCreateClose = $('moment-create-close');
+        dom.momentCreateOptions = document.querySelectorAll('.moment-create-option');
+        // Image moment popup
+        dom.momentImgOverlay = $('moment-img-overlay');
+        dom.momentImgClose = $('moment-img-close');
+        dom.momentImgPreview = $('moment-img-preview');
+        dom.momentImgPreviewWrap = $('moment-img-preview-wrap');
+        dom.momentImgChange = $('moment-img-change');
+        dom.momentImgDesc = $('moment-img-desc');
+        dom.momentImgDescCount = $('moment-img-desc-count');
+        dom.momentImgBtnCancel = $('moment-img-btn-cancel');
+        dom.momentImgBtnPost = $('moment-img-btn-post');
+        dom.momentImgFileInput = $('moment-img-file-input');
+        // Moment viewer
+        dom.mvOverlay = $('mv-overlay');
+        dom.mvProgress = $('mv-progress');
+        dom.mvAvatar = $('mv-avatar');
+        dom.mvUsername = $('mv-username');
+        dom.mvTime = $('mv-time');
+        dom.mvClose = $('mv-close');
+        dom.mvNavLeft = $('mv-nav-left');
+        dom.mvNavRight = $('mv-nav-right');
+        dom.mvImageWrap = $('mv-image-wrap');
+        dom.mvImage = $('mv-image');
+        dom.mvImageLoading = $('mv-image-loading');
+        dom.mvDescBar = $('mv-desc-bar');
+        dom.mvDescText = $('mv-desc-text');
+        dom.mvLikeBtn = $('mv-like-btn');
+        dom.mvReplyInput = $('mv-reply-input');
+        dom.mvReplySend = $('mv-reply-send');
     }
 
     /* ── Friend Button Icon SVGs ──────────────── */
