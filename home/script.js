@@ -196,6 +196,16 @@
         script.src = buzzAdScriptBase + ad.key + '/invoke.js';
         container.appendChild(script);
     }
+    function loadBuzzAdLarge(containerId) {
+        var container = document.getElementById(containerId);
+        if (!container) return;
+        var ad = { key: '0ca0bffacb761ba5ec55679cd36f7104', w: 160, h: 600 };
+        window.atOptions = { key: ad.key, format: 'iframe', height: ad.h, width: ad.w, params: {} };
+        var script = document.createElement('script');
+        script.async = true;
+        script.src = buzzAdScriptBase + ad.key + '/invoke.js';
+        container.appendChild(script);
+    }
 
     function formatTime(isoStr) {
         var d = new Date(isoStr);
@@ -1749,7 +1759,9 @@
         showDmSidebar();
         if (dom.restrictedBanner) dom.restrictedBanner.style.display = 'none';
         if (dom.chatComposer) dom.chatComposer.classList.remove('restricted');
-        openMoments();
+        if (window.innerWidth > 900) {
+            openMoments();
+        }
     }
 
     /* ── Friends Panel ─────────────────────────────── */
@@ -8063,6 +8075,14 @@
             });
         }
 
+        // DM moments button
+        var dmMomentsBtn = $('dm-moments-btn');
+        if (dmMomentsBtn) {
+            dmMomentsBtn.addEventListener('click', function () {
+                openMoments();
+            });
+        }
+
         // DM retry button
         if (dom.retryDm) {
             dom.retryDm.addEventListener('click', loadDmConversations);
@@ -8492,6 +8512,10 @@
                 var avatar = getAvatarUrl(m);
                 var name = m.display_name || m.username || 'User';
                 var timeAgo = formatTimeAgo(m.created_at);
+                var metaExtra = '';
+                if (m.type === 'video' && m.duration) {
+                    metaExtra = ' · ' + formatVideoDuration(m.duration);
+                }
 
                 item.innerHTML =
                     '<div class="moment-avatar-wrap">' +
@@ -8502,7 +8526,7 @@
                     '<div class="moment-info">' +
                         '<span class="moment-username">' + escapeHtml(name) + '</span>' +
                         '<div class="moment-meta">' +
-                            '<span class="moment-type-label">' + typeIcon + ' ' + typeLabel + '</span>' +
+                            '<span class="moment-type-label">' + typeIcon + ' ' + typeLabel + metaExtra + '</span>' +
                             '<span>' + escapeHtml(timeAgo) + '</span>' +
                         '</div>' +
                     '</div>';
@@ -8692,6 +8716,491 @@
         xhr.send(formData);
     }
 
+    /* ── Video Moment ────────────────────────────── */
+    var momentVidState = { file: null, uploading: false, duration: 0 };
+
+    function formatVideoDuration(seconds) {
+        if (!seconds || !isFinite(seconds)) return '0:00';
+        var m = Math.floor(seconds / 60);
+        var s = Math.floor(seconds % 60);
+        return m + ':' + (s < 10 ? '0' : '') + s;
+    }
+
+    function formatFileSize(bytes) {
+        if (!bytes) return '';
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+        return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    function openMomentVideoPopup() {
+        var overlay = dom.momentVidOverlay;
+        if (!overlay) return;
+        momentVidState.file = null;
+        momentVidState.uploading = false;
+        momentVidState.duration = 0;
+        if (dom.momentVidDesc) dom.momentVidDesc.value = '';
+        if (dom.momentVidDescCount) dom.momentVidDescCount.textContent = '0';
+        resetMomentVidPostBtn();
+        if (dom.momentVidPreview) { dom.momentVidPreview.src = ''; dom.momentVidPreview.poster = ''; }
+        if (dom.momentVidPreviewWrap) dom.momentVidPreviewWrap.style.display = 'none';
+        if (dom.momentVidInfo) dom.momentVidInfo.style.display = 'none';
+        if (dom.momentVidUploadProgress) dom.momentVidUploadProgress.style.display = 'none';
+        if (dom.momentVidProgressFill) dom.momentVidProgressFill.style.width = '0%';
+        if (dom.momentVidProgressText) dom.momentVidProgressText.textContent = '0%';
+        if (dom.momentVidFileInput) dom.momentVidFileInput.click();
+    }
+
+    function showMomentVideoPopup(videoUrl) {
+        var overlay = dom.momentVidOverlay;
+        if (!overlay) return;
+        if (dom.momentVidPreview) dom.momentVidPreview.src = videoUrl;
+        if (dom.momentVidPreviewWrap) dom.momentVidPreviewWrap.style.display = '';
+        overlay.style.display = '';
+        overlay.offsetHeight;
+        overlay.classList.add('visible');
+    }
+
+    function closeMomentVideoPopup() {
+        var overlay = dom.momentVidOverlay;
+        if (!overlay) return;
+        var popup = overlay.querySelector('.moment-vid-popup');
+        if (popup) popup.classList.add('moment-popup-exit');
+        overlay.classList.remove('visible');
+        setTimeout(function () {
+            overlay.style.display = 'none';
+            if (popup) popup.classList.remove('moment-popup-exit');
+            if (dom.momentVidPreview) { dom.momentVidPreview.pause(); dom.momentVidPreview.src = ''; }
+        }, 200);
+        momentVidState.file = null;
+        momentVidState.uploading = false;
+        momentVidState.duration = 0;
+    }
+
+    function resetMomentVidPostBtn() {
+        if (!dom.momentVidBtnPost) return;
+        dom.momentVidBtnPost.disabled = false;
+        var txt = dom.momentVidBtnPost.querySelector('.moment-vid-btn-text');
+        var load = dom.momentVidBtnPost.querySelector('.moment-vid-btn-loading');
+        if (txt) txt.style.display = '';
+        if (load) load.style.display = 'none';
+    }
+
+    function setMomentVidPosting(isPosting) {
+        momentVidState.uploading = isPosting;
+        if (!dom.momentVidBtnPost) return;
+        dom.momentVidBtnPost.disabled = isPosting;
+        var txt = dom.momentVidBtnPost.querySelector('.moment-vid-btn-text');
+        var load = dom.momentVidBtnPost.querySelector('.moment-vid-btn-loading');
+        if (txt) txt.style.display = isPosting ? 'none' : '';
+        if (load) load.style.display = isPosting ? '' : 'none';
+    }
+
+    function setMomentVidProgress(pct) {
+        if (dom.momentVidProgressFill) dom.momentVidProgressFill.style.width = pct + '%';
+        if (dom.momentVidProgressText) dom.momentVidProgressText.textContent = Math.round(pct) + '%';
+    }
+
+    function handleMomentVidFileSelect(file) {
+        if (!file) return;
+        var allowed = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo'];
+        if (!allowed.includes(file.type)) {
+            showToast('Please select an MP4, WebM, or MOV video', 'error');
+            return;
+        }
+        if (file.size > 25 * 1024 * 1024) {
+            showToast('Video must be under 25MB', 'error');
+            return;
+        }
+        momentVidState.file = file;
+        momentVidState.duration = 0;
+
+        var videoUrl = URL.createObjectURL(file);
+        var tempVideo = document.createElement('video');
+        tempVideo.preload = 'metadata';
+        tempVideo.onloadedmetadata = function () {
+            momentVidState.duration = tempVideo.duration;
+            if (dom.momentVidDuration) dom.momentVidDuration.textContent = formatVideoDuration(tempVideo.duration);
+            if (dom.momentVidSize) dom.momentVidSize.textContent = formatFileSize(file.size);
+            if (dom.momentVidInfo) dom.momentVidInfo.style.display = '';
+            URL.revokeObjectURL(videoUrl);
+        };
+        tempVideo.onerror = function () {
+            momentVidState.duration = 0;
+            if (dom.momentVidDuration) dom.momentVidDuration.textContent = '';
+            if (dom.momentVidSize) dom.momentVidSize.textContent = formatFileSize(file.size);
+            if (dom.momentVidInfo) dom.momentVidInfo.style.display = '';
+            URL.revokeObjectURL(videoUrl);
+        };
+        tempVideo.src = videoUrl;
+        showMomentVideoPopup(videoUrl);
+    }
+
+    function postVideoMoment() {
+        if (momentVidState.uploading) return;
+        if (!momentVidState.file) {
+            showToast('Please select a video', 'error');
+            return;
+        }
+
+        setMomentVidPosting(true);
+        if (dom.momentVidUploadProgress) dom.momentVidUploadProgress.style.display = '';
+        setMomentVidProgress(0);
+
+        var formData = new FormData();
+        formData.append('file', momentVidState.file);
+        var token = HiveAuth.getToken();
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', API_BASE + '/api/upload/attachment', true);
+        xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+        xhr.setRequestHeader('ngrok-skip-browser-warning', 'true');
+
+        xhr.upload.addEventListener('progress', function (e) {
+            if (e.lengthComputable) {
+                setMomentVidProgress((e.loaded / e.total) * 100);
+            }
+        });
+
+        xhr.addEventListener('load', function () {
+            try {
+                var data = JSON.parse(xhr.responseText);
+                if (!data.success || !data.attachment_url) {
+                    setMomentVidPosting(false);
+                    if (dom.momentVidUploadProgress) dom.momentVidUploadProgress.style.display = 'none';
+                    showToast('Video upload failed', 'error');
+                    return;
+                }
+                var desc = dom.momentVidDesc ? dom.momentVidDesc.value.trim() : '';
+                apiPost('/api/moments', {
+                    type: 'video',
+                    video_url: data.attachment_url,
+                    description: desc,
+                    duration: Math.round(momentVidState.duration) || 0,
+                }).then(function (res) {
+                    if (res && res.success && res.moment) {
+                        closeMomentVideoPopup();
+                        showToast('Video moment posted!', 'success');
+                        addMomentToList(res.moment);
+                    } else {
+                        showToast((res && res.message) || 'Failed to post moment', 'error');
+                    }
+                }).catch(function () {
+                    showToast('Network error. Please try again.', 'error');
+                }).finally(function () {
+                    setMomentVidPosting(false);
+                    if (dom.momentVidUploadProgress) dom.momentVidUploadProgress.style.display = 'none';
+                });
+            } catch (err) {
+                setMomentVidPosting(false);
+                if (dom.momentVidUploadProgress) dom.momentVidUploadProgress.style.display = 'none';
+                showToast('Upload failed', 'error');
+            }
+        });
+
+        xhr.addEventListener('error', function () {
+            setMomentVidPosting(false);
+            if (dom.momentVidUploadProgress) dom.momentVidUploadProgress.style.display = 'none';
+            showToast('Network error during upload', 'error');
+        });
+
+        xhr.send(formData);
+    }
+
+    /* ── Text Moment ────────────────────────────── */
+    var momentTxtState = {
+        text: '',
+        bg: 'solid-1',
+        font: 'default',
+        uploading: false,
+    };
+
+    var MV_TXT_BGS = {
+        'solid-1': 'linear-gradient(135deg, #0a0f2e, #1a1040)',
+        'solid-2': 'linear-gradient(135deg, #1a0a2e, #2d1b4e)',
+        'solid-3': 'linear-gradient(135deg, #0a1e3e, #0d2f5e)',
+        'solid-4': 'linear-gradient(135deg, #2e0a1a, #4e1b2d)',
+        'solid-5': 'linear-gradient(135deg, #0a2e1a, #1b4e2d)',
+        'solid-6': 'linear-gradient(135deg, #2e2a0a, #4e451b)',
+        'grad-1': 'linear-gradient(135deg, #6C63FF, #FF4D9E)',
+        'grad-2': 'linear-gradient(135deg, #00E5FF, #6C63FF)',
+        'grad-3': 'linear-gradient(135deg, #FF4D9E, #FF8A65)',
+        'grad-4': 'linear-gradient(135deg, #00E5FF, #00E676)',
+    };
+
+    var MV_TXT_FONTS = {
+        'default': "'Inter', sans-serif",
+        'grotesk': "'Space Grotesk', sans-serif",
+        'playfair': "'Playfair Display', serif",
+        'montserrat': "'Montserrat', sans-serif",
+        'poppins': "'Poppins', sans-serif",
+        'raleway': "'Raleway', sans-serif",
+        'bebas': "'Bebas Neue', sans-serif",
+        'pacifico': "'Pacifico', cursive",
+        'slab': "'Roboto Slab', serif",
+        'dm': "'DM Sans', sans-serif",
+    };
+
+    function openMomentTextPopup() {
+        var overlay = dom.momentTxtOverlay;
+        if (!overlay) return;
+        momentTxtState.text = '';
+        momentTxtState.bg = 'solid-1';
+        momentTxtState.font = 'default';
+        momentTxtState.uploading = false;
+        if (dom.momentTxtInput) dom.momentTxtInput.value = '';
+        if (dom.momentTxtInputCount) dom.momentTxtInputCount.textContent = '0';
+        updateMomentTxtPreview();
+        resetMomentTxtBgActive('solid-1');
+        resetMomentTxtFontActive('default');
+        setMomentTxtPosting(false);
+        overlay.style.display = '';
+        overlay.offsetHeight;
+        overlay.classList.add('visible');
+        if (dom.momentTxtInput) dom.momentTxtInput.focus();
+    }
+
+    function closeMomentTextPopup() {
+        var overlay = dom.momentTxtOverlay;
+        if (!overlay) return;
+        if (momentTxtState.uploading) return;
+        var popup = overlay.querySelector('.moment-txt-popup');
+        if (popup) popup.classList.add('moment-popup-exit');
+        overlay.classList.remove('visible');
+        setTimeout(function () {
+            overlay.style.display = 'none';
+            if (popup) popup.classList.remove('moment-popup-exit');
+        }, 200);
+        momentTxtState.text = '';
+        momentTxtState.bg = 'solid-1';
+        momentTxtState.font = 'default';
+        setMomentTxtPosting(false);
+    }
+
+    function updateMomentTxtPreview() {
+        var text = momentTxtState.text || '';
+        var displayText = text.trim() || 'Your text here';
+        if (dom.momentTxtPreviewText) dom.momentTxtPreviewText.textContent = displayText;
+
+        var len = text.length;
+        var fontSize;
+        if (len <= 40) {
+            fontSize = '1.25rem';
+        } else if (len <= 80) {
+            fontSize = '1.1rem';
+        } else if (len <= 150) {
+            fontSize = '0.95rem';
+        } else if (len <= 250) {
+            fontSize = '0.85rem';
+        } else {
+            fontSize = '0.78rem';
+        }
+        if (dom.momentTxtPreviewText) dom.momentTxtPreviewText.style.fontSize = fontSize;
+
+        var fontCSS = MV_TXT_FONTS[momentTxtState.font] || MV_TXT_FONTS['default'];
+        if (dom.momentTxtPreviewText) dom.momentTxtPreviewText.style.fontFamily = fontCSS;
+
+        var bg = MV_TXT_BGS[momentTxtState.bg] || MV_TXT_BGS['solid-1'];
+        if (dom.momentTxtPreview) dom.momentTxtPreview.style.background = bg;
+    }
+
+    function resetMomentTxtBgActive(activeBg) {
+        if (!dom.momentTxtBgOptions) return;
+        var opts = dom.momentTxtBgOptions.querySelectorAll('.moment-txt-bg-opt');
+        for (var i = 0; i < opts.length; i++) {
+            opts[i].classList.toggle('moment-txt-bg-active', opts[i].getAttribute('data-bg') === activeBg);
+        }
+    }
+
+    function resetMomentTxtFontActive(activeFont) {
+        if (!dom.momentTxtFontOptions) return;
+        var opts = dom.momentTxtFontOptions.querySelectorAll('.moment-txt-font-opt');
+        for (var i = 0; i < opts.length; i++) {
+            opts[i].classList.toggle('moment-txt-font-active', opts[i].getAttribute('data-font') === activeFont);
+        }
+    }
+
+    function setMomentTxtPosting(isPosting) {
+        momentTxtState.uploading = isPosting;
+        if (!dom.momentTxtBtnNext) return;
+        dom.momentTxtBtnNext.disabled = isPosting;
+        var txt = dom.momentTxtBtnNext.querySelector('.moment-txt-btn-text');
+        var load = dom.momentTxtBtnNext.querySelector('.moment-txt-btn-loading');
+        if (txt) txt.style.display = isPosting ? 'none' : '';
+        if (load) load.style.display = isPosting ? '' : 'none';
+    }
+
+    function generateTextMomentImage(text, bgKey, fontKey) {
+        return new Promise(function (resolve, reject) {
+            try {
+                var W = 1080, H = 1920;
+                var canvas = document.createElement('canvas');
+                canvas.width = W;
+                canvas.height = H;
+                var ctx = canvas.getContext('2d');
+
+                // --- draw background ---
+                var bgVal = MV_TXT_BGS[bgKey] || MV_TXT_BGS['solid-1'];
+                // canvas needs plain CSS string; gradients work in canvas via parsed stops
+                var grad = parseGradient(ctx, bgVal, W, H);
+                if (grad) {
+                    ctx.fillStyle = grad;
+                } else {
+                    ctx.fillStyle = bgVal;
+                }
+                ctx.fillRect(0, 0, W, H);
+
+                // --- draw text ---
+                var displayText = (text || '').trim() || 'Your text here';
+                var charLen = displayText.length;
+                var fontSize;
+                if (charLen <= 40) {
+                    fontSize = 72;
+                } else if (charLen <= 80) {
+                    fontSize = 64;
+                } else if (charLen <= 150) {
+                    fontSize = 54;
+                } else if (charLen <= 250) {
+                    fontSize = 46;
+                } else {
+                    fontSize = 40;
+                }
+
+                var fontCSS = MV_TXT_FONTS[fontKey] || MV_TXT_FONTS['default'];
+                // Strip quotes for canvas font shorthand (canvas needs unquoted family names)
+                var canvasFont = fontCSS.replace(/'/g, '');
+
+                ctx.fillStyle = '#FFFFFF';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.font = '600 ' + fontSize + 'px ' + canvasFont;
+
+                // wrap text
+                var padding = 100;
+                var maxWidth = W - padding * 2;
+                var lines = wrapCanvasText(ctx, displayText, maxWidth);
+                var lineHeight = fontSize * 1.35;
+                var totalTextH = lines.length * lineHeight;
+                var startY = (H - totalTextH) / 2 + lineHeight / 2;
+
+                for (var i = 0; i < lines.length; i++) {
+                    ctx.fillText(lines[i], W / 2, startY + i * lineHeight);
+                }
+
+                canvas.toBlob(function (blob) {
+                    if (!blob) return reject(new Error('Canvas toBlob failed'));
+                    resolve(blob);
+                }, 'image/png');
+            } catch (err) {
+                reject(err);
+            }
+        });
+    }
+
+    function parseGradient(ctx, css, w, h) {
+        if (!css) return null;
+        // Handle only linear-gradient(135deg, color1, color2) format used in MV_TXT_BGS
+        var m = css.match(/linear-gradient\((\d+)deg,\s*(#[0-9a-fA-F]{3,8})\s*,\s*(#[0-9a-fA-F]{3,8})\)/);
+        if (!m) return null;
+        var angle = parseInt(m[1]) * Math.PI / 180;
+        var c1 = m[2], c2 = m[3];
+        // compute start/end points from angle (135deg = top-left to bottom-right)
+        var cx = w / 2, cy = h / 2;
+        var len = Math.max(w, h) / 2;
+        var x1 = cx - Math.cos(angle) * len;
+        var y1 = cy - Math.sin(angle) * len;
+        var x2 = cx + Math.cos(angle) * len;
+        var y2 = cy + Math.sin(angle) * len;
+        var grad = ctx.createLinearGradient(x1, y1, x2, y2);
+        grad.addColorStop(0, c1);
+        grad.addColorStop(1, c2);
+        return grad;
+    }
+
+    function wrapCanvasText(ctx, text, maxWidth) {
+        var paragraphs = text.split('\n');
+        var allLines = [];
+        for (var p = 0; p < paragraphs.length; p++) {
+            var words = paragraphs[p].split(' ');
+            var line = '';
+            for (var w = 0; w < words.length; w++) {
+                var test = line ? line + ' ' + words[w] : words[w];
+                if (ctx.measureText(test).width > maxWidth && line) {
+                    allLines.push(line);
+                    line = words[w];
+                } else {
+                    line = test;
+                }
+            }
+            allLines.push(line);
+        }
+        return allLines;
+    }
+
+    function postTextMoment() {
+        if (momentTxtState.uploading) return;
+        var text = (momentTxtState.text || '').trim();
+        if (!text) {
+            showToast('Please enter some text', 'error');
+            return;
+        }
+
+        setMomentTxtPosting(true);
+
+        generateTextMomentImage(text, momentTxtState.bg, momentTxtState.font).then(function (blob) {
+            var formData = new FormData();
+            formData.append('file', blob, 'text-moment.png');
+            var token = HiveAuth.getToken();
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', API_BASE + '/api/upload/attachment', true);
+            xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+            xhr.setRequestHeader('ngrok-skip-browser-warning', 'true');
+
+            xhr.addEventListener('load', function () {
+                try {
+                    var data = JSON.parse(xhr.responseText);
+                    if (!data.success || !data.attachment_url) {
+                        setMomentTxtPosting(false);
+                        showToast('Image upload failed', 'error');
+                        return;
+                    }
+                    apiPost('/api/moments', {
+                        type: 'text',
+                        image_url: data.attachment_url,
+                        text_content: text,
+                        background: momentTxtState.bg,
+                        font: momentTxtState.font,
+                    }).then(function (res) {
+                        if (res && res.success && res.moment) {
+                            momentTxtState.uploading = false;
+                            closeMomentTextPopup();
+                            showToast('Moment posted!', 'success');
+                            addMomentToList(res.moment);
+                        } else {
+                            showToast((res && res.message) || 'Failed to post moment', 'error');
+                        }
+                    }).catch(function () {
+                        showToast('Network error. Please try again.', 'error');
+                    }).finally(function () {
+                        setMomentTxtPosting(false);
+                    });
+                } catch (err) {
+                    setMomentTxtPosting(false);
+                    showToast('Upload failed', 'error');
+                }
+            });
+
+            xhr.addEventListener('error', function () {
+                setMomentTxtPosting(false);
+                showToast('Network error during upload', 'error');
+            });
+
+            xhr.send(formData);
+        }).catch(function () {
+            setMomentTxtPosting(false);
+            showToast('Failed to generate image', 'error');
+        });
+    }
+
     function addMomentToList(moment) {
         var list = dom.momentsList;
         if (!list) return;
@@ -8708,6 +9217,10 @@
         var avatar = getAvatarUrl(moment);
         var name = moment.display_name || moment.username || 'User';
         var timeAgo = formatTimeAgo(moment.created_at);
+        var metaExtra = '';
+        if (moment.type === 'video' && moment.duration) {
+            metaExtra = ' · ' + formatVideoDuration(moment.duration);
+        }
 
         item.innerHTML =
             '<div class="moment-avatar-wrap">' +
@@ -8718,7 +9231,7 @@
             '<div class="moment-info">' +
                 '<span class="moment-username">' + escapeHtml(name) + '</span>' +
                 '<div class="moment-meta">' +
-                    '<span class="moment-type-label">' + typeIcon + ' ' + typeLabel + '</span>' +
+                    '<span class="moment-type-label">' + typeIcon + ' ' + typeLabel + metaExtra + '</span>' +
                     '<span>' + escapeHtml(timeAgo) + '</span>' +
                 '</div>' +
             '</div>';
@@ -8760,53 +9273,191 @@
     /* ── Moment Viewer (Stories) ─────────────────── */
     var mvState = {
         open: false,
-        moments: [],
-        currentIndex: 0,
-        progressTimer: null,
+        userGroups: [],
+        currentGroupIndex: 0,
+        currentMomentIndex: 0,
+        imageLoaded: false,
+        viewingStartTime: 0,
+        elapsedBefore: 0,
+        paused: false,
+        pausedElapsed: 0,
+        progressRaf: null,
         liked: false,
+        preloaded: {},
+        loadId: 0,
+        loadTimer: null,
+        isVideo: false,
+        videoDuration: 0,
+        buffering: false,
     };
     var MV_DURATION = 5000;
+    var MV_LOAD_TIMEOUT = 15000;
+    var MV_SPONSORED_DURATION = 15000;
+    var mvTipShownThisSession = false;
+    var mvTipTimer = null;
+
+    function createSponsoredMoment() {
+        return {
+            _isSponsored: true,
+            type: 'sponsored',
+            user_id: 'buzz',
+            username: 'buzz',
+            display_name: '📣 Buzz',
+            profile_picture: '/assets/buzz.png',
+            rank: 'bot',
+            is_bot: true,
+            is_verified: true,
+            description: '',
+            created_at: new Date().toISOString(),
+        };
+    }
+
+    function insertSponsoredMoment(moments) {
+        if (!moments || moments.length < 2) return moments;
+        if (state.user && state.user.is_premium) return moments;
+        var total = moments.length;
+        var insertIdx = Math.floor(total / 2);
+        var result = moments.slice();
+        result.splice(insertIdx, 0, createSponsoredMoment());
+        return result;
+    }
+
+    function mvGetCurrentGroup() {
+        return mvState.userGroups[mvState.currentGroupIndex] || null;
+    }
+
+    function mvGetCurrentMoment() {
+        var g = mvGetCurrentGroup();
+        if (!g) return null;
+        return g.moments[mvState.currentMomentIndex] || null;
+    }
+
+    function mvGroupMomentsByUser(moments, clickedUserId) {
+        var groups = [];
+        var groupMap = {};
+        for (var i = 0; i < moments.length; i++) {
+            var m = moments[i];
+            var uid = m.user_id || m.userId || m.id;
+            if (!groupMap[uid]) {
+                groupMap[uid] = {
+                    userId: uid,
+                    username: m.username || '',
+                    displayName: m.display_name || m.displayName || '',
+                    profilePicture: m.profile_picture || m.profilePicture || '',
+                    moments: [],
+                };
+                groups.push(groupMap[uid]);
+            }
+            groupMap[uid].moments.push(m);
+        }
+        if (clickedUserId != null) {
+            for (var j = 0; j < groups.length; j++) {
+                if (groups[j].userId === clickedUserId) {
+                    var first = groups.splice(j, 1)[0];
+                    groups.unshift(first);
+                    break;
+                }
+            }
+        }
+        return groups;
+    }
 
     function openMomentViewer(moments, startIndex) {
         if (!moments || moments.length === 0) return;
         mvState.open = true;
-        mvState.moments = moments;
-        mvState.currentIndex = startIndex || 0;
         mvState.liked = false;
+        mvState.preloaded = {};
+        mvState.loadId = 0;
+        mvState.currentGroupIndex = 0;
+        mvState.currentMomentIndex = 0;
+
+        var adjustedMoments = insertSponsoredMoment(moments);
+        var adjustedIndex = startIndex || 0;
+        if (adjustedMoments.length > moments.length) {
+            var totalReal = moments.length;
+            var insertIdx = Math.floor(totalReal / 2);
+            if (adjustedIndex >= insertIdx) {
+                adjustedIndex++;
+            }
+        }
+
+        var clickedMoment = adjustedMoments[adjustedIndex];
+        var clickedUserId = clickedMoment ? (clickedMoment._isSponsored ? 'buzz' : (clickedMoment.user_id || clickedMoment.userId || clickedMoment.id)) : null;
+        mvState.userGroups = mvGroupMomentsByUser(adjustedMoments, clickedUserId);
+
+        var group = mvGetCurrentGroup();
+        if (group && clickedUserId != null) {
+            for (var i = 0; i < group.moments.length; i++) {
+                if (group.moments[i] === clickedMoment) {
+                    mvState.currentMomentIndex = i;
+                    break;
+                }
+            }
+        }
 
         var overlay = dom.mvOverlay;
         if (!overlay) return;
 
-        // Build progress segments
         buildMvProgress();
-
-        // Show first moment
         renderMvMoment();
 
-        // Open overlay
         overlay.style.display = '';
         overlay.offsetHeight;
         overlay.classList.remove('mv-exit');
         overlay.classList.add('visible');
         document.body.style.overflow = 'hidden';
 
-        // Start progress
-        startMvProgress();
+        showMvTip();
     }
 
     function closeMomentViewer() {
         var overlay = dom.mvOverlay;
         if (!overlay) return;
 
-        clearMvProgress();
+        stopMvProgress();
+        clearMvLoadTimer();
+        hideMvTip();
         mvState.open = false;
+        mvState.paused = false;
+        mvState.pausedElapsed = 0;
+        mvState.isVideo = false;
+        mvState.videoDuration = 0;
+        mvState.buffering = false;
+        mvState.preloaded = {};
+        mvState.userGroups = [];
+        mvState.currentGroupIndex = 0;
+        mvState.currentMomentIndex = 0;
 
         overlay.classList.remove('visible');
         overlay.classList.add('mv-exit');
         setTimeout(function () {
             overlay.style.display = 'none';
             overlay.classList.remove('mv-exit');
-            if (dom.mvImage) dom.mvImage.src = '';
+            if (dom.mvImage) {
+                dom.mvImage.onload = null;
+                dom.mvImage.onerror = null;
+                dom.mvImage.src = '';
+            }
+            if (dom.mvVideo) {
+                dom.mvVideo.pause();
+                dom.mvVideo.onloadeddata = null;
+                dom.mvVideo.onerror = null;
+                dom.mvVideo.onplaying = null;
+                dom.mvVideo.onwaiting = null;
+                dom.mvVideo.onended = null;
+                dom.mvVideo.onseeked = null;
+                dom.mvVideo.removeAttribute('src');
+                dom.mvVideo.load();
+                dom.mvVideo.style.display = 'none';
+            }
+            if (dom.mvImage) dom.mvImage.style.display = '';
+            if (dom.mvSponsoredWrap) dom.mvSponsoredWrap.style.display = 'none';
+            if (dom.mvSponsoredAd) dom.mvSponsoredAd.innerHTML = '';
+            if (dom.mvHeader) dom.mvHeader.style.display = '';
+            if (dom.mvNavLeft) dom.mvNavLeft.style.display = '';
+            if (dom.mvNavRight) dom.mvNavRight.style.display = '';
+            if (dom.mvBottom) dom.mvBottom.style.display = '';
+            if (dom.mvActions) dom.mvActions.style.display = '';
             if (dom.mvReplyInput) dom.mvReplyInput.value = '';
             document.body.style.overflow = '';
         }, 250);
@@ -8816,7 +9467,9 @@
         var container = dom.mvProgress;
         if (!container) return;
         container.innerHTML = '';
-        for (var i = 0; i < mvState.moments.length; i++) {
+        var group = mvGetCurrentGroup();
+        if (!group) return;
+        for (var i = 0; i < group.moments.length; i++) {
             var seg = document.createElement('div');
             seg.className = 'mv-progress-seg';
             seg.innerHTML = '<div class="mv-progress-fill"></div>';
@@ -8824,34 +9477,165 @@
         }
     }
 
-    function startMvProgress() {
-        clearMvProgress();
+    function resetAllMvSegments() {
         var segs = dom.mvProgress ? dom.mvProgress.querySelectorAll('.mv-progress-seg') : [];
-        // Mark previous as done
-        for (var i = 0; i < mvState.currentIndex; i++) {
-            segs[i].classList.add('mv-seg-done');
+        for (var i = 0; i < segs.length; i++) {
+            segs[i].classList.remove('mv-seg-done', 'mv-seg-active');
+            var fill = segs[i].querySelector('.mv-progress-fill');
+            if (fill) {
+                fill.style.transition = 'none';
+                fill.style.transform = 'scaleX(0)';
+            }
         }
-        // Mark current as active
-        if (segs[mvState.currentIndex]) {
-            segs[mvState.currentIndex].classList.remove('mv-seg-done');
-            segs[mvState.currentIndex].classList.add('mv-seg-active');
+        for (var j = 0; j < mvState.currentMomentIndex; j++) {
+            segs[j].classList.add('mv-seg-done');
+            var fillDone = segs[j].querySelector('.mv-progress-fill');
+            if (fillDone) {
+                fillDone.style.transition = 'none';
+                fillDone.style.transform = 'scaleX(1)';
+            }
         }
-        // Auto-advance
-        mvState.progressTimer = setTimeout(function () {
-            goNextMoment();
-        }, MV_DURATION);
     }
 
-    function clearMvProgress() {
-        if (mvState.progressTimer) {
-            clearTimeout(mvState.progressTimer);
-            mvState.progressTimer = null;
+    function startMvProgress() {
+        stopMvProgress();
+        if (!mvState.imageLoaded) return;
+
+        var m = mvGetCurrentMoment();
+        var isSponsored = !!(m && m._isSponsored);
+        mvState.isVideo = !!(m && m.type === 'video' && m.video_url);
+
+        resetAllMvSegments();
+
+        var segs = dom.mvProgress ? dom.mvProgress.querySelectorAll('.mv-progress-seg') : [];
+        if (segs[mvState.currentMomentIndex]) {
+            segs[mvState.currentMomentIndex].classList.add('mv-seg-active');
+        }
+
+        if (mvState.isVideo) {
+            if (dom.mvVideo) {
+                mvState.videoDuration = dom.mvVideo.duration || 0;
+            }
+        } else {
+            mvState.viewingStartTime = performance.now();
+            mvState.elapsedBefore = 0;
+        }
+
+        tickMvProgress();
+    }
+
+    function tickMvProgress() {
+        if (!mvState.open || !mvState.imageLoaded || mvState.paused) return;
+
+        var pct;
+        if (mvState.isVideo && dom.mvVideo) {
+            var dur = mvState.videoDuration || dom.mvVideo.duration || 1;
+            var cur = dom.mvVideo.currentTime || 0;
+            pct = Math.min(cur / dur, 1);
+        } else {
+            var now = performance.now();
+            var viewingElapsed = mvState.elapsedBefore + (now - mvState.viewingStartTime);
+            var m = mvGetCurrentMoment();
+            var duration = (m && m._isSponsored) ? MV_SPONSORED_DURATION : MV_DURATION;
+            pct = Math.min(viewingElapsed / duration, 1);
+        }
+
+        var segs = dom.mvProgress ? dom.mvProgress.querySelectorAll('.mv-progress-seg') : [];
+        var activeSeg = segs[mvState.currentMomentIndex];
+        if (activeSeg) {
+            var fill = activeSeg.querySelector('.mv-progress-fill');
+            if (fill) {
+                fill.style.transition = 'none';
+                fill.style.transform = 'scaleX(' + pct + ')';
+            }
+        }
+
+        if (pct >= 1) {
+            goNextMoment();
+            return;
+        }
+
+        mvState.progressRaf = requestAnimationFrame(tickMvProgress);
+    }
+
+    function stopMvProgress() {
+        if (mvState.progressRaf) {
+            cancelAnimationFrame(mvState.progressRaf);
+            mvState.progressRaf = null;
+        }
+    }
+
+    function pauseMv() {
+        if (!mvState.open || mvState.paused || !mvState.imageLoaded) return;
+        mvState.paused = true;
+        stopMvProgress();
+        var now = performance.now();
+        mvState.pausedElapsed = mvState.elapsedBefore + (now - mvState.viewingStartTime);
+        if (dom.mvImageWrap) dom.mvImageWrap.classList.add('mv-paused');
+        if (mvState.isVideo && dom.mvVideo && !dom.mvVideo.paused && !mvState.buffering) {
+            dom.mvVideo.pause();
+        }
+    }
+
+    function resumeMv() {
+        if (!mvState.open || !mvState.paused) return;
+        mvState.paused = false;
+        mvState.buffering = false;
+        if (mvState.isVideo) {
+            // Video progress is driven by tickMvProgress reading video.currentTime
+            if (dom.mvVideo && dom.mvVideo.paused && dom.mvVideo.src) {
+                dom.mvVideo.play().catch(function () {});
+            }
+        } else {
+            mvState.elapsedBefore = mvState.pausedElapsed;
+            mvState.viewingStartTime = performance.now();
+        }
+        mvState.pausedElapsed = 0;
+        if (dom.mvImageWrap) dom.mvImageWrap.classList.remove('mv-paused');
+        tickMvProgress();
+    }
+
+    function showMvTip() {
+        if (mvTipShownThisSession) return;
+        mvTipShownThisSession = true;
+        clearTimeout(mvTipTimer);
+        if (!dom.mvTip) return;
+        setTimeout(function () {
+            if (!mvState.open || !dom.mvTip) return;
+            dom.mvTip.classList.add('mv-tip-show');
+            mvTipTimer = setTimeout(function () {
+                hideMvTip();
+            }, 3000);
+        }, 400);
+    }
+
+    function hideMvTip() {
+        clearTimeout(mvTipTimer);
+        mvTipTimer = null;
+        if (dom.mvTip) dom.mvTip.classList.remove('mv-tip-show');
+    }
+
+    function clearMvLoadTimer() {
+        if (mvState.loadTimer) {
+            clearTimeout(mvState.loadTimer);
+            mvState.loadTimer = null;
         }
     }
 
     function renderMvMoment() {
-        var m = mvState.moments[mvState.currentIndex];
+        var m = mvGetCurrentMoment();
         if (!m) return;
+
+        mvState.loadId++;
+        var thisLoadId = mvState.loadId;
+        mvState.imageLoaded = false;
+        mvState.elapsedBefore = 0;
+        mvState.paused = false;
+        mvState.pausedElapsed = 0;
+        mvState.buffering = false;
+        stopMvProgress();
+        clearMvLoadTimer();
+        if (dom.mvImageWrap) dom.mvImageWrap.classList.remove('mv-paused');
 
         var avatar = getAvatarUrl(m);
         var name = m.display_name || m.username || 'User';
@@ -8861,7 +9645,15 @@
         if (dom.mvUsername) dom.mvUsername.textContent = name;
         if (dom.mvTime) dom.mvTime.textContent = timeAgo;
 
-        // Description
+        if (dom.mvBadges) {
+            var badgesHtml = '';
+            if (m.is_bot) badgesHtml += createBotBadgeHtml();
+            if (m.rank && m.rank !== 'bot') badgesHtml += createRankBadgeHtml(m.rank);
+            if (m.is_premium) badgesHtml += createPremiumBadgeHtml(true);
+            if (m.is_verified) badgesHtml += createVerifiedBadgeHtml();
+            dom.mvBadges.innerHTML = badgesHtml;
+        }
+
         if (m.description && m.description.trim()) {
             if (dom.mvDescBar) dom.mvDescBar.style.display = '';
             if (dom.mvDescText) dom.mvDescText.textContent = m.description;
@@ -8869,55 +9661,290 @@
             if (dom.mvDescBar) dom.mvDescBar.style.display = 'none';
         }
 
-        // Image
-        if (dom.mvImage) {
-            dom.mvImage.classList.remove('mv-img-transition');
-            dom.mvImage.src = m.image_url || '';
-            // Loading state
-            if (dom.mvImageLoading) dom.mvImageLoading.style.display = '';
-            dom.mvImage.onload = function () {
-                if (dom.mvImageLoading) dom.mvImageLoading.style.display = 'none';
-            };
-            dom.mvImage.onerror = function () {
-                if (dom.mvImageLoading) dom.mvImageLoading.style.display = 'none';
-            };
+        resetAllMvSegments();
+
+        var isSponsored = !!m._isSponsored;
+        var isVideo = m.type === 'video' && m.video_url;
+
+        if (isSponsored) {
+            // Sponsored moment — show ad container
+            if (dom.mvImage) dom.mvImage.style.display = 'none';
+            if (dom.mvVideo) dom.mvVideo.style.display = 'none';
+            if (dom.mvSponsoredWrap) dom.mvSponsoredWrap.style.display = '';
+            if (dom.mvImageLoading) dom.mvImageLoading.style.display = 'none';
+            if (dom.mvImageError) dom.mvImageError.style.display = 'none';
+            if (dom.mvDescBar) dom.mvDescBar.style.display = 'none';
+
+            // Render Buzz bot badges
+            if (dom.mvSponsoredBadges) {
+                var buzzBadges = createBotBadgeHtml();
+                if (m.is_verified) buzzBadges += createVerifiedBadgeHtml();
+                if (m.is_premium) buzzBadges += createPremiumBadgeHtml(true);
+                dom.mvSponsoredBadges.innerHTML = buzzBadges;
+            }
+
+            // Hide regular viewer chrome for sponsored moments
+            if (dom.mvHeader) dom.mvHeader.style.display = 'none';
+            if (dom.mvNavLeft) dom.mvNavLeft.style.display = 'none';
+            if (dom.mvNavRight) dom.mvNavRight.style.display = 'none';
+            if (dom.mvBottom) dom.mvBottom.style.display = 'none';
+            if (dom.mvActions) dom.mvActions.style.display = 'none';
+
+            // Clear previous ad and load new one
+            if (dom.mvSponsoredAd) {
+                dom.mvSponsoredAd.innerHTML = '';
+                var adContainer = document.createElement('div');
+                adContainer.className = 'buzz-ad-container';
+                var adId = 'mv-buzz-ad-' + Date.now();
+                adContainer.id = adId;
+                dom.mvSponsoredAd.appendChild(adContainer);
+                setTimeout(function () {
+                    if (mvState.loadId !== thisLoadId) return;
+                    loadBuzzAdLarge(adId);
+                    setTimeout(function () {
+                        if (mvState.loadId !== thisLoadId) return;
+                        onMvImageReady();
+                    }, 800);
+                }, 50);
+            } else {
+                onMvImageReady();
+            }
+
+            mvState.liked = false;
+            if (dom.mvLikeBtn) dom.mvLikeBtn.classList.remove('mv-liked');
+            if (dom.mvReplyInput) dom.mvReplyInput.value = '';
+            if (dom.mvReplySend) dom.mvReplySend.classList.remove('mv-send-active');
+            updateMvNavState();
+            preloadNextMvImage();
+            return;
         }
 
-        // Reset like state
+        // Show regular viewer chrome for non-sponsored moments
+        if (dom.mvHeader) dom.mvHeader.style.display = '';
+        if (dom.mvNavLeft) dom.mvNavLeft.style.display = '';
+        if (dom.mvNavRight) dom.mvNavRight.style.display = '';
+        if (dom.mvBottom) dom.mvBottom.style.display = '';
+        if (dom.mvActions) dom.mvActions.style.display = '';
+        if (dom.mvSponsoredWrap) dom.mvSponsoredWrap.style.display = 'none';
+
+        // Toggle image vs video display
+        if (dom.mvImage) dom.mvImage.style.display = isVideo ? 'none' : '';
+        if (dom.mvVideo) dom.mvVideo.style.display = isVideo ? '' : 'none';
+
+        if (isVideo) {
+            // Video moment
+            if (dom.mvImageLoading) dom.mvImageLoading.style.display = '';
+            if (dom.mvImageError) dom.mvImageError.style.display = 'none';
+
+            var vid = dom.mvVideo;
+            vid.onloadeddata = null;
+            vid.onerror = null;
+            vid.onplaying = null;
+            vid.onwaiting = null;
+            vid.onended = null;
+            vid.onseeked = null;
+            mvState.buffering = false;
+
+            var vidReady = function () {
+                if (mvState.loadId !== thisLoadId) return;
+                clearMvLoadTimer();
+                mvState.videoDuration = vid.duration || 0;
+                vid.currentTime = 0;
+                onMvImageReady();
+                vid.play().catch(function () {});
+            };
+            var vidFailed = function () {
+                if (mvState.loadId !== thisLoadId) return;
+                clearMvLoadTimer();
+                onMvImageError();
+            };
+
+            vid.onplaying = function () {
+                if (mvState.loadId !== thisLoadId) return;
+                mvState.buffering = false;
+                if (!mvState.paused && mvState.imageLoaded) {
+                    startMvProgress();
+                }
+            };
+            vid.onwaiting = function () {
+                if (mvState.loadId !== thisLoadId) return;
+                mvState.buffering = true;
+                stopMvProgress();
+            };
+            vid.onended = function () {
+                if (mvState.loadId !== thisLoadId) return;
+                goNextMoment();
+            };
+            vid.onseeked = function () {
+                if (mvState.loadId !== thisLoadId) return;
+                if (!mvState.paused && mvState.imageLoaded) {
+                    startMvProgress();
+                }
+            };
+
+            if (mvState.preloaded[m.video_url]) {
+                vid.onloadeddata = vidReady;
+                vid.onerror = vidFailed;
+                vid.src = m.video_url;
+            } else {
+                vid.onloadeddata = vidReady;
+                vid.onerror = vidFailed;
+                vid.src = m.video_url;
+
+                mvState.loadTimer = setTimeout(function () {
+                    if (mvState.loadId !== thisLoadId) return;
+                    if (!mvState.imageLoaded) {
+                        onMvImageError();
+                    }
+                }, MV_LOAD_TIMEOUT);
+            }
+        } else if (dom.mvImage) {
+            // Image moment
+            dom.mvImage.classList.remove('mv-img-transition');
+            if (dom.mvImageLoading) dom.mvImageLoading.style.display = '';
+            if (dom.mvImageError) dom.mvImageError.style.display = 'none';
+
+            var img = dom.mvImage;
+            img.onload = null;
+            img.onerror = null;
+
+            var ready = function () {
+                if (mvState.loadId !== thisLoadId) return;
+                clearMvLoadTimer();
+                onMvImageReady();
+            };
+            var failed = function () {
+                if (mvState.loadId !== thisLoadId) return;
+                clearMvLoadTimer();
+                onMvImageError();
+            };
+
+            if (m.image_url && mvState.preloaded[m.image_url]) {
+                img.src = m.image_url;
+                ready();
+            } else if (m.image_url) {
+                img.onload = ready;
+                img.onerror = failed;
+                img.src = m.image_url;
+
+                mvState.loadTimer = setTimeout(function () {
+                    if (mvState.loadId !== thisLoadId) return;
+                    if (!mvState.imageLoaded) {
+                        onMvImageError();
+                    }
+                }, MV_LOAD_TIMEOUT);
+            } else {
+                if (dom.mvImageLoading) dom.mvImageLoading.style.display = 'none';
+                if (dom.mvImageError) dom.mvImageError.style.display = '';
+                onMvImageError();
+            }
+        }
+
         mvState.liked = false;
         if (dom.mvLikeBtn) dom.mvLikeBtn.classList.remove('mv-liked');
-
-        // Reset reply
         if (dom.mvReplyInput) dom.mvReplyInput.value = '';
         if (dom.mvReplySend) dom.mvReplySend.classList.remove('mv-send-active');
 
-        // Update nav states
         updateMvNavState();
+        preloadNextMvImage();
+    }
+
+    function onMvImageReady() {
+        if (!mvState.open) return;
+        mvState.imageLoaded = true;
+        if (dom.mvImageLoading) dom.mvImageLoading.style.display = 'none';
+        startMvProgress();
+    }
+
+    function onMvImageError() {
+        if (!mvState.open) return;
+        mvState.imageLoaded = true;
+        if (dom.mvImageLoading) dom.mvImageLoading.style.display = 'none';
+        if (dom.mvImageError) dom.mvImageError.style.display = '';
+        startMvProgress();
+    }
+
+    function preloadNextMvImage() {
+        var group = mvGetCurrentGroup();
+        if (!group) return;
+
+        var nextIdx = mvState.currentMomentIndex + 1;
+        var nextMoment = null;
+
+        if (nextIdx < group.moments.length) {
+            nextMoment = group.moments[nextIdx];
+        } else if (mvState.currentGroupIndex + 1 < mvState.userGroups.length) {
+            var nextGroup = mvState.userGroups[mvState.currentGroupIndex + 1];
+            if (nextGroup && nextGroup.moments.length > 0) {
+                nextMoment = nextGroup.moments[0];
+            }
+        }
+
+        if (!nextMoment || nextMoment._isSponsored) return;
+
+        var preloadUrl = nextMoment.type === 'video' ? nextMoment.video_url : nextMoment.image_url;
+        if (!preloadUrl || mvState.preloaded[preloadUrl]) return;
+
+        if (nextMoment.type === 'video') {
+            var preloadVid = document.createElement('video');
+            preloadVid.preload = 'metadata';
+            preloadVid.onloadeddata = function () {
+                mvState.preloaded[preloadUrl] = true;
+            };
+            preloadVid.src = preloadUrl;
+        } else {
+            var preloadImg = new Image();
+            preloadImg.onload = function () {
+                mvState.preloaded[preloadUrl] = true;
+            };
+            preloadImg.src = preloadUrl;
+        }
     }
 
     function goNextMoment() {
-        clearMvProgress();
-        if (mvState.currentIndex < mvState.moments.length - 1) {
-            // Mark current as done
-            var segs = dom.mvProgress ? dom.mvProgress.querySelectorAll('.mv-progress-seg') : [];
-            if (segs[mvState.currentIndex]) {
-                segs[mvState.currentIndex].classList.add('mv-seg-done');
-                segs[mvState.currentIndex].classList.remove('mv-seg-active');
+        stopMvProgress();
+        clearMvLoadTimer();
+        if (dom.mvVideo) {
+            dom.mvVideo.pause();
+            dom.mvVideo.onloadeddata = null;
+            dom.mvVideo.onerror = null;
+            dom.mvVideo.onplaying = null;
+            dom.mvVideo.onwaiting = null;
+            dom.mvVideo.onended = null;
+            dom.mvVideo.onseeked = null;
+            dom.mvVideo.removeAttribute('src');
+        }
+        mvState.buffering = false;
+        var group = mvGetCurrentGroup();
+        if (!group) { closeMomentViewer(); return; }
+
+        var segs = dom.mvProgress ? dom.mvProgress.querySelectorAll('.mv-progress-seg') : [];
+        var curSeg = segs[mvState.currentMomentIndex];
+        if (curSeg) {
+            curSeg.classList.add('mv-seg-done');
+            curSeg.classList.remove('mv-seg-active');
+            var curFill = curSeg.querySelector('.mv-progress-fill');
+            if (curFill) {
+                curFill.style.transition = 'none';
+                curFill.style.transform = 'scaleX(1)';
             }
-            mvState.currentIndex++;
-            // Transition image
+        }
+
+        if (mvState.currentMomentIndex < group.moments.length - 1) {
+            mvState.currentMomentIndex++;
             if (dom.mvImage) {
                 dom.mvImage.classList.add('mv-img-transition');
             }
             renderMvMoment();
-            startMvProgress();
-        } else {
-            // Last moment — close viewer
-            var lastSegs = dom.mvProgress ? dom.mvProgress.querySelectorAll('.mv-progress-seg') : [];
-            if (lastSegs[mvState.currentIndex]) {
-                lastSegs[mvState.currentIndex].classList.add('mv-seg-done');
-                lastSegs[mvState.currentIndex].classList.remove('mv-seg-active');
+        } else if (mvState.currentGroupIndex + 1 < mvState.userGroups.length) {
+            mvState.currentGroupIndex++;
+            mvState.currentMomentIndex = 0;
+            buildMvProgress();
+            if (dom.mvImage) {
+                dom.mvImage.classList.add('mv-img-transition');
             }
+            renderMvMoment();
+        } else {
             setTimeout(function () {
                 closeMomentViewer();
             }, 200);
@@ -8925,37 +9952,60 @@
     }
 
     function goPrevMoment() {
-        clearMvProgress();
-        if (mvState.currentIndex > 0) {
-            // Remove done from current
-            var segs = dom.mvProgress ? dom.mvProgress.querySelectorAll('.mv-progress-seg') : [];
-            if (segs[mvState.currentIndex]) {
-                segs[mvState.currentIndex].classList.remove('mv-seg-done');
-                segs[mvState.currentIndex].classList.remove('mv-seg-active');
+        stopMvProgress();
+        clearMvLoadTimer();
+        if (dom.mvVideo) {
+            dom.mvVideo.pause();
+            dom.mvVideo.onloadeddata = null;
+            dom.mvVideo.onerror = null;
+            dom.mvVideo.onplaying = null;
+            dom.mvVideo.onwaiting = null;
+            dom.mvVideo.onended = null;
+            dom.mvVideo.onseeked = null;
+            dom.mvVideo.removeAttribute('src');
+        }
+        mvState.buffering = false;
+
+        var curSegs = dom.mvProgress ? dom.mvProgress.querySelectorAll('.mv-progress-seg') : [];
+        var curSeg = curSegs[mvState.currentMomentIndex];
+        if (curSeg) {
+            curSeg.classList.remove('mv-seg-done', 'mv-seg-active');
+            var curFill = curSeg.querySelector('.mv-progress-fill');
+            if (curFill) {
+                curFill.style.transition = 'none';
+                curFill.style.transform = 'scaleX(0)';
             }
-            mvState.currentIndex--;
+        }
+
+        if (mvState.currentMomentIndex > 0) {
+            mvState.currentMomentIndex--;
             if (dom.mvImage) {
                 dom.mvImage.classList.add('mv-img-transition');
             }
             renderMvMoment();
-            startMvProgress();
+        } else if (mvState.currentGroupIndex > 0) {
+            mvState.currentGroupIndex--;
+            var prevGroup = mvGetCurrentGroup();
+            mvState.currentMomentIndex = prevGroup ? prevGroup.moments.length - 1 : 0;
+            buildMvProgress();
+            if (dom.mvImage) {
+                dom.mvImage.classList.add('mv-img-transition');
+            }
+            renderMvMoment();
         }
     }
 
     function updateMvNavState() {
+        var isFirstMoment = mvState.currentGroupIndex === 0 && mvState.currentMomentIndex === 0;
+        var group = mvGetCurrentGroup();
+        var isLastMoment = group &&
+            mvState.currentGroupIndex === mvState.userGroups.length - 1 &&
+            mvState.currentMomentIndex === group.moments.length - 1;
         if (dom.mvNavLeft) {
-            if (mvState.currentIndex <= 0) {
-                dom.mvNavLeft.classList.add('mv-nav-disabled');
-            } else {
-                dom.mvNavLeft.classList.remove('mv-nav-disabled');
-            }
+            dom.mvNavLeft.classList.toggle('mv-nav-disabled', isFirstMoment);
         }
         if (dom.mvNavRight) {
-            if (mvState.currentIndex >= mvState.moments.length - 1) {
-                dom.mvNavRight.classList.add('mv-nav-disabled');
-            } else {
-                dom.mvNavRight.classList.remove('mv-nav-disabled');
-            }
+            dom.mvNavRight.classList.toggle('mv-nav-disabled', isLastMoment);
         }
     }
 
@@ -9133,6 +10183,10 @@
                 closeMomentCreatePopup();
                 if (type === 'image') {
                     openMomentImagePopup();
+                } else if (type === 'video') {
+                    openMomentVideoPopup();
+                } else if (type === 'text') {
+                    openMomentTextPopup();
                 } else {
                     showToast('Create ' + type + ' moment — coming soon', 'info');
                 }
@@ -9171,6 +10225,87 @@
         }
         if (dom.momentImgBtnPost) {
             dom.momentImgBtnPost.addEventListener('click', postImageMoment);
+        }
+
+        // Video moment popup events
+        if (dom.momentVidClose) {
+            dom.momentVidClose.addEventListener('click', closeMomentVideoPopup);
+        }
+        if (dom.momentVidOverlay) {
+            dom.momentVidOverlay.addEventListener('click', function (e) {
+                if (e.target === dom.momentVidOverlay) closeMomentVideoPopup();
+            });
+        }
+        if (dom.momentVidChange) {
+            dom.momentVidChange.addEventListener('click', function () {
+                if (dom.momentVidFileInput) dom.momentVidFileInput.click();
+            });
+        }
+        if (dom.momentVidFileInput) {
+            dom.momentVidFileInput.addEventListener('change', function () {
+                var file = this.files && this.files[0];
+                if (file) handleMomentVidFileSelect(file);
+                this.value = '';
+            });
+        }
+        if (dom.momentVidDesc) {
+            dom.momentVidDesc.addEventListener('input', function () {
+                var len = this.value.length;
+                if (dom.momentVidDescCount) dom.momentVidDescCount.textContent = len;
+            });
+        }
+        if (dom.momentVidBtnCancel) {
+            dom.momentVidBtnCancel.addEventListener('click', closeMomentVideoPopup);
+        }
+        if (dom.momentVidBtnPost) {
+            dom.momentVidBtnPost.addEventListener('click', postVideoMoment);
+        }
+
+        // Text moment popup events
+        if (dom.momentTxtClose) {
+            dom.momentTxtClose.addEventListener('click', closeMomentTextPopup);
+        }
+        if (dom.momentTxtOverlay) {
+            dom.momentTxtOverlay.addEventListener('click', function (e) {
+                if (e.target === dom.momentTxtOverlay) closeMomentTextPopup();
+            });
+        }
+        if (dom.momentTxtInput) {
+            dom.momentTxtInput.addEventListener('input', function () {
+                momentTxtState.text = this.value;
+                if (dom.momentTxtInputCount) dom.momentTxtInputCount.textContent = this.value.length;
+                updateMomentTxtPreview();
+            });
+        }
+        if (dom.momentTxtBgOptions) {
+            dom.momentTxtBgOptions.addEventListener('click', function (e) {
+                var btn = e.target.closest('.moment-txt-bg-opt');
+                if (!btn) return;
+                var bg = btn.getAttribute('data-bg');
+                if (!bg) return;
+                momentTxtState.bg = bg;
+                resetMomentTxtBgActive(bg);
+                updateMomentTxtPreview();
+            });
+        }
+        if (dom.momentTxtFontOptions) {
+            dom.momentTxtFontOptions.addEventListener('click', function (e) {
+                var btn = e.target.closest('.moment-txt-font-opt');
+                if (!btn) return;
+                var font = btn.getAttribute('data-font');
+                if (!font) return;
+                momentTxtState.font = font;
+                resetMomentTxtFontActive(font);
+                updateMomentTxtPreview();
+            });
+        }
+        if (dom.momentTxtBtnCancel) {
+            dom.momentTxtBtnCancel.addEventListener('click', closeMomentTextPopup);
+        }
+        if (dom.momentTxtBtnNext) {
+            dom.momentTxtBtnNext.addEventListener('click', function () {
+                postTextMoment();
+            });
         }
 
         // Moment viewer events
@@ -9217,6 +10352,39 @@
             });
         }
 
+        // Pause / Resume (desktop: double-click, mobile: long-press)
+        if (dom.mvImageWrap) {
+            dom.mvImageWrap.addEventListener('dblclick', function (e) {
+                e.preventDefault();
+                if (mvState.paused) {
+                    resumeMv();
+                } else {
+                    pauseMv();
+                }
+            });
+            var mvTouchTimer = null;
+            dom.mvImageWrap.addEventListener('touchstart', function (e) {
+                if (e.touches.length !== 1) return;
+                mvTouchTimer = setTimeout(function () {
+                    pauseMv();
+                }, 0);
+            }, { passive: true });
+            dom.mvImageWrap.addEventListener('touchend', function () {
+                clearTimeout(mvTouchTimer);
+                mvTouchTimer = null;
+                if (mvState.paused) {
+                    resumeMv();
+                }
+            }, { passive: true });
+            dom.mvImageWrap.addEventListener('touchcancel', function () {
+                clearTimeout(mvTouchTimer);
+                mvTouchTimer = null;
+                if (mvState.paused) {
+                    resumeMv();
+                }
+            }, { passive: true });
+        }
+
         var expandHandle = $('rpanel-collapse-handle');
         if (expandHandle) expandHandle.addEventListener('click', toggleRpanelExpand);
 
@@ -9231,6 +10399,10 @@
                 closeMomentCreatePopup();
             } else if (e.key === 'Escape' && dom.momentImgOverlay && dom.momentImgOverlay.classList.contains('visible')) {
                 closeMomentImagePopup();
+            } else if (e.key === 'Escape' && dom.momentVidOverlay && dom.momentVidOverlay.classList.contains('visible')) {
+                closeMomentVideoPopup();
+            } else if (e.key === 'Escape' && dom.momentTxtOverlay && dom.momentTxtOverlay.classList.contains('visible')) {
+                closeMomentTextPopup();
             } else if (e.key === 'Escape' && mvState.open) {
                 closeMomentViewer();
             }
@@ -11343,23 +12515,61 @@
         dom.momentImgBtnCancel = $('moment-img-btn-cancel');
         dom.momentImgBtnPost = $('moment-img-btn-post');
         dom.momentImgFileInput = $('moment-img-file-input');
+        // Video moment popup
+        dom.momentVidOverlay = $('moment-vid-overlay');
+        dom.momentVidClose = $('moment-vid-close');
+        dom.momentVidPreview = $('moment-vid-preview');
+        dom.momentVidPreviewWrap = $('moment-vid-preview-wrap');
+        dom.momentVidInfo = $('moment-vid-info');
+        dom.momentVidDuration = $('moment-vid-duration');
+        dom.momentVidSize = $('moment-vid-size');
+        dom.momentVidChange = $('moment-vid-change');
+        dom.momentVidDesc = $('moment-vid-desc');
+        dom.momentVidDescCount = $('moment-vid-desc-count');
+        dom.momentVidBtnCancel = $('moment-vid-btn-cancel');
+        dom.momentVidBtnPost = $('moment-vid-btn-post');
+        dom.momentVidFileInput = $('moment-vid-file-input');
+        dom.momentVidUploadProgress = $('moment-vid-upload-progress');
+        dom.momentVidProgressFill = $('moment-vid-progress-fill');
+        dom.momentVidProgressText = $('moment-vid-progress-text');
+        // Text moment popup
+        dom.momentTxtOverlay = $('moment-txt-overlay');
+        dom.momentTxtClose = $('moment-txt-close');
+        dom.momentTxtPreview = $('moment-txt-preview');
+        dom.momentTxtPreviewText = $('moment-txt-preview-text');
+        dom.momentTxtInput = $('moment-txt-input');
+        dom.momentTxtInputCount = $('moment-txt-input-count');
+        dom.momentTxtBgOptions = $('moment-txt-bg-options');
+        dom.momentTxtFontOptions = $('moment-txt-font-options');
+        dom.momentTxtBtnCancel = $('moment-txt-btn-cancel');
+        dom.momentTxtBtnNext = $('moment-txt-btn-next');
         // Moment viewer
         dom.mvOverlay = $('mv-overlay');
         dom.mvProgress = $('mv-progress');
+        dom.mvHeader = $('mv-header');
         dom.mvAvatar = $('mv-avatar');
         dom.mvUsername = $('mv-username');
+        dom.mvBadges = $('mv-badges');
         dom.mvTime = $('mv-time');
         dom.mvClose = $('mv-close');
         dom.mvNavLeft = $('mv-nav-left');
         dom.mvNavRight = $('mv-nav-right');
         dom.mvImageWrap = $('mv-image-wrap');
         dom.mvImage = $('mv-image');
+        dom.mvVideo = $('mv-video');
         dom.mvImageLoading = $('mv-image-loading');
+        dom.mvImageError = $('mv-image-error');
+        dom.mvSponsoredWrap = $('mv-sponsored-wrap');
+        dom.mvSponsoredBadges = $('mv-sponsored-badges');
+        dom.mvSponsoredAd = $('mv-sponsored-ad');
+        dom.mvBottom = $('mv-bottom');
         dom.mvDescBar = $('mv-desc-bar');
         dom.mvDescText = $('mv-desc-text');
         dom.mvLikeBtn = $('mv-like-btn');
         dom.mvReplyInput = $('mv-reply-input');
         dom.mvReplySend = $('mv-reply-send');
+        dom.mvActions = $('mv-actions');
+        dom.mvTip = $('mv-tip');
     }
 
     /* ── Friend Button Icon SVGs ──────────────── */
