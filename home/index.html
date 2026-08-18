@@ -292,31 +292,32 @@
                         aria-label="Search conversations">
                 </div>
 
-                <div class="dm-list" id="dm-list">
-                    <!-- Loading skeleton -->
-                    <div class="dm-skeleton" id="dm-skeleton">
-                        <div class="dm-skel-item">
-                            <div class="dm-skel-avatar"></div>
-                            <div class="dm-skel-text">
-                                <div class="dm-skel-line"></div>
-                                <div class="dm-skel-line short"></div>
-                            </div>
-                        </div>
-                        <div class="dm-skel-item">
-                            <div class="dm-skel-avatar"></div>
-                            <div class="dm-skel-text">
-                                <div class="dm-skel-line"></div>
-                                <div class="dm-skel-line short"></div>
-                            </div>
-                        </div>
-                        <div class="dm-skel-item">
-                            <div class="dm-skel-avatar"></div>
-                            <div class="dm-skel-text">
-                                <div class="dm-skel-line"></div>
-                                <div class="dm-skel-line short"></div>
-                            </div>
+                <!-- Loading skeleton (outside dm-list) -->
+                <div class="dm-skeleton" id="dm-skeleton">
+                    <div class="dm-skel-item">
+                        <div class="dm-skel-avatar"></div>
+                        <div class="dm-skel-text">
+                            <div class="dm-skel-line"></div>
+                            <div class="dm-skel-line short"></div>
                         </div>
                     </div>
+                    <div class="dm-skel-item">
+                        <div class="dm-skel-avatar"></div>
+                        <div class="dm-skel-text">
+                            <div class="dm-skel-line"></div>
+                            <div class="dm-skel-line short"></div>
+                        </div>
+                    </div>
+                    <div class="dm-skel-item">
+                        <div class="dm-skel-avatar"></div>
+                        <div class="dm-skel-text">
+                            <div class="dm-skel-line"></div>
+                            <div class="dm-skel-line short"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dm-list" id="dm-list">
                     <!-- Empty state -->
                     <div class="dm-empty" id="dm-empty" style="display:none;">
                         <div class="dm-empty-icon">
@@ -426,7 +427,7 @@
             <!-- ═══ USER PANEL (shared) ═══ -->
             <div class="user-panel">
                 <div class="user-avatar-wrap">
-                    <img class="user-avatar" id="user-avatar" src="https://i.pravatar.cc/80?img=47" alt="Your avatar"
+                    <img class="user-avatar" id="user-avatar" src="../assets/hiveicon.png" alt="Your avatar"
                         loading="lazy">
                     <span class="user-status-dot online"></span>
                 </div>
@@ -890,8 +891,9 @@
                                     data-color="#FF4D9E">
                                     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
                                         stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M15.5 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V8.5L15.5 3z" />
-                                        <polyline points="14 3 14 9 21 9" />
+                                        <path d="M12 2l1.5 5.5L19 9l-5.5 1.5L12 16l-1.5-5.5L5 9l5.5-1.5z" />
+                                        <path d="M5 18l1-3" />
+                                        <path d="M19 18l-1-3" />
                                     </svg>
                                 </button>
                                 <button class="composer-btn" aria-label="Mention" data-tip="Mention"
@@ -900,6 +902,13 @@
                                         stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <circle cx="12" cy="12" r="4" />
                                         <path d="M16 8v5a3 3 0 006 0v-1a10 10 0 10-3.92 7.94" />
+                                    </svg>
+                                </button>
+                                <button class="composer-btn staff-post-btn" id="staff-post-btn" aria-label="Staff Post" data-tip="Staff Post" data-color="#A780FF" style="display:none;">
+                                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M12 20h9" />
+                                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
                                     </svg>
                                 </button>
                                 <button class="composer-btn send-btn" id="send-btn" aria-label="Send message">
@@ -1126,6 +1135,10 @@
                         <div class="rp-card-b">
                             <div class="rp-about-bio" id="rp-if-bio">No bio yet.</div>
                             <div class="rp-about-fields">
+                                <div class="rp-field" id="rp-if-pronouns-wrap"><span class="rp-fl">Pronouns</span><span class="rp-fv"
+                                        id="rp-if-pronouns"></span></div>
+                                <div class="rp-field" id="rp-if-status-wrap"><span class="rp-fl">Status</span><span class="rp-fv"
+                                        id="rp-if-status"></span></div>
                                 <div class="rp-field"><span class="rp-fl">Rank</span><span class="rp-fv"
                                         id="rp-if-rank"></span></div>
                                 <div class="rp-field"><span class="rp-fl">Joined</span><span class="rp-fv"
@@ -1886,6 +1899,7 @@
                     <div class="moments-my-card rp-entrance" data-delay="0">
                         <div class="moments-my-left">
                             <div class="moments-my-avatar-wrap">
+                                <div class="moments-my-ring"></div>
                                 <img class="moments-my-avatar" id="moments-my-avatar" src="" alt="Your avatar">
                                 <div class="moments-my-add" id="moments-add-btn" aria-label="Add moment">
                                     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor"
@@ -1897,13 +1911,17 @@
                             </div>
                             <div class="moments-my-info">
                                 <span class="moments-my-label">My Moment</span>
-                                <span class="moments-my-hint">Tap to add a moment</span>
+                                <span class="moments-my-hint" id="moments-my-hint">Tap to add a moment</span>
                             </div>
+                        </div>
+                        <div class="moments-my-count" id="moments-my-count" style="display:none;">
+                            <span class="moments-my-count-num" id="moments-my-count-num">0</span>
+                            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
                         </div>
                     </div>
 
                     <!-- Moments List Header -->
-                    <div class="moments-section-header rp-entrance" data-delay="1">
+                    <div class="moments-section-header rp-entrance" data-delay="1" id="moments-section-header">
                         <span>Recent Moments</span>
                     </div>
 
@@ -2458,14 +2476,29 @@
         <div class="emoji-picker-header">
             <input type="text" class="emoji-search" id="emoji-search" placeholder="Search emojis..." autocomplete="off"
                 spellcheck="false">
+            <button class="picker-close" id="emoji-picker-close" aria-label="Close emoji picker">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
         </div>
         <div class="emoji-category-tabs" id="emoji-category-tabs">
-            <button class="emoji-tab active" data-cat="recent" title="Recent">🕐</button>
-            <button class="emoji-tab" data-cat="faces" title="Faces">😀</button>
-            <button class="emoji-tab" data-cat="hands" title="Hands">👋</button>
-            <button class="emoji-tab" data-cat="nature" title="Nature">🌿</button>
-            <button class="emoji-tab" data-cat="objects" title="Objects">🍔</button>
-            <button class="emoji-tab" data-cat="symbols" title="Symbols">✨</button>
+            <button class="emoji-tab active" data-cat="recent" title="Recent">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </button>
+            <button class="emoji-tab" data-cat="faces" title="Faces">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+            </button>
+            <button class="emoji-tab" data-cat="hands" title="Hands">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8V6a2 2 0 0 0-4 0v1"/><path d="M14 7V4a2 2 0 0 0-4 0v4"/><path d="M10 7.5V3a2 2 0 0 0-4 0v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.5 0-3.8-.5-5.5-2L3.3 15a1.5 1.5 0 0 1 2-2L8 15"/></svg>
+            </button>
+            <button class="emoji-tab" data-cat="nature" title="Nature">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.9C15.5 4.9 17 3.5 17 3.5s1.5 0 2.8 1.3c1 1 1.3 2.3 1.5 3.5A10 10 0 0 0 11 20Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>
+            </button>
+            <button class="emoji-tab" data-cat="objects" title="Objects">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+            </button>
+            <button class="emoji-tab" data-cat="symbols" title="Symbols">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l1.5 5.5L19 9l-5.5 1.5L12 16l-1.5-5.5L5 9l5.5-1.5z"/></svg>
+            </button>
         </div>
         <div class="emoji-body" id="emoji-body">
             <!-- Built dynamically by JS -->
@@ -2489,6 +2522,39 @@
             <div class="gif-loadmore" id="gif-loadmore" style="display:none;">
                 <button class="gif-loadmore-btn" id="gif-loadmore-btn">Load more GIFs</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Sticker Picker Popup -->
+    <div class="sticker-picker" id="sticker-picker" style="display:none;">
+        <div class="sticker-picker-header">
+            <input type="text" class="sticker-search" id="sticker-search" placeholder="Search stickers..." autocomplete="off" spellcheck="false">
+            <button class="picker-close" id="sticker-picker-close" aria-label="Close sticker picker">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <div class="sticker-category-tabs" id="sticker-categories">
+            <button class="sticker-tab active" data-cat="Recent" title="Recent">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </button>
+            <button class="sticker-tab" data-cat="Smileys" title="Smileys">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+            </button>
+            <button class="sticker-tab" data-cat="Hearts" title="Hearts">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            </button>
+            <button class="sticker-tab" data-cat="Gestures" title="Gestures">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8V6a2 2 0 0 0-4 0v1"/><path d="M14 7V4a2 2 0 0 0-4 0v4"/><path d="M10 7.5V3a2 2 0 0 0-4 0v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.5 0-3.8-.5-5.5-2L3.3 15a1.5 1.5 0 0 1 2-2L8 15"/></svg>
+            </button>
+            <button class="sticker-tab" data-cat="Animals" title="Animals">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 5.172C10 3.782 8.423 2.679 6.5 3c-2.823.47-4.113 6.006-4 7 .08.703 1.725 1.722 3.656 1 1.261-.472 1.96-1.45 2.344-2.5"/><path d="M14.267 5.172c0-1.39 1.577-2.493 3.5-2.172 2.823.47 4.113 6.006 4 7-.08.703-1.725 1.722-3.656 1-1.261-.472-1.855-1.45-2.239-2.5"/><path d="M8 14v.5"/><path d="M16 14v.5"/><path d="M11.25 16.25h1.5L12 17l-.75-.75Z"/><path d="M4.42 11.247A13.152 13.152 0 0 0 4 14.556C4 18.728 7.582 21 12 21s8-2.272 8-6.444c0-1.061-.162-2.2-.493-3.309m-9.243-6.082A8.801 8.801 0 0 1 12 5c.78 0 1.5.108 2.161.306"/></svg>
+            </button>
+            <button class="sticker-tab" data-cat="Objects" title="Objects">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+            </button>
+        </div>
+        <div class="sticker-body" id="sticker-picker-body">
+            <div class="sticker-grid" id="sticker-grid"></div>
         </div>
     </div>
 
@@ -2810,6 +2876,7 @@
         <div class="mv-image-wrap" id="mv-image-wrap">
             <img class="mv-image" id="mv-image" src="" alt="Moment">
             <video class="mv-video" id="mv-video" style="display:none;" playsinline></video>
+            <div class="mv-hearts" id="mv-hearts"></div>
             <div class="mv-sposored-wrap" id="mv-sponsored-wrap" style="display:none;">
                 <div class="mv-sponsored-topbar">
                     <div class="mv-sponsored-identity">
@@ -2850,6 +2917,7 @@
                         stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                     </svg>
+                    <span class="mv-like-count" id="mv-like-count"></span>
                 </button>
                 <div class="mv-reply-wrap">
                     <input class="mv-reply-input" id="mv-reply-input" type="text"
@@ -2861,6 +2929,28 @@
                             <polygon points="22 2 15 22 11 13 2 9 22 2" />
                         </svg>
                     </button>
+                </div>
+            </div>
+            <!-- Owner Insights Panel (hidden by default) -->
+            <div class="mv-insights" id="mv-insights" style="display:none;">
+                <div class="mv-insight-card">
+                    <span class="mv-insight-icon">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                    </span>
+                    <span class="mv-insight-value" id="mv-insight-views">0</span>
+                    <span class="mv-insight-label">Views</span>
+                </div>
+                <div class="mv-insight-card">
+                    <span class="mv-insight-icon">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                        </svg>
+                    </span>
+                    <span class="mv-insight-value" id="mv-insight-likes">0</span>
+                    <span class="mv-insight-label">Likes</span>
                 </div>
             </div>
         </div>
@@ -3470,6 +3560,213 @@
         </div>
     </div>
     <!-- ═══ END ACHIEVEMENTS MODAL ═══ -->
+
+    <!-- ═══════════ COMMUNITY DETAILS POPUP ═══════════ -->
+    <div class="cd-overlay" id="cd-overlay" style="display:none;">
+        <div class="cd-popup" id="cd-popup" role="dialog" aria-modal="true" aria-labelledby="cd-title">
+            <!-- Banner -->
+            <div class="cd-banner" id="cd-banner">
+                <div class="cd-banner-orbs">
+                    <div class="cd-orb cd-orb-1"></div>
+                    <div class="cd-orb cd-orb-2"></div>
+                    <div class="cd-orb cd-orb-3"></div>
+                </div>
+                <div class="cd-banner-shimmer"></div>
+                <button class="cd-close" id="cd-close" aria-label="Close community details">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Identity -->
+            <div class="cd-identity">
+                <div class="cd-icon-wrap">
+                    <div class="cd-icon" id="cd-icon"></div>
+                </div>
+                <div class="cd-identity-text">
+                    <h2 class="cd-title" id="cd-title"></h2>
+                    <div class="cd-meta">
+                        <span class="cd-meta-badge" id="cd-visibility"></span>
+                        <span class="cd-meta-dot"></span>
+                        <span class="cd-meta-text" id="cd-created"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Description -->
+            <div class="cd-desc-section">
+                <p class="cd-description" id="cd-description"></p>
+            </div>
+
+            <!-- Stats -->
+            <div class="cd-stats-grid" id="cd-stats-grid">
+                <div class="cd-stat">
+                    <div class="cd-stat-num" id="cd-stat-members">0</div>
+                    <div class="cd-stat-lbl">Members</div>
+                </div>
+                <div class="cd-stat-sep"></div>
+                <div class="cd-stat">
+                    <div class="cd-stat-num" id="cd-stat-online">0</div>
+                    <div class="cd-stat-lbl">Online</div>
+                </div>
+                <div class="cd-stat-sep"></div>
+                <div class="cd-stat">
+                    <div class="cd-stat-num" id="cd-stat-messages">0</div>
+                    <div class="cd-stat-lbl">Messages</div>
+                </div>
+                <div class="cd-stat-sep"></div>
+                <div class="cd-stat">
+                    <div class="cd-stat-num cd-stat-text" id="cd-stat-permission">All</div>
+                    <div class="cd-stat-lbl">Chat Access</div>
+                </div>
+            </div>
+
+            <!-- Staff Section -->
+            <div class="cd-section" id="cd-staff-section" style="display:none;">
+                <div class="cd-section-head">
+                    <div class="cd-section-icon" style="--sic:#A780FF">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                        </svg>
+                    </div>
+                    <span class="cd-section-title">Staff</span>
+                    <span class="cd-section-count" id="cd-staff-count"></span>
+                </div>
+                <div class="cd-staff-grid" id="cd-staff-list"></div>
+            </div>
+
+        </div>
+    </div>
+    <!-- ═══ END COMMUNITY DETAILS POPUP ═══ -->
+
+    <!-- ═══════════ STAFF POST MENU POPUP ═══════════ -->
+    <div class="sp-overlay" id="sp-overlay" style="display:none;">
+        <div class="sp-popup" id="sp-popup">
+            <div class="sp-header">
+                <div class="sp-header-icon">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 20h9"/>
+                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                    </svg>
+                </div>
+                <span class="sp-header-title">Staff Posts</span>
+                <button class="sp-close" id="sp-close" aria-label="Close">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="sp-body">
+                <button class="sp-option" id="sp-create-poll">
+                    <div class="sp-option-icon" style="background:rgba(0,229,255,0.1);color:#00E5FF;">
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="20" x2="18" y2="10"/>
+                            <line x1="12" y1="20" x2="12" y2="4"/>
+                            <line x1="6" y1="20" x2="6" y2="14"/>
+                        </svg>
+                    </div>
+                    <div class="sp-option-text">
+                        <span class="sp-option-title">Create Poll</span>
+                        <span class="sp-option-desc">Ask a question with selectable options</span>
+                    </div>
+                    <svg class="sp-option-arrow" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="9 18 15 12 9 6"/>
+                    </svg>
+                </button>
+                <button class="sp-option" id="sp-create-post">
+                    <div class="sp-option-icon" style="background:rgba(167,128,255,0.1);color:#A780FF;">
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                    </div>
+                    <div class="sp-option-text">
+                        <span class="sp-option-title">Create Post</span>
+                        <span class="sp-option-desc">Share an announcement or update</span>
+                    </div>
+                    <svg class="sp-option-arrow" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="9 18 15 12 9 6"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- ═══ END STAFF POST MENU POPUP ═══ -->
+
+    <!-- ═══════════ CREATE POLL POPUP ═══════════ -->
+    <div class="poll-overlay" id="poll-overlay" style="display:none;">
+        <div class="poll-popup" id="poll-popup">
+            <div class="poll-header">
+                <div class="poll-header-left">
+                    <div class="poll-header-icon">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="20" x2="18" y2="10"/>
+                            <line x1="12" y1="20" x2="12" y2="4"/>
+                            <line x1="6" y1="20" x2="6" y2="14"/>
+                        </svg>
+                    </div>
+                    <span class="poll-header-title">Create Poll</span>
+                </div>
+                <button class="poll-close" id="poll-close" aria-label="Close">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="poll-body">
+                <div class="poll-field">
+                    <label class="poll-label">Question</label>
+                    <input type="text" class="poll-input" id="poll-question" placeholder="Ask your question..." maxlength="300" autocomplete="off" spellcheck="false">
+                    <div class="poll-input-count" id="poll-question-count">0 / 300</div>
+                </div>
+
+                <div class="poll-field">
+                    <label class="poll-label">Options</label>
+                    <div class="poll-options" id="poll-options">
+                        <div class="poll-option-row" data-index="0">
+                            <div class="poll-option-num">1</div>
+                            <input type="text" class="poll-input poll-option-input" placeholder="Option 1" maxlength="150" autocomplete="off" spellcheck="false">
+                            <button class="poll-option-remove" aria-label="Remove option" style="visibility:hidden;">
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="18" y1="6" x2="6" y2="18"/>
+                                    <line x1="6" y1="6" x2="18" y2="18"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="poll-option-row" data-index="1">
+                            <div class="poll-option-num">2</div>
+                            <input type="text" class="poll-input poll-option-input" placeholder="Option 2" maxlength="150" autocomplete="off" spellcheck="false">
+                            <button class="poll-option-remove" aria-label="Remove option" style="visibility:hidden;">
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="18" y1="6" x2="6" y2="18"/>
+                                    <line x1="6" y1="6" x2="18" y2="18"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <button class="poll-add-option" id="poll-add-option">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19"/>
+                            <line x1="5" y1="12" x2="19" y2="12"/>
+                        </svg>
+                        <span>Add Option</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="poll-footer">
+                <button class="poll-btn poll-btn-cancel" id="poll-btn-cancel">Cancel</button>
+                <button class="poll-btn poll-btn-create" id="poll-btn-create">Create Poll</button>
+            </div>
+        </div>
+    </div>
+    <!-- ═══ END CREATE POLL POPUP ═══ -->
 
     <script src="achievements.js"></script>
 </body>

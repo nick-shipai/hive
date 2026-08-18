@@ -262,7 +262,7 @@
             if (user.profile_picture.startsWith('data:')) return user.profile_picture;
             return user.profile_picture;
         }
-        return 'https://i.pravatar.cc/80?u=' + (user ? user.id || user.username : 'default');
+        return '../assets/hiveicon.png';
     }
 
     var AVATAR_COLORS = [
@@ -705,7 +705,7 @@
         var showUsers = users.slice(0, 3);
         for (var i = 0; i < showUsers.length; i++) {
             var u = showUsers[i];
-            var avatarUrl = 'https://i.pravatar.cc/80?u=' + (u.userId || u.username);
+            var avatarUrl = '../assets/hiveicon.png';
             // Try to find user in state to get their actual avatar
             if (u.userId) {
                 var memberData = state.members.get(u.userId) || state.homeMembers.get(u.userId);
@@ -1700,6 +1700,8 @@
         state.currentCommunity = null;
         state.currentDmConversation = null;
         state.chatRestricted = false;
+        if (dom.staffPostBtn) dom.staffPostBtn.style.display = 'none';
+        if (pollOpen) closePollPopup();
         state.members.clear();
         state.activeView = 'home';
         syncSidebarVisibility('home');
@@ -1750,6 +1752,8 @@
         state.currentCommunity = null;
         state.currentDmConversation = null;
         state.chatRestricted = false;
+        if (dom.staffPostBtn) dom.staffPostBtn.style.display = 'none';
+        if (pollOpen) closePollPopup();
         state.members.clear();
         state.activeView = 'dm';
         syncSidebarVisibility('dm');
@@ -1781,6 +1785,7 @@
         state.currentCommunity = null;
         state.currentDmConversation = null;
         state.chatRestricted = false;
+        if (dom.staffPostBtn) dom.staffPostBtn.style.display = 'none';
         state.members.clear();
         state.activeView = 'friends';
         syncSidebarVisibility('friends');
@@ -2112,6 +2117,7 @@
         state.currentCommunity = null;
         state.currentDmConversation = null;
         state.chatRestricted = false;
+        if (dom.staffPostBtn) dom.staffPostBtn.style.display = 'none';
         state.members.clear();
         state.activeView = 'friends';
         syncSidebarVisibility('friends');
@@ -2132,6 +2138,7 @@
         state.currentCommunity = null;
         state.chatRestricted = false;
         state.currentDmConversation = null;
+        if (dom.staffPostBtn) dom.staffPostBtn.style.display = 'none';
         state.members.clear();
         state.activeView = 'communities';
         syncSidebarVisibility('communities');
@@ -2177,9 +2184,12 @@
     }
 
     function loadDmConversations() {
-        show(dom.dmSkeleton);
+        // Clear old items FIRST so skeleton doesn't show alongside stale list
+        var oldItems = dom.dmList ? dom.dmList.querySelectorAll('.dm-item') : [];
+        for (var i = 0; i < oldItems.length; i++) oldItems[i].remove();
         hide(dom.dmEmpty);
         hide(dom.dmError);
+        show(dom.dmSkeleton);
 
         return apiGet('/api/dm/conversations')
             .then(function (data) {
@@ -2187,9 +2197,8 @@
                 hide(dom.dmSkeleton);
                 if (state.dmConversations.length === 0) {
                     show(dom.dmEmpty);
-                } else {
-                    renderDmList();
                 }
+                renderDmList();
             })
             .catch(function (err) {
                 console.error('[HIVE] loadDmConversations error:', err);
@@ -2201,11 +2210,123 @@
             });
     }
 
+    var _dmReloadTimer = null;
+    function debouncedLoadDmConversations() {
+        if (_dmReloadTimer) clearTimeout(_dmReloadTimer);
+        _dmReloadTimer = setTimeout(function () {
+            _dmReloadTimer = null;
+            loadDmConversations();
+        }, 800);
+    }
+
+    function updateDmListInPlace(msg) {
+        if (!msg || !msg.conversation_id) return;
+        var convId = String(msg.conversation_id);
+        var senderId = String(msg.sender_id || msg.user_id || '');
+        var isSelf = state.user && senderId === String(state.user.id);
+        var text = msg.message || msg.content || msg.text || '';
+        if (msg.message_type === 'sticker') text = 'Sticker';
+        var now = msg.created_at || new Date().toISOString();
+
+        var conv = null;
+        var convIdx = -1;
+        for (var i = 0; i < state.dmConversations.length; i++) {
+            if (String(state.dmConversations[i].conversation_id) === convId) {
+                conv = state.dmConversations[i];
+                convIdx = i;
+                break;
+            }
+        }
+
+        if (conv) {
+            conv.last_message = text;
+            conv.last_message_time = now;
+            if (!isSelf && state.currentDmConversation != convId) {
+                conv.unread_count = (conv.unread_count || 0) + 1;
+            }
+            state.dmConversations.sort(function (a, b) {
+                var ta = a.last_message_time || a.created_at || '';
+                var tb = b.last_message_time || b.created_at || '';
+                return tb > ta ? 1 : tb < ta ? -1 : 0;
+            });
+        } else {
+            debouncedLoadDmConversations();
+            updateChatsBadge();
+            return;
+        }
+
+        // Move the DOM element to top and update its content in-place
+        var list = dom.dmList;
+        if (list) {
+            var existingEl = list.querySelector('[data-conv-id="' + convId + '"]');
+            if (existingEl) {
+                // Update preview text
+                var previewEl = existingEl.querySelector('.dm-item-preview');
+                if (previewEl) {
+                    var displayMsg = text || 'No messages yet';
+                    if (displayMsg.length > 40) displayMsg = displayMsg.substring(0, 40) + '...';
+                    previewEl.textContent = displayMsg;
+                }
+                // Update time
+                var timeEl = existingEl.querySelector('.dm-item-time');
+                if (timeEl) {
+                    timeEl.textContent = conv.last_message_time ? formatTime(conv.last_message_time) : '';
+                }
+                // Update unread badge
+                var oldBadge = existingEl.querySelector('.dm-item-unread');
+                if (oldBadge) oldBadge.remove();
+                if (conv.unread_count > 0 && !isSelf && state.currentDmConversation != convId) {
+                    var badge = document.createElement('div');
+                    badge.className = 'dm-item-unread';
+                    badge.textContent = Math.min(conv.unread_count, 99);
+                    existingEl.appendChild(badge);
+                }
+                // Move to top
+                list.insertBefore(existingEl, list.firstChild);
+            } else {
+                renderDmList();
+            }
+        }
+        updateChatsBadge();
+    }
+
+    function updateDmPresence(userId, online) {
+        var uid = String(userId);
+        for (var i = 0; i < state.dmConversations.length; i++) {
+            if (String(state.dmConversations[i].other_user_id) === uid) {
+                state.dmConversations[i].other_online = online;
+            }
+        }
+        // Update the dot directly without full re-render
+        var items = dom.dmList ? dom.dmList.querySelectorAll('.dm-item') : [];
+        for (var j = 0; j < items.length; j++) {
+            var convId = items[j].getAttribute('data-conv-id');
+            for (var k = 0; k < state.dmConversations.length; k++) {
+                if (String(state.dmConversations[k].conversation_id) === convId && String(state.dmConversations[k].other_user_id) === uid) {
+                    var dot = items[j].querySelector('.dm-item-status');
+                    if (dot) {
+                        dot.classList.remove('online', 'offline');
+                        dot.classList.add(online ? 'online' : 'offline');
+                    }
+                    break;
+                }
+            }
+        }
+    }
+
     function renderDmList() {
         var list = dom.dmList;
         if (!list) return;
         var existing = list.querySelectorAll('.dm-item');
         for (var i = 0; i < existing.length; i++) existing[i].remove();
+
+        if (state.dmConversations.length === 0) {
+            show(dom.dmEmpty);
+            hide(dom.dmError);
+            return;
+        }
+        hide(dom.dmEmpty);
+        hide(dom.dmError);
 
         for (var i = 0; i < state.dmConversations.length; i++) {
             var conv = state.dmConversations[i];
@@ -2294,6 +2415,9 @@
 
         // Update chat header for DM
         updateDmChatHeader(conv);
+
+        // Hide staff post button in DMs
+        if (dom.staffPostBtn) dom.staffPostBtn.style.display = 'none';
 
         // Show chat view
         showChatView();
@@ -2535,6 +2659,30 @@
                                     .then(function (data) {
                                         closeModal();
                                         if (data.conversationId) {
+                                            var convExists = false;
+                                            for (var ci = 0; ci < state.dmConversations.length; ci++) {
+                                                if (state.dmConversations[ci].conversation_id == data.conversationId) {
+                                                    convExists = true;
+                                                    break;
+                                                }
+                                            }
+                                            if (!convExists) {
+                                                var otherUser = data.otherUser || {};
+                                                state.dmConversations.unshift({
+                                                    conversation_id: data.conversationId,
+                                                    other_user_id: targetUserId,
+                                                    other_username: otherUser.username || '',
+                                                    other_display_name: otherUser.display_name || otherUser.username || '',
+                                                    other_profile_picture: otherUser.profile_picture || '',
+                                                    other_profile_ring: otherUser.rank || 'none',
+                                                    other_online: otherUser.online || false,
+                                                    last_message: '',
+                                                    last_message_time: new Date().toISOString(),
+                                                    unread_count: 0,
+                                                    created_at: new Date().toISOString(),
+                                                });
+                                                renderDmList();
+                                            }
                                             openDmConversation(data.conversationId);
                                         }
                                     })
@@ -2617,6 +2765,429 @@
 
         profileOpen = false;
         appearanceOpen = false;
+    }
+
+    /* ── Community Details popup ──────────────── */
+    var communityDetailsOpen = false;
+
+    function openCommunityDetails() {
+        if (communityDetailsOpen) return;
+        communityDetailsOpen = true;
+
+        var overlay = $('cd-overlay');
+        if (!overlay) return;
+
+        if (state.notifOpen) closeNotifications(false);
+        document.body.classList.remove('side-open');
+
+        show(overlay);
+        requestAnimationFrame(function () {
+            requestAnimationFrame(function () {
+                overlay.classList.add('visible');
+            });
+        });
+
+        renderCommunityDetailsSkeleton();
+        loadCommunityDetails();
+    }
+
+    function closeCommunityDetails() {
+        if (!communityDetailsOpen) return;
+        communityDetailsOpen = false;
+
+        var overlay = $('cd-overlay');
+        if (!overlay) return;
+
+        overlay.classList.remove('visible');
+        setTimeout(function () {
+            hide(overlay);
+        }, 220);
+    }
+
+    /* ── Staff Post Menu ──────────────────────── */
+    var staffPostOpen = false;
+
+    function updateStaffPostButton() {
+        var btn = dom.staffPostBtn;
+        if (!btn) return;
+        var staffRanks = ['moderator', 'administrator', 'owner'];
+        var isStaff = state.user && staffRanks.indexOf(state.user.rank) !== -1;
+        var isStaffCommunity = state.currentCommunity && state.currentCommunity.chat_permission === 'staff';
+        btn.style.display = (isStaff && isStaffCommunity) ? '' : 'none';
+    }
+
+    function openStaffPostMenu() {
+        if (staffPostOpen) return;
+        staffPostOpen = true;
+        var overlay = dom.spOverlay;
+        if (!overlay) return;
+        show(overlay);
+        requestAnimationFrame(function () {
+            requestAnimationFrame(function () {
+                overlay.classList.add('visible');
+            });
+        });
+    }
+
+    function closeStaffPostMenu() {
+        if (!staffPostOpen) return;
+        staffPostOpen = false;
+        var overlay = dom.spOverlay;
+        if (!overlay) return;
+        overlay.classList.remove('visible');
+        setTimeout(function () {
+            hide(overlay);
+        }, 220);
+    }
+
+    /* ── Create Poll Popup ──────────────────────── */
+    var pollOpen = false;
+    var pollMaxOptions = 10;
+    var pollMinOptions = 2;
+
+    function openPollPopup() {
+        if (pollOpen) return;
+        pollOpen = true;
+        resetPollForm();
+        var overlay = dom.pollOverlay;
+        if (!overlay) return;
+        show(overlay);
+        requestAnimationFrame(function () {
+            requestAnimationFrame(function () {
+                overlay.classList.add('visible');
+            });
+        });
+        setTimeout(function () {
+            if (dom.pollQuestion) dom.pollQuestion.focus();
+        }, 100);
+    }
+
+    function closePollPopup() {
+        if (!pollOpen) return;
+        pollOpen = false;
+        var overlay = dom.pollOverlay;
+        if (!overlay) return;
+        overlay.classList.remove('visible');
+        setTimeout(function () {
+            hide(overlay);
+        }, 220);
+    }
+
+    function resetPollForm() {
+        if (dom.pollQuestion) {
+            dom.pollQuestion.value = '';
+            updatePollQuestionCount();
+        }
+        var container = dom.pollOptions;
+        if (!container) return;
+        container.innerHTML = '';
+        for (var i = 0; i < pollMinOptions; i++) {
+            addPollOption(i);
+        }
+        updatePollAddButton();
+    }
+
+    function addPollOption(index) {
+        var container = dom.pollOptions;
+        if (!container) return;
+        var count = container.querySelectorAll('.poll-option-row').length;
+        if (count >= pollMaxOptions) return;
+
+        var row = document.createElement('div');
+        row.className = 'poll-option-row';
+        row.setAttribute('data-index', index !== undefined ? index : count);
+
+        var num = document.createElement('div');
+        num.className = 'poll-option-num';
+        num.textContent = (count + 1);
+
+        var input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'poll-input poll-option-input';
+        input.placeholder = 'Option ' + (count + 1);
+        input.maxLength = 150;
+        input.autocomplete = 'off';
+        input.spellcheck = false;
+
+        var removeBtn = document.createElement('button');
+        removeBtn.className = 'poll-option-remove';
+        removeBtn.setAttribute('aria-label', 'Remove option');
+        removeBtn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+        removeBtn.addEventListener('click', function () {
+            removePollOption(row);
+        });
+
+        row.appendChild(num);
+        row.appendChild(input);
+        row.appendChild(removeBtn);
+        container.appendChild(row);
+
+        updatePollOptionVisibility();
+        updatePollAddButton();
+
+        if (count === 0 && input) {
+            input.focus();
+        }
+    }
+
+    function removePollOption(row) {
+        var container = dom.pollOptions;
+        if (!container) return;
+        var rows = container.querySelectorAll('.poll-option-row');
+        if (rows.length <= pollMinOptions) return;
+        row.remove();
+        renumberPollOptions();
+        updatePollAddButton();
+    }
+
+    function renumberPollOptions() {
+        var container = dom.pollOptions;
+        if (!container) return;
+        var rows = container.querySelectorAll('.poll-option-row');
+        for (var i = 0; i < rows.length; i++) {
+            rows[i].querySelector('.poll-option-num').textContent = i + 1;
+            rows[i].querySelector('.poll-option-input').placeholder = 'Option ' + (i + 1);
+            rows[i].setAttribute('data-index', i);
+        }
+        updatePollOptionVisibility();
+    }
+
+    function updatePollOptionVisibility() {
+        var container = dom.pollOptions;
+        if (!container) return;
+        var rows = container.querySelectorAll('.poll-option-row');
+        var count = rows.length;
+        for (var i = 0; i < rows.length; i++) {
+            var removeBtn = rows[i].querySelector('.poll-option-remove');
+            if (removeBtn) {
+                removeBtn.style.visibility = count <= pollMinOptions ? 'hidden' : 'visible';
+            }
+        }
+    }
+
+    function updatePollAddButton() {
+        var container = dom.pollOptions;
+        var btn = dom.pollAddOption;
+        if (!container || !btn) return;
+        var count = container.querySelectorAll('.poll-option-row').length;
+        btn.disabled = count >= pollMaxOptions;
+    }
+
+    function updatePollQuestionCount() {
+        var input = dom.pollQuestion;
+        var counter = dom.pollQuestionCount;
+        if (!input || !counter) return;
+        counter.textContent = input.value.length + ' / 300';
+    }
+
+    function submitPoll() {
+        if (!state.currentCommunity || !state.currentCommunity.id) {
+            showToast('No community selected', 'error');
+            return;
+        }
+
+        var question = dom.pollQuestion ? dom.pollQuestion.value.trim() : '';
+        if (!question) {
+            showToast('Please enter a question', 'error');
+            return;
+        }
+
+        var optionInputs = dom.pollOptions ? dom.pollOptions.querySelectorAll('.poll-option-input') : [];
+        var options = [];
+        for (var i = 0; i < optionInputs.length; i++) {
+            var val = optionInputs[i].value.trim();
+            if (val) options.push(val);
+        }
+
+        if (options.length < 2) {
+            showToast('Please add at least 2 options', 'error');
+            return;
+        }
+
+        var btn = dom.pollBtnCreate;
+        if (btn) { btn.disabled = true; btn.textContent = 'Creating...'; }
+
+        apiPost('/api/polls', {
+            communityId: state.currentCommunity.id,
+            question: question,
+            options: options,
+            allowMultiple: false
+        }).then(function (data) {
+            if (btn) { btn.disabled = false; btn.textContent = 'Create Poll'; }
+            if (data && data.success && data.msg) {
+                closePollPopup();
+                appendMessage(data.msg);
+                showToast('Poll created', 'success');
+            } else {
+                showToast(data && data.message ? data.message : 'Failed to create poll', 'error');
+            }
+        }).catch(function (err) {
+            if (btn) { btn.disabled = false; btn.textContent = 'Create Poll'; }
+            showToast(err.message || 'Failed to create poll', 'error');
+        });
+    }
+
+    function renderCommunityDetailsSkeleton() {
+        var staffList = dom.cdStaffList;
+        if (staffList) {
+            staffList.innerHTML =
+                '<div class="cd-staff-card" style="pointer-events:none;opacity:0.5;">' +
+                    '<div class="cd-staff-avatar-wrap"><div class="cd-staff-avatar" style="background:var(--bg-3);"></div></div>' +
+                    '<div class="cd-staff-info"><div style="width:80px;height:10px;background:var(--bg-3);border-radius:4px;"></div>' +
+                    '<div style="width:50px;height:8px;background:var(--bg-3);border-radius:4px;margin-top:4px;"></div></div></div>' +
+                '<div class="cd-staff-card" style="pointer-events:none;opacity:0.5;">' +
+                    '<div class="cd-staff-avatar-wrap"><div class="cd-staff-avatar" style="background:var(--bg-3);"></div></div>' +
+                    '<div class="cd-staff-info"><div style="width:90px;height:10px;background:var(--bg-3);border-radius:4px;"></div>' +
+                    '<div style="width:60px;height:8px;background:var(--bg-3);border-radius:4px;margin-top:4px;"></div></div></div>';
+        }
+        if (dom.cdStaffSection) dom.cdStaffSection.style.display = 'none';
+    }
+
+    function loadCommunityDetails() {
+        if (!state.currentCommunity || !state.currentCommunity.id) return;
+        var communityId = state.currentCommunity.id;
+
+        apiGet('/api/communities/' + communityId)
+            .then(function (data) {
+                if (!data || !data.success || !data.community) return;
+                renderCommunityDetails(data);
+            })
+            .catch(function () {
+                closeCommunityDetails();
+                showToast('Failed to load community details', 'error');
+            });
+    }
+
+    function renderCommunityDetails(data) {
+        var community = data.community;
+        var staff = data.staff || [];
+
+        var el;
+
+        el = dom.cdIcon;
+        if (el) el.textContent = community.icon || '#';
+
+        el = dom.cdTitle;
+        if (el) el.textContent = community.name || 'Community';
+
+        el = dom.cdVisibility;
+        if (el) el.textContent = community.is_official ? 'Official' : (community.chat_permission === 'staff' ? 'Staff Only' : 'Public');
+
+        el = dom.cdCreated;
+        if (el) el.textContent = community.created_at ? 'Created ' + formatDateDivider(community.created_at) : '';
+
+        el = dom.cdDescription;
+        if (el) el.textContent = community.description || 'No description available.';
+
+        el = dom.cdStatMembers;
+        if (el) el.textContent = (data.totalMembers || community.member_count || 0).toLocaleString();
+
+        el = dom.cdStatOnline;
+        if (el) el.textContent = (data.onlineCount || community.online_count || 0).toLocaleString();
+
+        el = dom.cdStatMessages;
+        if (el) el.textContent = (data.messageCount || 0).toLocaleString();
+
+        el = dom.cdStatPermission;
+        if (el) {
+            var perm = community.chat_permission || 'all';
+            el.textContent = perm === 'all' ? 'All' : perm === 'staff' ? 'Staff' : perm.charAt(0).toUpperCase() + perm.slice(1);
+        }
+
+        if (dom.cdStaffSection && dom.cdStaffList) {
+            if (staff.length > 0) {
+                dom.cdStaffSection.style.display = '';
+                dom.cdStaffList.innerHTML = '';
+                for (var i = 0; i < staff.length; i++) {
+                    dom.cdStaffList.appendChild(createCommunityStaffCard(staff[i]));
+                }
+                if (dom.cdStaffCount) dom.cdStaffCount.textContent = staff.length;
+            } else {
+                dom.cdStaffSection.style.display = 'none';
+            }
+        }
+    }
+
+    function createCommunityStaffCard(member) {
+        var card = document.createElement('div');
+        card.className = 'cd-staff-card';
+
+        var avatar = getAvatarUrl(member);
+        var displayName = member.display_name || member.username;
+        var isOnline = member.online;
+        var role = member.rank ? member.rank.charAt(0).toUpperCase() + member.rank.slice(1) : '';
+
+        var badgesHtml = '';
+        if (member.is_bot) badgesHtml += createBotBadgeHtml();
+        if (window.HiveRankBadge) {
+            var badgeEl = window.HiveRankBadge.create(member.rank, 13);
+            if (badgeEl) { badgeEl.className = 'rank-badge rank-badge-sm rank-' + member.rank; badgesHtml += badgeEl.outerHTML; }
+        }
+        if (member.is_verified) badgesHtml += '<span class="verified-badge" title="Verified"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#6C63FF" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></span>';
+        if (member.is_premium) badgesHtml += createPremiumBadgeHtml(true);
+
+        card.innerHTML =
+            '<div class="cd-staff-avatar-wrap">' +
+                '<img class="cd-staff-avatar" src="' + escapeHtml(avatar) + '" alt="">' +
+                '<div class="cd-staff-dot' + (isOnline ? ' online' : '') + '"></div>' +
+            '</div>' +
+            '<div class="cd-staff-info">' +
+                '<div class="cd-staff-name">' +
+                    '<span>' + escapeHtml(displayName) + '</span>' +
+                    badgesHtml +
+                '</div>' +
+                '<span class="cd-staff-role">' + escapeHtml(role) + '</span>' +
+            '</div>';
+
+        card.addEventListener('click', function () {
+            closeCommunityDetails();
+            openUserPopup(member.id, card);
+        });
+
+        return card;
+    }
+
+    function createCommunityMemberRow(member) {
+        var row = document.createElement('div');
+        row.className = 'cd-member-row';
+
+        var avatar = getAvatarUrl(member);
+        var displayName = member.display_name || member.username;
+        var isOnline = member.online;
+
+        var staffRanks = ['owner', 'administrator', 'moderator'];
+        var isStaff = staffRanks.indexOf(member.rank) !== -1;
+
+        var badgesHtml = '';
+        if (member.is_bot) badgesHtml += createBotBadgeHtml();
+        if (isStaff && window.HiveRankBadge) {
+            var badgeEl = window.HiveRankBadge.create(member.rank, 12);
+            if (badgeEl) { badgeEl.className = 'rank-badge rank-badge-sm rank-' + member.rank; badgesHtml += badgeEl.outerHTML; }
+        }
+        if (member.is_verified) badgesHtml += '<span class="verified-badge" title="Verified"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#6C63FF" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></span>';
+        if (member.is_premium) badgesHtml += createPremiumBadgeHtml(true);
+
+        var rankLabel = member.rank ? member.rank.charAt(0).toUpperCase() + member.rank.slice(1) : '';
+
+        row.innerHTML =
+            '<div class="cd-member-avatar-wrap">' +
+                '<img class="cd-member-avatar" src="' + escapeHtml(avatar) + '" alt="">' +
+                '<div class="cd-member-online-dot' + (isOnline ? ' online' : '') + '"></div>' +
+            '</div>' +
+            '<div class="cd-member-info">' +
+                '<div class="cd-member-name-row">' +
+                    '<span class="cd-member-username">' + escapeHtml(displayName) + '</span>' +
+                    '<span class="cd-member-badges">' + badgesHtml + '</span>' +
+                '</div>' +
+                '<span class="cd-member-rank">' + escapeHtml(rankLabel) + '</span>' +
+            '</div>';
+
+        row.addEventListener('click', function () {
+            closeCommunityDetails();
+            openUserPopup(member.id, row);
+        });
+
+        return row;
     }
 
     /* ── Online Users panel ─────────────────── */
@@ -4348,6 +4919,9 @@
             }
         }
 
+        // Staff post button visibility
+        updateStaffPostButton();
+
         // Hide/show UI elements for official announcement communities (News/Updates)
         updateOfficialCommunityUI(community);
 
@@ -4430,6 +5004,9 @@
     }
 
     function updateChatHeader(community) {
+        if (dom.chatCommunityBadge) dom.chatCommunityBadge.innerHTML = '<span class="chat-community-icon" id="chat-community-icon"></span><span class="chat-community-name" id="chat-community-name"></span>';
+        dom.chatCommunityIcon = $('chat-community-icon');
+        dom.chatCommunityName = $('chat-community-name');
         if (dom.chatCommunityIcon) dom.chatCommunityIcon.textContent = community.icon || '#';
         if (dom.chatCommunityName) dom.chatCommunityName.textContent = community.name;
         if (dom.chatChannelName) dom.chatChannelName.textContent = 'general';
@@ -4616,8 +5193,9 @@
     function createMessageElement(msg, animate) {
         var el = document.createElement('div');
         var hasReply = msg.reply_to_id && (msg.reply_to_message || msg.reply_to_attachment_type);
+        var hasMoment = msg.moment_id && msg.moment_type;
         var isBot = msg.is_bot;
-        el.className = 'chat-message' + (animate ? ' msg-enter' : '') + (hasReply ? ' has-reply' : '') + (isBot ? ' msg-bot' : '');
+        el.className = 'chat-message' + (animate ? ' msg-enter' : '') + (hasReply ? ' has-reply' : '') + (hasMoment ? ' has-moment' : '') + (isBot ? ' msg-bot' : '');
         el.setAttribute('data-msg-id', msg.id);
         el.setAttribute('data-sender-id', msg.sender_id || msg.user_id || '');
 
@@ -4685,11 +5263,104 @@
             return el;
         }
 
+        // ── Poll message ──
+        if (msg.message_type === 'poll' && msg.poll) {
+            var poll = msg.poll;
+            var pollAvatar = getAvatarUrl(msg);
+            var pollOptions = poll.options || [];
+            var totalVotes = 0;
+            for (var pi = 0; pi < pollOptions.length; pi++) { totalVotes += (pollOptions[pi].votes || 0); }
+            var pollStatus = poll.status || 'active';
+            var isPollClosed = pollStatus === 'closed';
+            var userVoteOptionId = null;
+            if (poll._userVotes && poll._userVotes.length > 0) { userVoteOptionId = poll._userVotes[0]; }
+
+            var pollOptionsHtml = '';
+            for (var oi = 0; oi < pollOptions.length; oi++) {
+                var opt = pollOptions[oi];
+                var optVotes = opt.votes || 0;
+                var pct = totalVotes > 0 ? Math.round((optVotes / totalVotes) * 100) : 0;
+                var isSelected = userVoteOptionId === opt.id;
+                var optClass = 'poll-opt' + (isSelected ? ' poll-opt-selected' : '') + (isPollClosed ? ' poll-opt-closed' : '');
+                pollOptionsHtml +=
+                    '<div class="' + optClass + '" data-poll-id="' + escapeHtml(poll.id) + '" data-option-id="' + escapeHtml(opt.id) + '">' +
+                        '<div class="poll-opt-bar" style="width:' + pct + '%;"></div>' +
+                        '<div class="poll-opt-content">' +
+                            '<div class="poll-opt-left">' +
+                                '<span class="poll-opt-check">' + (isSelected ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' : '') + '</span>' +
+                                '<span class="poll-opt-text">' + escapeHtml(opt.text) + '</span>' +
+                            '</div>' +
+                            '<div class="poll-opt-right">' +
+                                '<span class="poll-opt-pct">' + pct + '%</span>' +
+                                '<span class="poll-opt-votes">' + optVotes + '</span>' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>';
+            }
+
+            var pollStatusLabel = isPollClosed ? 'Closed' : 'Active';
+            var pollStatusClass = isPollClosed ? 'poll-status-closed' : 'poll-status-active';
+
+            el.className += ' msg-poll';
+            el.innerHTML =
+                '<div class="msg-avatar-wrap' + (ringClass ? ' ' + ringClass : '') + '"><img class="msg-avatar" src="' + escapeHtml(pollAvatar) + '" alt="" loading="lazy"></div>' +
+                '<div class="msg-body">' +
+                    '<div class="msg-header">' +
+                        '<span class="msg-username' + (msg.rank ? ' rank-' + msg.rank : '') + '"' + (msg.username_color ? ' style="color:' + escapeHtml(msg.username_color) + ';"' : '') + '>' + escapeHtml(msg.username) + createRankBadgeHtml(msg.rank) + createPremiumBadgeHtml(msg.is_premium) + '</span>' +
+                        '<span class="msg-timestamp" data-created-at="' + escapeHtml(msg.created_at) + '" title="' + escapeHtml(formatFullTime(msg.created_at)) + '">' + escapeHtml(formatTime(msg.created_at)) + '</span>' +
+                    '</div>' +
+                    '<div class="poll-card" data-poll-id="' + escapeHtml(poll.id) + '">' +
+                        '<div class="poll-card-header">' +
+                            '<svg class="poll-card-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>' +
+                            '<span class="poll-card-title">Poll</span>' +
+                            '<span class="poll-status ' + pollStatusClass + '">' + pollStatusLabel + '</span>' +
+                        '</div>' +
+                        '<div class="poll-question">' + escapeHtml(poll.question) + '</div>' +
+                        '<div class="poll-options">' + pollOptionsHtml + '</div>' +
+                        '<div class="poll-footer">' +
+                            '<span class="poll-total">' + totalVotes + ' vote' + (totalVotes !== 1 ? 's' : '') + '</span>' +
+                            (poll.allow_multiple ? '<span class="poll-multi-label">Multiple choices</span>' : '') +
+                        '</div>' +
+                    '</div>' +
+                '</div>';
+
+            // Bind poll option clicks
+            var pollOpts = el.querySelectorAll('.poll-opt');
+            for (var vi = 0; vi < pollOpts.length; vi++) {
+                (function (optEl) {
+                    optEl.addEventListener('click', function () {
+                        if (isPollClosed) return;
+                        var pId = optEl.getAttribute('data-poll-id');
+                        var oId = optEl.getAttribute('data-option-id');
+                        if (pId && oId) votePoll(pId, oId, msg);
+                    });
+                })(pollOpts[vi]);
+            }
+
+            // Avatar click
+            var pAvatar = el.querySelector('.msg-avatar');
+            if (pAvatar) {
+                pAvatar.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    openUserPopup(msg.sender_id, pAvatar);
+                });
+            }
+            var pUsername = el.querySelector('.msg-username');
+            if (pUsername) {
+                pUsername.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    openUserPopup(msg.sender_id, pUsername);
+                });
+            }
+
+            return el;
+        }
+
         var avatarUrl = getAvatarUrl(msg);
 
         var replyHtml = '';
         if (hasReply) {
-            var replyAvatar = msg.reply_to_profile_picture || ('https://i.pravatar.cc/80?u=' + (msg.reply_to_username || 'reply'));
+            var replyAvatar = msg.reply_to_profile_picture || '../assets/hiveicon.png';
             var replyText = msg.reply_to_message || '';
             var replyAttLabel = '';
             if (!replyText && msg.reply_to_attachment_type) {
@@ -4719,6 +5390,59 @@
                 '</div>';
         }
 
+        var momentPreviewHtml = '';
+        if (hasMoment) {
+            var mType = msg.moment_type || 'image';
+            var mThumb = msg.moment_image_url || '';
+            var mVideo = msg.moment_video_url || '';
+            var mOwnerName = msg.moment_owner_username || 'User';
+            var mOwnerPic = msg.moment_owner_picture || '';
+            var mDesc = msg.moment_description || '';
+            var mExpired = msg.moment_expires_at && new Date(msg.moment_expires_at) < new Date();
+            var mAccent = getReplyAccentColor(msg.moment_owner_id || msg.sender_id);
+
+            var thumbHtml = '';
+            if (mExpired) {
+                thumbHtml =
+                    '<div class="mv-thumb mv-thumb-expired">' +
+                        '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.4"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' +
+                        '<span class="mv-thumb-expired-text">No longer available</span>' +
+                    '</div>';
+            } else if (mType === 'video' && mVideo) {
+                thumbHtml =
+                    '<div class="mv-thumb mv-thumb-video">' +
+                        '<video class="mv-thumb-video-el" src="' + escapeHtml(mVideo) + '" preload="metadata" muted playsinline></video>' +
+                        '<div class="mv-thumb-play">' +
+                            '<svg viewBox="0 0 24 24" width="20" height="20" fill="white" stroke="none"><polygon points="6 3 20 12 6 21 6 3"/></svg>' +
+                        '</div>' +
+                    '</div>';
+            } else if (mThumb) {
+                thumbHtml =
+                    '<div class="mv-thumb">' +
+                        '<img class="mv-thumb-img" src="' + escapeHtml(mThumb) + '" alt="" loading="lazy">' +
+                    '</div>';
+            } else {
+                thumbHtml =
+                    '<div class="mv-thumb mv-thumb-text">' +
+                        '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="14" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/></svg>' +
+                    '</div>';
+            }
+
+            momentPreviewHtml =
+                '<div class="msg-moment-preview' + (mExpired ? ' msg-moment-expired' : '') + '" data-moment-id="' + escapeHtml(msg.moment_id) + '" style="--reply-accent:' + mAccent + '">' +
+                    '<div class="msg-moment-accent"></div>' +
+                    '<div class="msg-moment-body">' +
+                        '<div class="msg-moment-header">' +
+                            (mOwnerPic ? '<img class="msg-moment-owner-pic" src="' + escapeHtml(mOwnerPic) + '" alt="" loading="lazy">' : '') +
+                            '<span class="msg-moment-owner-name" style="color:' + mAccent + '">' + escapeHtml(mOwnerName) + '</span>' +
+                            '<span class="msg-moment-label">Replied to a Moment</span>' +
+                        '</div>' +
+                        '<div class="msg-moment-thumb-wrap">' + thumbHtml + '</div>' +
+                        (mDesc ? '<div class="msg-moment-desc">' + escapeHtml(mDesc.length > 80 ? mDesc.substring(0, 80) + '...' : mDesc) + '</div>' : '') +
+                    '</div>' +
+                '</div>';
+        }
+
         var usernameColorStyle = msg.username_color ? 'color:' + escapeHtml(msg.username_color) : '';
         var textColorStyle = msg.chat_text_color ? 'color:' + escapeHtml(msg.chat_text_color) : '';
         var textFontStyle = msg.chat_text_font ? 'font-family:\'' + escapeHtml(msg.chat_text_font) + '\',sans-serif' : '';
@@ -4727,6 +5451,61 @@
         var combinedUsernameStyle = (usernameColorStyle || profileFontStyle) ? ' style="' + usernameColorStyle + (usernameColorStyle && profileFontStyle ? ';' : '') + profileFontStyle + '"' : '';
 
         var ringClass = msg.profile_ring && msg.profile_ring !== 'none' ? msg.profile_ring : '';
+
+        // Sticker message
+        if (msg.message_type === 'sticker' && msg.sticker_id) {
+            var stickerUrl = '';
+            var stickerObj = getStickerById(msg.sticker_id);
+            if (stickerObj) stickerUrl = stickerObj.url;
+            else if (msg._stickerUrl) stickerUrl = msg._stickerUrl;
+
+            el.innerHTML =
+                '<div class="msg-avatar-wrap' + (ringClass ? ' ' + ringClass : '') + '"><img class="msg-avatar' + (isBot ? ' msg-avatar-bot' : '') + '" src="' + escapeHtml(avatarUrl) + '" alt="' + escapeHtml(msg.username) + '" loading="lazy"></div>' +
+                '<div class="msg-body">' +
+                    '<div class="msg-header">' +
+                        '<span class="msg-username' + (msg.rank ? ' rank-' + msg.rank : '') + (isBot ? ' msg-username-bot' : '') + '"' + combinedUsernameStyle + '>' + escapeHtml(msg.username) + (isBot ? createBotBadgeHtml() : '') + createRankBadgeHtml(msg.rank) + createPremiumBadgeHtml(msg.is_premium) + '</span>' +
+                        '<span class="msg-timestamp" data-created-at="' + escapeHtml(msg.created_at) + '" title="' + escapeHtml(formatFullTime(msg.created_at)) + '">' + escapeHtml(formatTime(msg.created_at)) + '</span>' +
+                    '</div>' +
+                    replyHtml +
+                    (stickerUrl ? '<div class="msg-sticker"><img src="' + escapeHtml(stickerUrl) + '" alt="Sticker" loading="lazy"></div>' : '') +
+                    renderReactionsHtml(msg, state.user ? state.user.id : null) +
+                '</div>' +
+                (isBot ? '' : '<div class="msg-actions">' +
+                '<button class="msg-action-btn" aria-label="React" data-tip="React" data-color="#FFD93D">' +
+                    '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>' +
+                '</button>' +
+                '<button class="msg-action-btn msg-reply-btn" aria-label="Reply" data-tip="Reply" data-color="#6C63FF">' +
+                    '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>' +
+                '</button>' +
+                '<button class="msg-action-btn msg-more-btn" aria-label="More" aria-haspopup="menu" aria-expanded="false" data-tip="More" data-color="currentColor">' +
+                    '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>' +
+                '</button>' +
+            '</div>');
+
+            var stickerReplyBtn = el.querySelector('.msg-reply-btn');
+            if (stickerReplyBtn) {
+                stickerReplyBtn.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    startReply(msg);
+                });
+            }
+            var stickerMoreBtn = el.querySelector('.msg-more-btn');
+            if (stickerMoreBtn) {
+                stickerMoreBtn.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    toggleMessageMenu(el, stickerMoreBtn, msg);
+                });
+            }
+            var stickerReplyRef = el.querySelector('.msg-reply');
+            if (stickerReplyRef) {
+                stickerReplyRef.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    var targetId = this.getAttribute('data-reply-to');
+                    if (targetId) scrollToMessage(targetId);
+                });
+            }
+            return el;
+        }
 
         el.innerHTML =
             '<div class="msg-avatar-wrap' + (ringClass ? ' ' + ringClass : '') + '"><img class="msg-avatar' + (isBot ? ' msg-avatar-bot' : '') + '" src="' + escapeHtml(avatarUrl) + '" alt="' + escapeHtml(msg.username) + '" loading="lazy"></div>' +
@@ -4737,6 +5516,7 @@
                         (msg.edited_at ? '<span class="msg-edited">(edited)</span>' : '') +
                     '</div>' +
                     replyHtml +
+                    momentPreviewHtml +
                     renderAttachmentHtml(msg) +
                     (msg.message ? '<div class="msg-content"' + combinedTextStyle + '>' + renderMessageText(msg.message, msg.mentions) + '</div>' : '') +
                     renderReactionsHtml(msg, state.user ? state.user.id : null) +
@@ -4775,6 +5555,32 @@
                 e.stopPropagation();
                 var targetId = this.getAttribute('data-reply-to');
                 if (targetId) scrollToMessage(targetId);
+            });
+        }
+
+        var momentPreview = el.querySelector('.msg-moment-preview');
+        if (momentPreview) {
+            momentPreview.style.cursor = 'pointer';
+            momentPreview.addEventListener('click', function (e) {
+                e.stopPropagation();
+                var momentId = this.getAttribute('data-moment-id');
+                if (!momentId) return;
+                var mExpired = msg.moment_expires_at && new Date(msg.moment_expires_at) < new Date();
+                if (mExpired) {
+                    showToast('This moment is no longer available', 'error');
+                    return;
+                }
+                var momentObj = {
+                    id: msg.moment_id,
+                    type: msg.moment_type,
+                    image_url: msg.moment_image_url,
+                    video_url: msg.moment_video_url,
+                    description: msg.moment_description,
+                    user_id: msg.moment_owner_id,
+                    username: msg.moment_owner_username,
+                    profile_picture: msg.moment_owner_picture
+                };
+                openMomentViewer([momentObj], 0);
             });
         }
 
@@ -5232,6 +6038,89 @@
         return html;
     }
 
+    /* ── Poll voting ──────────────────────────── */
+    function votePoll(pollId, optionId, msg) {
+        if (!pollId || !optionId) return;
+
+        // Optimistic UI update
+        var pollCard = document.querySelector('.poll-card[data-poll-id="' + pollId + '"]');
+        if (pollCard) {
+            var allOpts = pollCard.querySelectorAll('.poll-opt');
+            var targetOpt = pollCard.querySelector('.poll-opt[data-option-id="' + optionId + '"]');
+            var alreadySelected = targetOpt && targetOpt.classList.contains('poll-opt-selected');
+
+            // If allow_multiple is false, deselect other options
+            if (!msg.poll.allow_multiple) {
+                for (var i = 0; i < allOpts.length; i++) {
+                    allOpts[i].classList.remove('poll-opt-selected');
+                    var chk = allOpts[i].querySelector('.poll-opt-check');
+                    if (chk) chk.innerHTML = '';
+                }
+            }
+
+            if (alreadySelected && msg.poll.allow_multiple) {
+                // Deselect this option
+                targetOpt.classList.remove('poll-opt-selected');
+                var chk2 = targetOpt.querySelector('.poll-opt-check');
+                if (chk2) chk2.innerHTML = '';
+            } else if (targetOpt) {
+                targetOpt.classList.add('poll-opt-selected');
+                var chk3 = targetOpt.querySelector('.poll-opt-check');
+                if (chk3) chk3.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+            }
+
+            // Recalculate totals after optimistic update
+            recalcPollTotals(pollCard);
+        }
+
+        // Send vote to server
+        apiPost('/api/polls/' + pollId + '/vote', { optionId: optionId }).then(function (data) {
+            if (!data || !data.success) {
+                showToast(data && data.message ? data.message : 'Failed to vote', 'error');
+                // Re-fetch poll state on failure
+                refreshPollState(pollId, msg);
+            }
+        }).catch(function () {
+            showToast('Failed to vote', 'error');
+            refreshPollState(pollId, msg);
+        });
+    }
+
+    function recalcPollTotals(pollCard) {
+        var allOpts = pollCard.querySelectorAll('.poll-opt');
+        var total = 0;
+        for (var i = 0; i < allOpts.length; i++) {
+            var v = parseInt(allOpts[i].querySelector('.poll-opt-votes').textContent) || 0;
+            total += v;
+        }
+        for (var j = 0; j < allOpts.length; j++) {
+            var votes = parseInt(allOpts[j].querySelector('.poll-opt-votes').textContent) || 0;
+            var pct = total > 0 ? Math.round((votes / total) * 100) : 0;
+            var bar = allOpts[j].querySelector('.poll-opt-bar');
+            var pctEl = allOpts[j].querySelector('.poll-opt-pct');
+            if (bar) bar.style.width = pct + '%';
+            if (pctEl) pctEl.textContent = pct + '%';
+        }
+        var totalEl = pollCard.querySelector('.poll-total');
+        if (totalEl) totalEl.textContent = total + ' vote' + (total !== 1 ? 's' : '');
+    }
+
+    function refreshPollState(pollId, msg) {
+        apiGet('/api/polls/' + pollId).then(function (data) {
+            if (data && data.success && data.poll) {
+                // Update the message's poll data
+                msg.poll.options = data.poll.options;
+                msg.poll.status = data.poll.status;
+                // Re-render the message element
+                var existingEl = document.querySelector('[data-msg-id="' + msg.id + '"]');
+                if (existingEl) {
+                    var newEl = createMessageElement(msg, false);
+                    if (newEl) existingEl.parentNode.replaceChild(newEl, existingEl);
+                }
+            }
+        }).catch(function () {});
+    }
+
     function scrollToBottom(smooth) {
         var scrollArea = dom.chatMessages;
         if (!scrollArea) return;
@@ -5642,6 +6531,183 @@
         updateSendButton();
         closeGifPicker();
         sendMessage();
+    }
+
+    /* ── Sticker Picker ─────────────────────── */
+    var STICKER_DATA = {
+        'Recent': [
+            { id: 'wave', name: 'Wave', url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f44b.svg' },
+            { id: 'fire', name: 'Fire', url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f525.svg' },
+            { id: 'heart_on_fire', name: 'Heart on Fire', url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/2764-fe0f-200d-1f525.svg' },
+            { id: 'sparkles', name: 'Sparkles', url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/2728.svg' },
+            { id: 'hundred', name: '100', url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f4af.svg' },
+            { id: 'thumbsup', name: 'Thumbs Up', url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f44d.svg' },
+            { id: 'clap', name: 'Clap', url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f44f.svg' },
+            { id: 'pray', name: 'Pray', url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f64f.svg' },
+        ],
+        'Smileys': [
+            { id: 'smile', name: 'Smile', url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f604.svg' },
+            { id: 'laughing', name: 'Laughing', url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f602.svg' },
+            { id: 'joy', name: 'Joy', url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f602.svg' },
+            { id: 'rofl', name: 'ROFL', url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f923.svg' },
+            { id: 'wink', name: 'Wink', url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f609.svg' },
+            { id: 'heart_eyes', name: 'Heart Eyes', url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f60d.svg' },
+            { id: 'star_struck', name: 'Star Struck', url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f929.svg' },
+            { id: 'thinking', name: 'Thinking', url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f914.svg' },
+            { id: 'shushing', name: 'Shushing', url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f92b.svg' },
+            { id: 'mind_blown', name: 'Mind Blown', url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f92f.svg' },
+            { id: 'nerd', name: 'Nerd', url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f913.svg' },
+            { id: 'sunglasses', name: 'Cool', url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f60e.svg' },
+        ],
+        'Hearts': [
+            { id: 'heart', name: 'Heart', url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/2764.svg' },
+            { id: 'orange_heart', name: 'Orange Heart', url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f9e1.svg' },
+            { id: 'yellow_heart', name: 'Yellow Heart', url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f49b.svg' },
+            { id: 'green_heart', name: 'Green Heart', url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f49a.svg' },
+            { id: 'blue_heart', name: 'Blue Heart', url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f499.svg' },
+            { id: 'purple_heart', name: 'Purple Heart', url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f49c.svg' },
+            { id: 'pink_heart', name: 'Pink Heart', url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f49d.svg' },
+            { id: 'broken_heart', name: 'Broken Heart', url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f494.svg' },
+            { id: 'heart_exclaim', name: 'Heart Exclaim', url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/2763.svg' },
+            { id: 'two_hearts', name: 'Two Hearts', url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f495.svg' },
+        ],
+        'Gestures': [
+            { id: 'thumbsup', name: 'Thumbs Up', url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f44d.svg' },
+            { id: 'thumbsdown', name: 'Thumbs Down', url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f44e.svg' },
+            { id: 'fist', name: 'Fist', url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/270a.svg' },
+            { id: 'raised_hands', name: 'Raised Hands', url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f64c.svg' },
+            { id: 'ok_hand', name: 'OK Hand', url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f44c.svg' },
+            { id: 'victory', name: 'Victory', url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/270c.svg' },
+            { id: 'pinch', name: 'Pinch', url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f90f.svg' },
+            { id: 'wave', name: 'Wave', url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f44b.svg' },
+            { id: 'muscle', name: 'Muscle', url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f4aa.svg' },
+            { id: 'palms_up', name: 'Palms Up', url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f932.svg' },
+        ],
+        'Animals': [
+            { id: 'dog', name: 'Dog', url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f436.svg' },
+            { id: 'cat', name: 'Cat', url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f431.svg' },
+            { id: 'bear', name: 'Bear', url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f43b.svg' },
+            { id: 'fox', name: 'Fox', url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f98a.svg' },
+            { id: 'panda', name: 'Panda', url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f43c.svg' },
+            { id: 'penguin', name: 'Penguin', url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f427.svg' },
+            { id: 'bee', name: 'Bee', url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f41d.svg' },
+            { id: 'butterfly', name: 'Butterfly', url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f98b.svg' },
+            { id: 'unicorn', name: 'Unicorn', url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f984.svg' },
+            { id: 'dragon', name: 'Dragon', url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f409.svg' },
+        ],
+        'Objects': [
+            { id: 'fire', name: 'Fire', url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f525.svg' },
+            { id: 'sparkles', name: 'Sparkles', url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/2728.svg' },
+            { id: 'star', name: 'Star', url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/2b50.svg' },
+            { id: 'rainbow', name: 'Rainbow', url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f308.svg' },
+            { id: 'lightning', name: 'Lightning', url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/26a1.svg' },
+            { id: 'trophy', name: 'Trophy', url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f3c6.svg' },
+            { id: 'gem', name: 'Gem', url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f48e.svg' },
+            { id: 'rocket', name: 'Rocket', url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f680.svg' },
+            { id: 'crown', name: 'Crown', url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f451.svg' },
+            { id: 'hundred', name: '100', url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f4af.svg' },
+        ],
+    };
+    var STICKER_CATEGORIES = Object.keys(STICKER_DATA);
+
+    var stickerState = {
+        selected: null,
+        activeCategory: 'Recent',
+    };
+
+    function getStickerById(id) {
+        for (var cat in STICKER_DATA) {
+            var stickers = STICKER_DATA[cat];
+            for (var i = 0; i < stickers.length; i++) {
+                if (stickers[i].id === id) return stickers[i];
+            }
+        }
+        return null;
+    }
+
+    function positionStickerPicker() {
+        if (window.innerWidth <= 900) return;
+        var stickerBtn = qs('.composer-btn[aria-label="Sticker"]');
+        if (stickerBtn && dom.stickerPicker) {
+            var rect = stickerBtn.getBoundingClientRect();
+            var pw = 360, ph = 440, gap = 12;
+            var left = rect.right - pw;
+            var top = rect.top - ph - gap;
+            if (left < 8) left = 8;
+            if (top < 8) top = rect.bottom + gap;
+            if (left + pw > window.innerWidth - 8) left = window.innerWidth - pw - 8;
+            if (top + ph > window.innerHeight - 8) top = window.innerHeight - ph - 8;
+            dom.stickerPicker.style.left = left + 'px';
+            dom.stickerPicker.style.top = top + 'px';
+        }
+    }
+
+    function openStickerPicker() {
+        if (!dom.stickerPicker) return;
+        closeGifPicker();
+        closeEmojiPicker();
+        dom.stickerPicker.style.display = '';
+        dom.stickerPicker.classList.remove('closing');
+        positionStickerPicker();
+        stickerState.activeCategory = 'Recent';
+        syncStickerTabs();
+        renderStickerGrid();
+    }
+
+    function closeStickerPicker() {
+        if (!dom.stickerPicker) return;
+        dom.stickerPicker.classList.add('closing');
+        setTimeout(function () {
+            dom.stickerPicker.style.display = 'none';
+            dom.stickerPicker.classList.remove('closing');
+        }, 120);
+    }
+
+    function toggleStickerPicker() {
+        if (!dom.stickerPicker) return;
+        if (dom.stickerPicker.style.display === 'none' || !dom.stickerPicker.style.display) {
+            openStickerPicker();
+        } else {
+            closeStickerPicker();
+        }
+    }
+
+    function syncStickerTabs() {
+        var tabs = dom.stickerCategories ? dom.stickerCategories.querySelectorAll('.sticker-tab') : [];
+        for (var i = 0; i < tabs.length; i++) {
+            if (tabs[i].getAttribute('data-cat') === stickerState.activeCategory) {
+                tabs[i].classList.add('active');
+            } else {
+                tabs[i].classList.remove('active');
+            }
+        }
+    }
+
+    function renderStickerGrid() {
+        var grid = dom.stickerGrid;
+        if (!grid) return;
+        grid.innerHTML = '';
+        var stickers = STICKER_DATA[stickerState.activeCategory] || [];
+        stickers.forEach(function (s) {
+            var item = document.createElement('button');
+            item.type = 'button';
+            item.className = 'sticker-item';
+            item.setAttribute('aria-label', 'Send ' + s.name);
+            item.innerHTML = '<img src="' + escapeHtml(s.url) + '" alt="' + escapeHtml(s.name) + '" loading="lazy">';
+            item.addEventListener('click', function (e) {
+                e.stopPropagation();
+                sendSticker(s);
+            });
+            grid.appendChild(item);
+        });
+    }
+
+    function sendSticker(sticker) {
+        if (!sticker || !sticker.id) return;
+        stickerState.selected = sticker;
+        closeStickerPicker();
+        sendMessage();
+        stickerState.selected = null;
     }
 
     /* ── Hashtag Autocomplete ─────────────────── */
@@ -6426,7 +7492,8 @@
         if (!input) return;
         var text = getComposerText();
         var hasAttach = attachState.files.length > 0;
-        if (!text && !hasAttach) return;
+        var hasSticker = stickerState.selected && stickerState.selected.id;
+        if (!text && !hasAttach && !hasSticker) return;
         if (text.length > 2000) return;
 
         var replyTo = state.replyingTo;
@@ -6463,6 +7530,9 @@
             reply_to_message: replyTo ? replyTo.message : null,
             reply_to_username: replyTo ? replyTo.username : null,
             reply_to_profile_picture: replyTo ? replyTo.profile_picture : null,
+            message_type: hasSticker ? 'sticker' : null,
+            sticker_id: hasSticker ? stickerState.selected.id : null,
+            _stickerUrl: hasSticker ? stickerState.selected.url : null,
         };
 
         if (pendingFiles.length > 0) {
@@ -6500,6 +7570,7 @@
             var body = {};
             if (isDm) {
                 body = { message: text };
+                if (hasSticker) body.stickerId = stickerState.selected.id;
                 if (replyTo && replyTo.id) body.replyToMessageId = replyTo.id;
                 if (attachmentsArr.length === 1) {
                     body.attachment = attachmentsArr[0];
@@ -6512,6 +7583,7 @@
                         if (confirmed) {
                             state.reconciledIds[clientId] = true;
                             reconcilePending(clientId, confirmed);
+                            updateDmListInPlace(confirmed);
                         } else {
                             delete state.pendingMessages[clientId];
                         }
@@ -6526,6 +7598,7 @@
                     message: text,
                     clientId: clientId,
                 };
+                if (hasSticker) body.stickerId = stickerState.selected.id;
                 if (replyTo && replyTo.id) body.replyToMessageId = replyTo.id;
                 if (sentMentions.length > 0) body.mentions = sentMentions;
                 if (attachmentsArr.length === 1) {
@@ -6721,14 +7794,15 @@
     function createOptimisticElement(msg) {
         var el = document.createElement('div');
         var hasReply = msg.reply_to_id && msg.reply_to_message;
-        el.className = 'chat-message msg-enter' + (hasReply ? ' has-reply' : '');
+        var hasMoment = msg.moment_id && msg.moment_type;
+        el.className = 'chat-message msg-enter' + (hasReply ? ' has-reply' : '') + (hasMoment ? ' has-moment' : '');
         el.setAttribute('data-msg-id', msg.id);
         el.setAttribute('data-sender-id', msg.sender_id || msg.user_id || '');
         var avatarUrl = getAvatarUrl(msg);
 
         var replyHtml = '';
         if (hasReply) {
-            var replyAvatar = msg.reply_to_profile_picture || ('https://i.pravatar.cc/80?u=' + (msg.reply_to_username || 'reply'));
+            var replyAvatar = msg.reply_to_profile_picture || '../assets/hiveicon.png';
             var replyText = msg.reply_to_message || '';
             if (replyText.length > 120) replyText = replyText.substring(0, 120) + '...';
             var replyTime = msg.reply_to_created_at ? formatTime(msg.reply_to_created_at) : '';
@@ -6752,6 +7826,28 @@
         }
 
         var attachHtml = '';
+
+        // Sticker optimistic message
+        if (msg.message_type === 'sticker' && msg.sticker_id) {
+            var stickerUrl = msg._stickerUrl || '';
+            var stickerObj = getStickerById(msg.sticker_id);
+            if (stickerObj) stickerUrl = stickerObj.url;
+            var optUsernameColor = msg.username_color ? 'color:' + escapeHtml(msg.username_color) : 'color:' + getRankColor(msg.rank);
+            var optFontStyle = msg.profile_font ? 'font-family:\'' + escapeHtml(msg.profile_font) + '\',sans-serif' : '';
+            var optCombinedStyle = (optUsernameColor || optFontStyle) ? ' style="' + optUsernameColor + (optUsernameColor && optFontStyle ? ';' : '') + optFontStyle + '"' : '';
+            el.innerHTML =
+                '<div class="msg-avatar-wrap"><img class="msg-avatar" src="' + escapeHtml(avatarUrl) + '" alt="' + escapeHtml(msg.username) + '" loading="lazy"></div>' +
+                '<div class="msg-body">' +
+                    '<div class="msg-header">' +
+                        '<span class="msg-username' + (msg.rank ? ' rank-' + msg.rank : '') + '"' + optCombinedStyle + '>' + escapeHtml(msg.username) + createRankBadgeHtml(msg.rank) + createPremiumBadgeHtml(msg.is_premium) + '</span>' +
+                        '<span class="msg-timestamp" data-created-at="' + escapeHtml(msg.created_at) + '">Just now</span>' +
+                    '</div>' +
+                    replyHtml +
+                    (stickerUrl ? '<div class="msg-sticker"><img src="' + escapeHtml(stickerUrl) + '" alt="Sticker" loading="lazy"></div>' : '') +
+                '</div>';
+            return el;
+        }
+
         if (msg._pendingUpload && msg._pendingAttachments) {
             var atts = msg._pendingAttachments;
             var cardsHtml = '';
@@ -6986,6 +8082,50 @@
             applyReactionFromSocket(data);
         });
 
+        socket.on('poll:vote', function (data) {
+            if (!state.currentCommunity) return;
+            if (!data || !data.pollId || !data.options) return;
+
+            // Find the poll card in DOM and update options
+            var pollCard = document.querySelector('.poll-card[data-poll-id="' + data.pollId + '"]');
+            if (!pollCard) return;
+
+            var optEls = pollCard.querySelectorAll('.poll-opt');
+            for (var i = 0; i < optEls.length; i++) {
+                var oId = optEls[i].getAttribute('data-option-id');
+                for (var j = 0; j < data.options.length; j++) {
+                    if (data.options[j].id === oId) {
+                        var votesEl = optEls[i].querySelector('.poll-opt-votes');
+                        if (votesEl) votesEl.textContent = data.options[j].votes || 0;
+                        break;
+                    }
+                }
+            }
+
+            // Update user's own vote highlight
+            if (data.userVotes && state.user) {
+                // Only update if this vote event includes the current user's votes
+                // (the broadcast includes all user votes for simplicity)
+            }
+
+            // Recalculate percentages
+            var total = 0;
+            for (var k = 0; k < data.options.length; k++) {
+                total += (data.options[k].votes || 0);
+            }
+            for (var m = 0; m < optEls.length; m++) {
+                var v = parseInt(optEls[m].querySelector('.poll-opt-votes').textContent) || 0;
+                var pct = total > 0 ? Math.round((v / total) * 100) : 0;
+                var bar = optEls[m].querySelector('.poll-opt-bar');
+                var pctEl = optEls[m].querySelector('.poll-opt-pct');
+                if (bar) bar.style.width = pct + '%';
+                if (pctEl) pctEl.textContent = pct + '%';
+            }
+
+            var totalEl = pollCard.querySelector('.poll-total');
+            if (totalEl) totalEl.textContent = total + ' vote' + (total !== 1 ? 's' : '');
+        });
+
         // ── Appearance update (real-time color + font change) ─
         // Look up the sender's current rank (from in-memory state) so username_color
         // can fall back to the rank color when unset — matching createMessageElement.
@@ -7076,6 +8216,15 @@
                     if (data.profile_ring !== null && data.profile_ring !== undefined) pm.profile_ring = data.profile_ring;
                     if (data.profile_effect !== null && data.profile_effect !== undefined) pm.profile_effect = data.profile_effect;
                 }
+            }
+            if (data.userId === (state.user && state.user.id)) {
+                if (data.profile_ring !== null && data.profile_ring !== undefined) state.user.profile_ring = data.profile_ring;
+                if (data.profile_effect !== null && data.profile_effect !== undefined) state.user.profile_effect = data.profile_effect;
+                if (data.username_color !== null && data.username_color !== undefined) state.user.username_color = data.username_color;
+                if (data.chat_text_color !== null && data.chat_text_color !== undefined) state.user.chat_text_color = data.chat_text_color;
+                if (data.profile_font !== null && data.profile_font !== undefined) state.user.profile_font = data.profile_font;
+                if (data.chat_text_font !== null && data.chat_text_font !== undefined) state.user.chat_text_font = data.chat_text_font;
+                if (profileOpen) populateProfile();
             }
         });
 
@@ -7172,6 +8321,7 @@
 
             // Update friends panel
             updateFriendPresence(data.userId, true);
+            updateDmPresence(data.userId, true);
         });
 
         socket.on('user_offline', function (data) {
@@ -7182,6 +8332,7 @@
             removeMemberFromHomeOnlineList(data.userId);
             // Update friends panel
             updateFriendPresence(data.userId, false);
+            updateDmPresence(data.userId, false);
         });
 
         socket.on('presence_updated', function (data) {
@@ -7242,7 +8393,6 @@
 
         // ── DM socket events ────────────────────────────
         socket.on('dm:message', function (msg) {
-            // If we're viewing this conversation, append the message and mark as read
             if (state.currentDmConversation && msg.conversation_id == state.currentDmConversation) {
                 msg.sender_id = msg.sender_id || msg.user_id;
                 appendMessage(msg);
@@ -7259,9 +8409,7 @@
                 }
             }
             playMsgSound();
-            // Always refresh the DM sidebar list and badge
-            loadDmConversations();
-            updateChatsBadge();
+            updateDmListInPlace(msg);
         });
 
         // DM system message (e.g. call started/ended) broadcast from backend
@@ -7283,8 +8431,7 @@
                 }
             }
             playMsgSound();
-            loadDmConversations();
-            updateChatsBadge();
+            updateDmListInPlace(msg);
         });
 
         socket.on('dm:typing', function (data) {
@@ -7305,8 +8452,12 @@
             if (state.currentDmConversation && data.conversationId == state.currentDmConversation) {
                 // Could update read receipts
             }
-            loadDmConversations();
             updateChatsBadge();
+        });
+
+        socket.on('dm:presence', function (data) {
+            if (!data || !data.userId) return;
+            updateDmPresence(data.userId, data.online);
         });
 
         socket.on('bee:usage', function (data) {
@@ -7874,6 +9025,9 @@
                     } else if (dom.gifPicker && dom.gifPicker.style.display !== 'none' && dom.gifPicker.style.display !== '') {
                         e.preventDefault();
                         closeGifPicker();
+                    } else if (dom.stickerPicker && dom.stickerPicker.style.display !== 'none' && dom.stickerPicker.style.display !== '') {
+                        e.preventDefault();
+                        closeStickerPicker();
                     } else if (state.replyingTo) {
                         e.preventDefault();
                         cancelReply();
@@ -7930,6 +9084,45 @@
             });
         }
 
+        // Sticker button
+        var stickerBtn = qs('.composer-btn[aria-label="Sticker"]');
+        if (stickerBtn) {
+            stickerBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                toggleStickerPicker();
+            });
+        }
+        // Sticker category tabs
+        if (dom.stickerCategories) {
+            dom.stickerCategories.addEventListener('click', function (e) {
+                var tab = e.target.closest('.sticker-tab');
+                if (!tab) return;
+                e.stopPropagation();
+                var cat = tab.getAttribute('data-cat');
+                if (cat) {
+                    stickerState.activeCategory = cat;
+                    syncStickerTabs();
+                    renderStickerGrid();
+                }
+            });
+        }
+        // Sticker close button
+        var stickerCloseBtn = $('sticker-picker-close');
+        if (stickerCloseBtn) {
+            stickerCloseBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                closeStickerPicker();
+            });
+        }
+        // Emoji close button
+        var emojiCloseBtn = $('emoji-picker-close');
+        if (emojiCloseBtn) {
+            emojiCloseBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                closeEmojiPicker();
+            });
+        }
+
         // Emoji search
         if (dom.emojiSearch) {
             dom.emojiSearch.addEventListener('input', function () {
@@ -7975,6 +9168,11 @@
             if (dom.gifPicker && dom.gifPicker.style.display !== 'none' && dom.gifPicker.style.display !== '') {
                 if (!dom.gifPicker.contains(e.target) && !e.target.closest('.composer-btn[aria-label="GIF"]')) {
                     closeGifPicker();
+                }
+            }
+            if (dom.stickerPicker && dom.stickerPicker.style.display !== 'none' && dom.stickerPicker.style.display !== '') {
+                if (!dom.stickerPicker.contains(e.target) && !e.target.closest('.composer-btn[aria-label="Sticker"]')) {
+                    closeStickerPicker();
                 }
             }
             if (hashtagState.active && dom.hashtagPanel) {
@@ -8179,6 +9377,113 @@
             });
         }
 
+        // ── Community details popup ──
+        if (dom.chatCommunityBadge) {
+            dom.chatCommunityBadge.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (state.currentDmConversation && state.currentDmUserId) {
+                    openUserPopup(state.currentDmUserId, dom.chatCommunityBadge);
+                } else {
+                    openCommunityDetails();
+                }
+            });
+        }
+        if (dom.cdClose) {
+            dom.cdClose.addEventListener('click', function () {
+                closeCommunityDetails();
+            });
+        }
+        if (dom.cdOverlay) {
+            dom.cdOverlay.addEventListener('click', function (e) {
+                if (e.target === dom.cdOverlay) {
+                    closeCommunityDetails();
+                }
+            });
+        }
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && communityDetailsOpen) {
+                closeCommunityDetails();
+            }
+        });
+
+        // ── Staff post menu ──
+        if (dom.staffPostBtn) {
+            dom.staffPostBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                openStaffPostMenu();
+            });
+        }
+        if (dom.spClose) {
+            dom.spClose.addEventListener('click', function () {
+                closeStaffPostMenu();
+            });
+        }
+        if (dom.spOverlay) {
+            dom.spOverlay.addEventListener('click', function (e) {
+                if (e.target === dom.spOverlay) {
+                    closeStaffPostMenu();
+                }
+            });
+        }
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && staffPostOpen) {
+                closeStaffPostMenu();
+            }
+        });
+        if (dom.spCreatePoll) {
+            dom.spCreatePoll.addEventListener('click', function () {
+                closeStaffPostMenu();
+                setTimeout(openPollPopup, 100);
+            });
+        }
+        if (dom.spCreatePost) {
+            dom.spCreatePost.addEventListener('click', function () {
+                closeStaffPostMenu();
+                showToast('Post creation coming soon', 'info');
+            });
+        }
+
+        // ── Poll creation popup ──
+        if (dom.pollClose) {
+            dom.pollClose.addEventListener('click', function () {
+                closePollPopup();
+            });
+        }
+        if (dom.pollOverlay) {
+            dom.pollOverlay.addEventListener('click', function (e) {
+                if (e.target === dom.pollOverlay) {
+                    closePollPopup();
+                }
+            });
+        }
+        if (dom.pollBtnCancel) {
+            dom.pollBtnCancel.addEventListener('click', function () {
+                closePollPopup();
+            });
+        }
+        if (dom.pollBtnCreate) {
+            dom.pollBtnCreate.addEventListener('click', function () {
+                submitPoll();
+            });
+        }
+        if (dom.pollAddOption) {
+            dom.pollAddOption.addEventListener('click', function () {
+                addPollOption();
+            });
+        }
+        if (dom.pollQuestion) {
+            dom.pollQuestion.addEventListener('input', function () {
+                updatePollQuestionCount();
+            });
+        }
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && pollOpen) {
+                closePollPopup();
+            }
+        });
+
         // ── Audio player event delegation ──
         document.addEventListener('click', function(e) {
             // Audio play/pause
@@ -8368,7 +9673,6 @@
         var rightSidebar = qs('.right-sidebar');
         if (!rpanel || !profileView) return;
 
-        // On mobile, close the sidebar overlay so the profile shows cleanly on top
         document.body.classList.remove('side-open');
 
         hide(editView);
@@ -8381,7 +9685,13 @@
         restoreRpanelExpand();
         populateProfile();
         triggerProfileEntrance();
-        animateStatCounters();
+
+        apiGet('/api/profile/me').then(function (data) {
+            if (data && data.success && data.profile) {
+                state.user = Object.assign(state.user || {}, data.profile);
+                if (profileOpen) populateProfile();
+            }
+        }).catch(function () {});
 
         if (!isProfileRoute()) {
             window.history.pushState({ view: 'profile' }, '', '/home/#/profile');
@@ -8415,15 +9725,6 @@
 
     /* ── Moments (rpanel) ─────────────────────── */
     var momentsOpen = false;
-
-    var MOCK_MOMENTS = [
-        { id: 'm1', username: 'Alex', profile_picture: 'https://i.pravatar.cc/150?img=1', time: '2h ago', type: 'image', ring: 'ring_sakura', viewed: false },
-        { id: 'm2', username: 'Sarah', profile_picture: 'https://i.pravatar.cc/150?img=5', time: '4h ago', type: 'video', ring: 'ring_lightning', viewed: false },
-        { id: 'm3', username: 'Mike', profile_picture: 'https://i.pravatar.cc/150?img=3', time: '6h ago', type: 'text', ring: 'ring_aurora', viewed: true },
-        { id: 'm4', username: 'Emma', profile_picture: 'https://i.pravatar.cc/150?img=9', time: '8h ago', type: 'image', ring: 'ring_galaxy', viewed: false },
-        { id: 'm5', username: 'Jake', profile_picture: 'https://i.pravatar.cc/150?img=12', time: '12h ago', type: 'video', ring: 'ring_diamond', viewed: true },
-        { id: 'm6', username: 'Luna', profile_picture: 'https://i.pravatar.cc/150?img=16', time: '1d ago', type: 'text', ring: 'ring_sunset', viewed: true },
-    ];
 
     var MOMENT_TYPE_ICONS = {
         image: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>',
@@ -8488,61 +9789,178 @@
         list.innerHTML = '';
         if (dom.momentsSkeleton) show(dom.momentsSkeleton);
 
-        apiGet('/api/moments?limit=20').then(function (data) {
+        apiGet('/api/moments?limit=50').then(function (data) {
             if (dom.momentsSkeleton) hide(dom.momentsSkeleton);
 
             var moments = (data && data.moments) || [];
 
+            updateMyMomentCard(moments);
+
             if (moments.length === 0) {
+                if (dom.momentsSectionHeader) hide(dom.momentsSectionHeader);
                 show(dom.momentsEmpty);
                 return;
             }
             hide(dom.momentsEmpty);
 
-            for (var i = 0; i < moments.length; i++) {
-                var m = moments[i];
-                var item = document.createElement('div');
-                item.className = 'moment-item rp-entrance';
-                item.setAttribute('data-delay', String(i));
-                item.setAttribute('data-moment-id', m.id);
-                item._momentData = m;
-
-                var typeIcon = MOMENT_TYPE_ICONS[m.type] || '';
-                var typeLabel = m.type.charAt(0).toUpperCase() + m.type.slice(1);
-                var avatar = getAvatarUrl(m);
-                var name = m.display_name || m.username || 'User';
-                var timeAgo = formatTimeAgo(m.created_at);
-                var metaExtra = '';
-                if (m.type === 'video' && m.duration) {
-                    metaExtra = ' · ' + formatVideoDuration(m.duration);
+            var userGroups = groupMomentsByUser(moments);
+            var myUserId = state.user ? state.user.id : null;
+            var recentGroups = [];
+            for (var i = 0; i < userGroups.length; i++) {
+                if (userGroups[i].userId !== myUserId) {
+                    recentGroups.push(userGroups[i]);
                 }
+            }
 
-                item.innerHTML =
-                    '<div class="moment-avatar-wrap">' +
-                        '<div class="moment-avatar-ring"></div>' +
-                        '<img class="moment-avatar" src="' + escapeHtml(avatar) + '" alt="" loading="lazy">' +
-                        '<div class="moment-type-badge" style="color:' + getTypeColor(m.type) + '">' + typeIcon + '</div>' +
-                    '</div>' +
-                    '<div class="moment-info">' +
-                        '<span class="moment-username">' + escapeHtml(name) + '</span>' +
-                        '<div class="moment-meta">' +
-                            '<span class="moment-type-label">' + typeIcon + ' ' + typeLabel + metaExtra + '</span>' +
-                            '<span>' + escapeHtml(timeAgo) + '</span>' +
-                        '</div>' +
-                    '</div>';
+            if (dom.momentsSectionHeader) {
+                if (recentGroups.length === 0) hide(dom.momentsSectionHeader);
+                else show(dom.momentsSectionHeader);
+            }
 
-                item.addEventListener('click', (function (moment, idx) {
-                    return function () {
-                        openMomentViewer(moments, idx);
-                    };
-                })(m, i));
-
+            for (var j = 0; j < recentGroups.length; j++) {
+                var group = recentGroups[j];
+                var startIdx = 0;
+                for (var k = 0; k < moments.length; k++) {
+                    if (moments[k] === group.moments[0]) {
+                        startIdx = k;
+                        break;
+                    }
+                }
+                var item = createMomentUserItem(group, j, moments, startIdx);
                 list.appendChild(item);
             }
         }).catch(function () {
             if (dom.momentsSkeleton) hide(dom.momentsSkeleton);
             show(dom.momentsEmpty);
         });
+    }
+
+    function groupMomentsByUser(moments) {
+        var groups = [];
+        var groupMap = {};
+        for (var i = 0; i < moments.length; i++) {
+            var m = moments[i];
+            var uid = m.user_id;
+            if (!groupMap[uid]) {
+                groupMap[uid] = {
+                    userId: uid,
+                    username: m.username || '',
+                    displayName: m.display_name || '',
+                    profile_picture: m.profile_picture || '',
+                    isPremium: m.is_premium || false,
+                    isBot: m.is_bot || false,
+                    isVerified: m.is_verified || false,
+                    rank: m.rank || null,
+                    moments: [],
+                    latestAt: m.created_at,
+                };
+                groups.push(groupMap[uid]);
+            }
+            groupMap[uid].moments.push(m);
+            if (m.created_at > groupMap[uid].latestAt) {
+                groupMap[uid].latestAt = m.created_at;
+            }
+        }
+        return groups;
+    }
+
+    function updateMyMomentCard(moments) {
+        var myUserId = state.user ? state.user.id : null;
+        if (!myUserId) return;
+
+        var myMoments = [];
+        for (var i = 0; i < moments.length; i++) {
+            if (moments[i].user_id === myUserId) {
+                myMoments.push(moments[i]);
+            }
+        }
+
+        if (dom.momentsMyAvatar && state.user) {
+            dom.momentsMyAvatar.src = getAvatarUrl(state.user);
+        }
+        var myBadges = '';
+        if (state.user) {
+            if (state.user.rank && state.user.rank !== 'bot') myBadges += createRankBadgeHtml(state.user.rank, 'rank-badge-sm');
+            if (state.user.is_premium) myBadges += createPremiumBadgeHtml(true);
+            if (state.user.is_verified) myBadges += createVerifiedBadgeHtml();
+        }
+        var myLabelEl = qs('.moments-my-label');
+        if (myLabelEl) {
+            myLabelEl.innerHTML = 'My Moment' + myBadges;
+        }
+
+        if (myMoments.length > 0) {
+            if (dom.momentsMyHint) {
+                dom.momentsMyHint.textContent = formatTimeAgo(myMoments[0].created_at);
+            }
+            if (dom.momentsMyCount && dom.momentsMyCountNum) {
+                dom.momentsMyCountNum.textContent = myMoments.length;
+                dom.momentsMyCount.style.display = '';
+            }
+        } else {
+            if (dom.momentsMyHint) {
+                dom.momentsMyHint.textContent = 'Tap to add a moment';
+            }
+            if (dom.momentsMyCount) {
+                dom.momentsMyCount.style.display = 'none';
+            }
+        }
+    }
+
+    function createMomentUserItem(group, index, allMoments, startIndex) {
+        var item = document.createElement('div');
+        item.className = 'moment-user-item rp-entrance';
+        item.setAttribute('data-delay', String(index));
+        item.setAttribute('data-user-id', group.userId);
+        item._groupData = group;
+
+        var avatar = getAvatarUrl(group);
+        var name = group.displayName || group.username || 'User';
+        var timeAgo = formatTimeAgo(group.latestAt);
+        var count = group.moments.length;
+        var hasMultiple = count > 1;
+
+        var nameBadges = '';
+        if (group.isBot || group.rank === 'bot') nameBadges += createBotBadgeHtml();
+        if (group.rank && group.rank !== 'bot') nameBadges += createRankBadgeHtml(group.rank, 'rank-badge-sm');
+        if (group.isPremium) nameBadges += createPremiumBadgeHtml(true);
+        if (group.isVerified) nameBadges += createVerifiedBadgeHtml();
+
+        var typeIcons = '';
+        var typeSet = {};
+        for (var i = 0; i < group.moments.length; i++) {
+            var t = group.moments[i].type;
+            if (!typeSet[t]) {
+                typeSet[t] = true;
+                typeIcons += '<span class="moment-user-type-dot" style="background:' + getTypeColor(t) + '"></span>';
+            }
+        }
+
+        item.innerHTML =
+            '<div class="moment-user-avatar-wrap">' +
+                '<div class="moment-user-ring"></div>' +
+                '<img class="moment-user-avatar" src="' + escapeHtml(avatar) + '" alt="" loading="lazy">' +
+            '</div>' +
+            '<div class="moment-user-info">' +
+                '<span class="moment-user-name">' + escapeHtml(name) + nameBadges + '</span>' +
+                '<div class="moment-user-meta">' +
+                    '<span class="moment-user-time">' + escapeHtml(timeAgo) + '</span>' +
+                    (hasMultiple ? '<span class="moment-user-count">' + count + ' moments</span>' : '') +
+                '</div>' +
+            '</div>' +
+            '<div class="moment-user-types">' + typeIcons + '</div>';
+
+        item.addEventListener('click', (function (allM, startIdx) {
+            return function () {
+                if (allM && allM.length > 0) {
+                    openMomentViewer(allM, startIdx);
+                } else {
+                    openMomentViewer(group.moments, 0);
+                }
+            };
+        })(allMoments, startIndex));
+
+        return item;
     }
 
     function getTypeColor(type) {
@@ -9204,58 +10622,101 @@
     function addMomentToList(moment) {
         var list = dom.momentsList;
         if (!list) return;
-        // Hide empty state
         if (dom.momentsEmpty) hide(dom.momentsEmpty);
 
-        var item = document.createElement('div');
-        item.className = 'moment-item rp-entrance entering';
-        item.setAttribute('data-moment-id', moment.id);
-        item._momentData = moment;
-
-        var typeIcon = MOMENT_TYPE_ICONS[moment.type] || '';
-        var typeLabel = moment.type.charAt(0).toUpperCase() + moment.type.slice(1);
-        var avatar = getAvatarUrl(moment);
-        var name = moment.display_name || moment.username || 'User';
-        var timeAgo = formatTimeAgo(moment.created_at);
-        var metaExtra = '';
-        if (moment.type === 'video' && moment.duration) {
-            metaExtra = ' · ' + formatVideoDuration(moment.duration);
+        var myUserId = state.user ? state.user.id : null;
+        if (moment.user_id === myUserId) {
+            updateMyMomentCardFromNew(moment);
+            return;
         }
 
-        item.innerHTML =
-            '<div class="moment-avatar-wrap">' +
-                '<div class="moment-avatar-ring"></div>' +
-                '<img class="moment-avatar" src="' + escapeHtml(avatar) + '" alt="" loading="lazy">' +
-                '<div class="moment-type-badge" style="color:' + getTypeColor(moment.type) + '">' + typeIcon + '</div>' +
-            '</div>' +
-            '<div class="moment-info">' +
-                '<span class="moment-username">' + escapeHtml(name) + '</span>' +
-                '<div class="moment-meta">' +
-                    '<span class="moment-type-label">' + typeIcon + ' ' + typeLabel + metaExtra + '</span>' +
-                    '<span>' + escapeHtml(timeAgo) + '</span>' +
-                '</div>' +
-            '</div>';
+        var existingItem = list.querySelector('[data-user-id="' + moment.user_id + '"]');
+        if (existingItem) {
+            var countEl = existingItem.querySelector('.moment-user-count');
+            var currentCount = existingItem._groupData ? existingItem._groupData.moments.length : 1;
+            var newCount = currentCount + 1;
+            existingItem._groupData.moments.unshift(moment);
 
-        item.addEventListener('click', function () {
-            // Collect all moments from the list for the viewer
-            var allItems = list.querySelectorAll('.moment-item');
-            var momentsData = [];
-            var clickedIndex = 0;
-            for (var i = 0; i < allItems.length; i++) {
-                var mData = allItems[i]._momentData;
-                if (mData) {
-                    if (allItems[i] === item) clickedIndex = momentsData.length;
-                    momentsData.push(mData);
+            if (newCount > 1) {
+                if (countEl) {
+                    countEl.textContent = newCount + ' moments';
+                    countEl.style.display = '';
+                } else {
+                    var metaEl = existingItem.querySelector('.moment-user-meta');
+                    if (metaEl) {
+                        var newCountEl = document.createElement('span');
+                        newCountEl.className = 'moment-user-count';
+                        newCountEl.textContent = newCount + ' moments';
+                        metaEl.appendChild(newCountEl);
+                    }
                 }
             }
-            if (momentsData.length > 0) {
-                openMomentViewer(momentsData, clickedIndex);
-            } else {
-                openMomentViewer([moment], 0);
-            }
-        });
 
-        list.insertBefore(item, list.firstChild);
+            var timeEl = existingItem.querySelector('.moment-user-time');
+            if (timeEl) {
+                timeEl.textContent = formatTimeAgo(moment.created_at);
+            }
+
+            var typeSet = {};
+            for (var i = 0; i < existingItem._groupData.moments.length; i++) {
+                typeSet[existingItem._groupData.moments[i].type] = true;
+            }
+            var typeContainer = existingItem.querySelector('.moment-user-types');
+            if (typeContainer) {
+                var dots = '';
+                for (var t in typeSet) {
+                    dots += '<span class="moment-user-type-dot" style="background:' + getTypeColor(t) + '"></span>';
+                }
+                typeContainer.innerHTML = dots;
+            }
+
+            existingItem.classList.add('moment-user-item-flash');
+            setTimeout(function () {
+                existingItem.classList.remove('moment-user-item-flash');
+            }, 600);
+
+            list.insertBefore(existingItem, list.firstChild);
+        } else {
+            var group = {
+                userId: moment.user_id,
+                username: moment.username || '',
+                displayName: moment.display_name || '',
+                profile_picture: moment.profile_picture || '',
+                isPremium: moment.is_premium || false,
+                isBot: moment.is_bot || false,
+                isVerified: moment.is_verified || false,
+                rank: moment.rank || null,
+                moments: [moment],
+                latestAt: moment.created_at,
+            };
+            var allKnownMoments = [moment];
+            var groups = list.querySelectorAll('.moment-user-item');
+            for (var gi = 0; gi < groups.length; gi++) {
+                var gd = groups[gi]._groupData;
+                if (gd && gd.moments) {
+                    for (var mi = 0; mi < gd.moments.length; mi++) {
+                        allKnownMoments.push(gd.moments[mi]);
+                    }
+                }
+            }
+            var newItem = createMomentUserItem(group, 0, allKnownMoments, allKnownMoments.indexOf(moment));
+            newItem.classList.add('moment-user-item-entering');
+            list.insertBefore(newItem, list.firstChild);
+        }
+    }
+
+    function updateMyMomentCardFromNew(moment) {
+        var myUserId = state.user ? state.user.id : null;
+        if (!myUserId) return;
+
+        if (dom.momentsMyHint) {
+            dom.momentsMyHint.textContent = formatTimeAgo(moment.created_at);
+        }
+        if (dom.momentsMyCount && dom.momentsMyCountNum) {
+            var current = parseInt(dom.momentsMyCountNum.textContent) || 0;
+            dom.momentsMyCountNum.textContent = current + 1;
+            dom.momentsMyCount.style.display = '';
+        }
     }
 
     function formatTimeAgo(dateStr) {
@@ -9283,6 +10744,8 @@
         pausedElapsed: 0,
         progressRaf: null,
         liked: false,
+        likeCount: 0,
+        currentMomentId: null,
         preloaded: {},
         loadId: 0,
         loadTimer: null,
@@ -9320,6 +10783,16 @@
         var result = moments.slice();
         result.splice(insertIdx, 0, createSponsoredMoment());
         return result;
+    }
+
+    function createSponsoredGroup() {
+        return {
+            userId: 'buzz',
+            username: 'buzz',
+            displayName: '\uD83D\uDCE3 Buzz',
+            profilePicture: '/assets/buzz.png',
+            moments: [createSponsoredMoment()],
+        };
     }
 
     function mvGetCurrentGroup() {
@@ -9371,28 +10844,69 @@
         mvState.currentGroupIndex = 0;
         mvState.currentMomentIndex = 0;
 
-        var adjustedMoments = insertSponsoredMoment(moments);
-        var adjustedIndex = startIndex || 0;
-        if (adjustedMoments.length > moments.length) {
-            var totalReal = moments.length;
-            var insertIdx = Math.floor(totalReal / 2);
-            if (adjustedIndex >= insertIdx) {
-                adjustedIndex++;
+        var groups = mvGroupMomentsByUser(moments, null);
+        var totalReal = moments.length;
+        var shouldInsertAd = totalReal >= 2 && !(state.user && state.user.is_premium);
+
+        var halfIdx = Math.ceil(totalReal / 2);
+
+        if (shouldInsertAd) {
+            var adInserted = false;
+            var cumReal = 0;
+            var newGroups = [];
+            for (var i = 0; i < groups.length; i++) {
+                var g = groups[i];
+                if (!adInserted && cumReal + g.moments.length > halfIdx) {
+                    var splitAt = halfIdx - cumReal;
+                    var prefix = {
+                        userId: g.userId,
+                        username: g.username,
+                        displayName: g.displayName,
+                        profilePicture: g.profilePicture,
+                        moments: g.moments.slice(0, splitAt),
+                    };
+                    var suffix = {
+                        userId: g.userId,
+                        username: g.username,
+                        displayName: g.displayName,
+                        profilePicture: g.profilePicture,
+                        moments: g.moments.slice(splitAt),
+                    };
+                    newGroups.push(prefix);
+                    newGroups.push(createSponsoredGroup());
+                    newGroups.push(suffix);
+                    adInserted = true;
+                } else if (!adInserted && cumReal + g.moments.length === halfIdx) {
+                    newGroups.push(g);
+                    newGroups.push(createSponsoredGroup());
+                    adInserted = true;
+                } else {
+                    newGroups.push(g);
+                }
+                cumReal += g.moments.length;
             }
+            groups = newGroups;
         }
 
-        var clickedMoment = adjustedMoments[adjustedIndex];
-        var clickedUserId = clickedMoment ? (clickedMoment._isSponsored ? 'buzz' : (clickedMoment.user_id || clickedMoment.userId || clickedMoment.id)) : null;
-        mvState.userGroups = mvGroupMomentsByUser(adjustedMoments, clickedUserId);
+        mvState.userGroups = groups;
 
-        var group = mvGetCurrentGroup();
-        if (group && clickedUserId != null) {
-            for (var i = 0; i < group.moments.length; i++) {
-                if (group.moments[i] === clickedMoment) {
-                    mvState.currentMomentIndex = i;
-                    break;
-                }
+        var si = startIndex || 0;
+        if (shouldInsertAd && si >= halfIdx) si += 1;
+        var cum = 0;
+        var found = false;
+        for (var i = 0; i < groups.length; i++) {
+            var gLen = groups[i].moments.length;
+            if (si >= cum && si < cum + gLen) {
+                mvState.currentGroupIndex = i;
+                mvState.currentMomentIndex = si - cum;
+                found = true;
+                break;
             }
+            cum += gLen;
+        }
+        if (!found) {
+            mvState.currentGroupIndex = 0;
+            mvState.currentMomentIndex = 0;
         }
 
         var overlay = dom.mvOverlay;
@@ -9427,6 +10941,9 @@
         mvState.userGroups = [];
         mvState.currentGroupIndex = 0;
         mvState.currentMomentIndex = 0;
+        mvState.currentMomentId = null;
+        mvState.liked = false;
+        mvState.likeCount = 0;
 
         overlay.classList.remove('visible');
         overlay.classList.add('mv-exit');
@@ -9458,6 +10975,8 @@
             if (dom.mvNavRight) dom.mvNavRight.style.display = '';
             if (dom.mvBottom) dom.mvBottom.style.display = '';
             if (dom.mvActions) dom.mvActions.style.display = '';
+            if (dom.mvInsights) dom.mvInsights.style.display = 'none';
+            if (dom.mvHearts) dom.mvHearts.innerHTML = '';
             if (dom.mvReplyInput) dom.mvReplyInput.value = '';
             document.body.style.overflow = '';
         }, 250);
@@ -9622,6 +11141,53 @@
         }
     }
 
+    var MV_HEART_SVG = '<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
+    var MV_HEART_COLORS = ['#ff4081', '#ff6090', '#ff1744', '#e91e63', '#f50057', '#ff80ab', '#ff5252'];
+
+    function spawnMvHearts(likeCount) {
+        var container = dom.mvHearts;
+        if (!container) return;
+        container.innerHTML = '';
+
+        var count = Math.min(Math.max(likeCount, 1) * 3 + 4, 40);
+        var fragment = document.createDocumentFragment();
+
+        for (var i = 0; i < count; i++) {
+            var heart = document.createElement('div');
+            heart.className = 'mv-heart';
+
+            var size = 14 + Math.random() * 16;
+            var left = 8 + Math.random() * 84;
+            var duration = 2.2 + Math.random() * 1.8;
+            var delay = Math.random() * 2.5;
+            var drift = (Math.random() - 0.5) * 80;
+            var rotate = (Math.random() - 0.5) * 30;
+            var scale = 0.6 + Math.random() * 0.6;
+            var color = MV_HEART_COLORS[Math.floor(Math.random() * MV_HEART_COLORS.length)];
+
+            heart.style.cssText =
+                'left:' + left + '%;' +
+                '--heart-duration:' + duration.toFixed(2) + 's;' +
+                '--heart-delay:' + delay.toFixed(2) + 's;' +
+                '--heart-drift:' + drift.toFixed(1) + 'px;' +
+                '--heart-rotate:' + rotate.toFixed(1) + 'deg;' +
+                '--heart-scale:' + scale.toFixed(2) + ';' +
+                'color:' + color + ';' +
+                'width:' + size.toFixed(0) + 'px;' +
+                'height:' + size.toFixed(0) + 'px;';
+
+            heart.innerHTML = MV_HEART_SVG;
+            fragment.appendChild(heart);
+        }
+
+        container.appendChild(fragment);
+
+        var maxLife = 5000;
+        setTimeout(function () {
+            if (container) container.innerHTML = '';
+        }, maxLife);
+    }
+
     function renderMvMoment() {
         var m = mvGetCurrentMoment();
         if (!m) return;
@@ -9636,6 +11202,29 @@
         stopMvProgress();
         clearMvLoadTimer();
         if (dom.mvImageWrap) dom.mvImageWrap.classList.remove('mv-paused');
+
+        mvState.currentMomentId = m.id;
+        mvState.liked = !!m.user_has_liked;
+        mvState.likeCount = m.like_count || 0;
+        if (dom.mvLikeBtn) dom.mvLikeBtn.classList.toggle('mv-liked', mvState.liked);
+        if (dom.mvLikeCount) dom.mvLikeCount.textContent = mvState.likeCount > 0 ? mvState.likeCount : '';
+
+        var isOwner = !m._isSponsored && state.user && m.user_id === state.user.id;
+        if (dom.mvActions) dom.mvActions.style.display = (isOwner || m._isSponsored) ? 'none' : '';
+        if (dom.mvInsights) {
+            if (isOwner && !m._isSponsored) {
+                dom.mvInsights.style.display = '';
+                if (dom.mvInsightLikes) dom.mvInsightLikes.textContent = m.like_count || 0;
+                if (dom.mvInsightViews) dom.mvInsightViews.textContent = m.view_count || 0;
+                if (m.like_count > 0) spawnMvHearts(m.like_count);
+            } else {
+                dom.mvInsights.style.display = 'none';
+            }
+        }
+
+        if (m.id && !m._isSponsored) {
+            apiGet('/api/moments/' + m.id).catch(function () {});
+        }
 
         var avatar = getAvatarUrl(m);
         var name = m.display_name || m.username || 'User';
@@ -9701,17 +11290,17 @@
                 setTimeout(function () {
                     if (mvState.loadId !== thisLoadId) return;
                     loadBuzzAdLarge(adId);
-                    setTimeout(function () {
-                        if (mvState.loadId !== thisLoadId) return;
-                        onMvImageReady();
-                    }, 800);
+                    mvWaitForAdLoad(adId, thisLoadId);
                 }, 50);
             } else {
                 onMvImageReady();
             }
 
             mvState.liked = false;
+            mvState.likeCount = 0;
+            mvState.currentMomentId = null;
             if (dom.mvLikeBtn) dom.mvLikeBtn.classList.remove('mv-liked');
+            if (dom.mvLikeCount) dom.mvLikeCount.textContent = '';
             if (dom.mvReplyInput) dom.mvReplyInput.value = '';
             if (dom.mvReplySend) dom.mvReplySend.classList.remove('mv-send-active');
             updateMvNavState();
@@ -9724,7 +11313,8 @@
         if (dom.mvNavLeft) dom.mvNavLeft.style.display = '';
         if (dom.mvNavRight) dom.mvNavRight.style.display = '';
         if (dom.mvBottom) dom.mvBottom.style.display = '';
-        if (dom.mvActions) dom.mvActions.style.display = '';
+        if (dom.mvActions) dom.mvActions.style.display = isOwner ? 'none' : '';
+        if (dom.mvInsights) dom.mvInsights.style.display = isOwner ? '' : 'none';
         if (dom.mvSponsoredWrap) dom.mvSponsoredWrap.style.display = 'none';
 
         // Toggle image vs video display
@@ -9862,6 +11452,46 @@
         if (dom.mvImageLoading) dom.mvImageLoading.style.display = 'none';
         if (dom.mvImageError) dom.mvImageError.style.display = '';
         startMvProgress();
+    }
+
+    function mvWaitForAdLoad(containerId, thisLoadId) {
+        var container = document.getElementById(containerId);
+        if (!container) {
+            onMvImageReady();
+            return;
+        }
+        var startedAt = Date.now();
+        var finished = false;
+        var poll = setInterval(function () {
+            if (finished) {
+                clearInterval(poll);
+                return;
+            }
+            if (!mvState.open || mvState.loadId !== thisLoadId) {
+                clearInterval(poll);
+                return;
+            }
+            var finish = function () {
+                if (finished) return;
+                finished = true;
+                clearInterval(poll);
+                onMvImageReady();
+            };
+            var iframe = container.querySelector('iframe');
+            if (iframe && iframe.src) {
+                try {
+                    if (iframe.contentDocument && iframe.contentDocument.readyState === 'complete') {
+                        finish();
+                        return;
+                    }
+                } catch (e) {}
+                iframe.onload = finish;
+                return;
+            }
+            if (Date.now() - startedAt >= MV_LOAD_TIMEOUT) {
+                finish();
+            }
+        }, 150);
     }
 
     function preloadNextMvImage() {
@@ -10010,22 +11640,71 @@
     }
 
     function mvToggleLike() {
-        mvState.liked = !mvState.liked;
-        if (dom.mvLikeBtn) {
-            dom.mvLikeBtn.classList.toggle('mv-liked', mvState.liked);
-        }
-        if (mvState.liked) {
-            showToast('Liked!', 'success');
-        }
+        var momentId = mvState.currentMomentId;
+        if (!momentId) return;
+        var wasLiked = mvState.liked;
+        mvState.liked = !wasLiked;
+        mvState.likeCount = Math.max(0, mvState.likeCount + (mvState.liked ? 1 : -1));
+        if (dom.mvLikeBtn) dom.mvLikeBtn.classList.toggle('mv-liked', mvState.liked);
+        if (dom.mvLikeCount) dom.mvLikeCount.textContent = mvState.likeCount > 0 ? mvState.likeCount : '';
+        apiPost('/api/moments/' + momentId + '/like', {}).then(function (res) {
+            if (res && res.data) {
+                mvState.liked = res.data.liked;
+                mvState.likeCount = res.data.like_count;
+                if (dom.mvLikeBtn) dom.mvLikeBtn.classList.toggle('mv-liked', mvState.liked);
+                if (dom.mvLikeCount) dom.mvLikeCount.textContent = mvState.likeCount > 0 ? mvState.likeCount : '';
+            }
+        }).catch(function () {
+            mvState.liked = wasLiked;
+            mvState.likeCount = Math.max(0, mvState.likeCount + (wasLiked ? 1 : -1));
+            if (dom.mvLikeBtn) dom.mvLikeBtn.classList.toggle('mv-liked', mvState.liked);
+            if (dom.mvLikeCount) dom.mvLikeCount.textContent = mvState.likeCount > 0 ? mvState.likeCount : '';
+        });
     }
 
     function mvSendReply() {
         if (!dom.mvReplyInput) return;
         var text = dom.mvReplyInput.value.trim();
         if (!text) return;
-        showToast('Reply sent!', 'success');
+
+        var m = mvGetCurrentMoment();
+        if (!m || !m.user_id || !m.id) {
+            showToast('Could not send reply', 'error');
+            return;
+        }
+
+        // Don't reply to your own moment
+        if (state.user && m.user_id === state.user.id) {
+            showToast('You cannot reply to your own moment', 'error');
+            dom.mvReplyInput.value = '';
+            if (dom.mvReplySend) dom.mvReplySend.classList.remove('mv-send-active');
+            return;
+        }
+
+        var replyText = text;
         dom.mvReplyInput.value = '';
         if (dom.mvReplySend) dom.mvReplySend.classList.remove('mv-send-active');
+
+        // Create or get DM conversation with the moment owner, then send the message
+        apiPost('/api/dm/conversations', { userId: m.user_id })
+            .then(function (data) {
+                if (!data || !data.conversationId) {
+                    showToast('Could not start conversation', 'error');
+                    return;
+                }
+                return apiPost('/api/dm/' + data.conversationId + '/messages', {
+                    message: replyText,
+                    momentId: m.id
+                });
+            })
+            .then(function (result) {
+                if (result && result.success !== false) {
+                    showToast('Reply sent!', 'success');
+                }
+            })
+            .catch(function () {
+                showToast('Failed to send reply', 'error');
+            });
     }
 
     function populateProfile() {
@@ -10035,8 +11714,28 @@
         var avatar = getAvatarUrl(user);
         var el;
 
+        el = $('rpanel-banner');
+        if (el) {
+            if (user.profile_banner) {
+                el.style.backgroundImage = 'url(' + user.profile_banner + ')';
+                el.style.backgroundSize = 'cover';
+                el.style.backgroundPosition = 'center';
+            } else {
+                el.style.backgroundImage = '';
+            }
+        }
+
         el = $('rpanel-avatar');
         if (el) el.src = avatar;
+
+        updateProfileOnlineStatus(user.online);
+
+        var ringEl = $('rpanel-avatar-ring');
+        if (ringEl) {
+            ringEl.className = 'rpanel-avatar-ring';
+            var ring = user.profile_ring && user.profile_ring !== 'none' ? user.profile_ring : '';
+            if (ring) ringEl.classList.add(ring);
+        }
 
         el = $('rpanel-username');
         if (el) el.textContent = '@' + (user.username || 'user');
@@ -10047,6 +11746,9 @@
         el = $('rpanel-badges');
         if (el) {
             var badges = '';
+            if (user.is_bot) {
+                badges += createBotBadgeHtml();
+            }
             if (user.rank && user.rank !== 'bot' && window.HiveRankBadge) {
                 var badgeEl = window.HiveRankBadge.create(user.rank, 14);
                 if (badgeEl) { badgeEl.className = 'rank-badge rank-' + user.rank; badges += badgeEl.outerHTML; }
@@ -10072,12 +11774,35 @@
         el = $('rp-if-bio');
         if (el) el.textContent = user.bio || 'No bio yet.';
 
+        el = $('rp-if-pronouns');
+        if (el) {
+            if (user.pronouns) {
+                el.textContent = user.pronouns;
+                var pronounsWrap = $('rp-if-pronouns-wrap');
+                if (pronounsWrap) pronounsWrap.style.display = '';
+            } else {
+                var pronounsWrap = $('rp-if-pronouns-wrap');
+                if (pronounsWrap) pronounsWrap.style.display = 'none';
+            }
+        }
+
+        el = $('rp-if-status');
+        if (el) {
+            if (user.status) {
+                el.textContent = user.status;
+                var statusWrap = $('rp-if-status-wrap');
+                if (statusWrap) statusWrap.style.display = '';
+            } else {
+                var statusWrap = $('rp-if-status-wrap');
+                if (statusWrap) statusWrap.style.display = 'none';
+            }
+        }
+
         el = $('rp-xp-section');
         if (el) {
             el.innerHTML = createXpProgressBarHtml(user.xp || 0);
         }
 
-        // Level Card (existing rp-level-bar)
         var levelData = getXpProgress(user.xp || 0);
         el = $('rp-level-badge');
         if (el) el.textContent = levelData.level;
@@ -10093,6 +11818,58 @@
             var span = el.querySelector('span');
             if (span) span.textContent = 'Member since ' + formatDateDivider(user.created_at);
         }
+
+        loadProfileStats();
+    }
+
+    function updateProfileOnlineStatus(isOnline) {
+        var dot = $('rpanel-status-dot');
+        if (!dot) return;
+        if (isOnline) {
+            dot.classList.add('online');
+            dot.classList.remove('offline');
+        } else {
+            dot.classList.remove('online');
+            dot.classList.add('offline');
+        }
+    }
+
+    function loadProfileStats() {
+        var user = state.user;
+        if (!user || !user.id) return;
+
+        apiGet('/api/profile/popup/' + user.id)
+            .then(function (data) {
+                if (!data || !data.success || !data.popup) return;
+                var popup = data.popup;
+                var stats = popup.stats || {};
+                updateProfileStatCounters(stats, user.id);
+
+                if (popup.online !== undefined) {
+                    state.user.online = popup.online;
+                    state.user.last_seen = popup.lastSeen;
+                    updateProfileOnlineStatus(popup.online);
+                }
+            })
+            .catch(function () {});
+    }
+
+    function updateProfileStatCounters(stats, userId) {
+        var statEls = document.querySelectorAll('#rpanel-profile .rp-stat-v[data-count]');
+        if (!statEls || statEls.length === 0) return;
+
+        var statOrder = ['messages', 'communities', 'reactions', 'replies', 'activeDays'];
+        for (var i = 0; i < statEls.length; i++) {
+            var key = statOrder[i];
+            var val = 0;
+            if (key && stats[key] !== undefined) {
+                val = parseInt(stats[key], 10) || 0;
+            }
+            statEls[i].setAttribute('data-count', val);
+            statEls[i].textContent = '0';
+        }
+
+        animateStatCounters();
     }
 
     function animateStatCounters() {
@@ -10163,7 +11940,22 @@
         var momentsMyCard = qs('.moments-my-card');
         if (momentsMyCard) {
             momentsMyCard.addEventListener('click', function () {
-                openMomentCreatePopup();
+                var myUserId = state.user ? state.user.id : null;
+                if (!myUserId) return;
+                apiGet('/api/moments?limit=50').then(function (data) {
+                    var moments = (data && data.moments) || [];
+                    var myMoments = [];
+                    for (var i = 0; i < moments.length; i++) {
+                        if (moments[i].user_id === myUserId) {
+                            myMoments.push(moments[i]);
+                        }
+                    }
+                    if (myMoments.length > 0) {
+                        openMomentViewer(myMoments, 0);
+                    } else {
+                        openMomentCreatePopup();
+                    }
+                });
             });
         }
 
@@ -10343,6 +12135,12 @@
                     mvSendReply();
                 }
                 e.stopPropagation();
+            });
+            dom.mvReplyInput.addEventListener('focus', function () {
+                pauseMv();
+            });
+            dom.mvReplyInput.addEventListener('blur', function () {
+                resumeMv();
             });
         }
         if (dom.mvReplySend) {
@@ -10757,7 +12555,6 @@
 
         populateProfile();
         triggerProfileEntrance();
-        animateStatCounters();
 
         window.history.back();
     }
@@ -11470,7 +13267,6 @@
 
         populateProfile();
         triggerProfileEntrance();
-        animateStatCounters();
 
         window.history.back();
     }
@@ -12402,6 +14198,10 @@
         dom.gifLoadMore = $('gif-loadmore');
         dom.gifLoadMoreBtn = $('gif-loadmore-btn');
         dom.gifPickerClose = $('gif-picker-close');
+        dom.stickerPicker = $('sticker-picker');
+        dom.stickerSearch = $('sticker-search');
+        dom.stickerCategories = $('sticker-categories');
+        dom.stickerGrid = $('sticker-grid');
         // Home presence elements
         dom.homeOnlineList = $('home-online-list');
         dom.homeOfflineList = $('home-offline-list');
@@ -12492,11 +14292,46 @@
         dom.notifEmpty = $('notif-empty');
         dom.notifLoadMore = $('notif-load-more');
         dom.topbarNotifBtn = $('topbar-notif-btn');
+        // Community details popup
+        dom.cdOverlay = $('cd-overlay');
+        dom.cdClose = $('cd-close');
+        dom.cdIcon = $('cd-icon');
+        dom.cdTitle = $('cd-title');
+        dom.cdVisibility = $('cd-visibility');
+        dom.cdCreated = $('cd-created');
+        dom.cdDescription = $('cd-description');
+        dom.cdStatsGrid = $('cd-stats-grid');
+        dom.cdStatMembers = $('cd-stat-members');
+        dom.cdStatOnline = $('cd-stat-online');
+        dom.cdStatMessages = $('cd-stat-messages');
+        dom.cdStatPermission = $('cd-stat-permission');
+        dom.cdStaffSection = $('cd-staff-section');
+        dom.cdStaffList = $('cd-staff-list');
+        dom.cdStaffCount = $('cd-staff-count');
+        // Staff post menu
+        dom.staffPostBtn = $('staff-post-btn');
+        dom.spOverlay = $('sp-overlay');
+        dom.spClose = $('sp-close');
+        dom.spCreatePoll = $('sp-create-poll');
+        dom.spCreatePost = $('sp-create-post');
+        // Poll creation popup
+        dom.pollOverlay = $('poll-overlay');
+        dom.pollClose = $('poll-close');
+        dom.pollQuestion = $('poll-question');
+        dom.pollQuestionCount = $('poll-question-count');
+        dom.pollOptions = $('poll-options');
+        dom.pollAddOption = $('poll-add-option');
+        dom.pollBtnCancel = $('poll-btn-cancel');
+        dom.pollBtnCreate = $('poll-btn-create');
         // Moments panel
         dom.momentsView = $('rpanel-moments');
         dom.momentsBack = $('rpanel-moments-back');
         dom.momentsMyAvatar = $('moments-my-avatar');
+        dom.momentsMyHint = $('moments-my-hint');
+        dom.momentsMyCount = $('moments-my-count');
+        dom.momentsMyCountNum = $('moments-my-count-num');
         dom.momentsAddBtn = $('moments-add-btn');
+        dom.momentsSectionHeader = $('moments-section-header');
         dom.momentsList = $('moments-list');
         dom.momentsEmpty = $('moments-empty');
         dom.momentsSkeleton = $('moments-skeleton');
@@ -12557,6 +14392,7 @@
         dom.mvImageWrap = $('mv-image-wrap');
         dom.mvImage = $('mv-image');
         dom.mvVideo = $('mv-video');
+        dom.mvHearts = $('mv-hearts');
         dom.mvImageLoading = $('mv-image-loading');
         dom.mvImageError = $('mv-image-error');
         dom.mvSponsoredWrap = $('mv-sponsored-wrap');
@@ -12566,9 +14402,13 @@
         dom.mvDescBar = $('mv-desc-bar');
         dom.mvDescText = $('mv-desc-text');
         dom.mvLikeBtn = $('mv-like-btn');
+        dom.mvLikeCount = $('mv-like-count');
         dom.mvReplyInput = $('mv-reply-input');
         dom.mvReplySend = $('mv-reply-send');
         dom.mvActions = $('mv-actions');
+        dom.mvInsights = $('mv-insights');
+        dom.mvInsightLikes = $('mv-insight-likes');
+        dom.mvInsightViews = $('mv-insight-views');
         dom.mvTip = $('mv-tip');
     }
 
@@ -13098,7 +14938,7 @@
                 dom.upMutualChips.innerHTML = '<div class="up-mutual-empty">No mutual servers</div>';
             } else {
                 dom.upMutualChips.innerHTML = data.mutuals.map(function (m) {
-                    var iconSrc = m.icon || 'https://i.pravatar.cc/40?u=' + m.id;
+                    var iconSrc = m.icon || '../assets/hiveicon.png';
                     return '<div class="up-mutual-chip">' +
                         '<img class="up-mutual-chip-icon" src="' + escapeHtml(iconSrc) + '" alt="" loading="lazy">' +
                         '<span class="up-mutual-chip-name">' + escapeHtml(m.name) + '</span>' +
